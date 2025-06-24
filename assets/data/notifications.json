@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "type": "info",
+    "icon": "mdi-information",
+    "title": "システムアップデート",
+    "message": "5月10日にシステムのアップデートを実施します。",
+    "time": "1時間前"
+  },
+  {
+    "id": 2,
+    "type": "warning",
+    "icon": "mdi-alert",
+    "title": "会議室予約の確認",
+    "message": "明日の営業会議の会議室予約が確定しました。",
+    "time": "3時間前"
+  },
+  {
+    "id": 3,
+    "type": "info",
+    "icon": "mdi-bullhorn",
+    "title": "新規プロジェクト案内",
+    "message": "新しいプロジェクトが開始されました。詳細は資料をご確認ください。",
+    "time": "昨日"
+  }
+]

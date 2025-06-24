@@ -1,0 +1,9 @@
+{
+  "users": [
+    { "id": 1, "name": "山田 太郎", "initial": "TY", "color": "user-color-1", "visible": true },
+    { "id": 2, "name": "佐藤 花子", "initial": "SH", "color": "user-color-2", "visible": true },
+    { "id": 3, "name": "鈴木 一郎", "initial": "SI", "color": "user-color-3", "visible": true },
+    { "id": 4, "name": "田中 美咲", "initial": "MT", "color": "user-color-4", "visible": true },
+    { "id": 5, "name": "高橋 健太", "initial": "KT", "color": "user-color-5", "visible": true }
+  ]
+}

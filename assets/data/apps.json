@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "name": "経費申請",
+    "icon": "mdi-file-document",
+    "url": "/expense"
+  },
+  {
+    "id": 2,
+    "name": "勤怠管理",
+    "icon": "mdi-clipboard-text",
+    "url": "/attendance"
+  },
+  {
+    "id": 3,
+    "name": "売上管理",
+    "icon": "mdi-chart-line",
+    "url": "/sales"
+  },
+  {
+    "id": 4,
+    "name": "人事システム",
+    "icon": "mdi-account-group",
+    "url": "#"
+  },
+  {
+    "id": 5,
+    "name": "社内メール",
+    "icon": "mdi-email",
+    "url": "#"
+  },
+  {
+    "id": 6,
+    "name": "ナレッジベース",
+    "icon": "mdi-book",
+    "url": "#"
+  }
+]

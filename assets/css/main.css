@@ -1,0 +1,54 @@
+:root {
+  --primary-color: #4a6cf7;
+  --primary-light: #edf2ff;
+  --primary-hover: #3a56d4;
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --info-color: #17a2b8;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --light-color: #f8f9fa;
+  --dark-color: #343a40;
+  --gray-color: #6c757d;
+  --accent-color: #ef476f;
+  --text-primary: #2b2d42;
+  --text-secondary: #6c757d;
+  --text-light: #8d99ae;
+  --border-color: #e9ecef;
+  --background-light: #f8f9fa;
+  --background-white: #ffffff;
+    /* イベントカラー - 統一されたスタイル */
+  --event-1: #4361ee; /* プライマリーカラーと統一 */
+  --event-2: #F95A5A;
+  --event-3: #00C2FF;
+  --event-4: #34D399;
+  --event-5: #F59E0B;
+  --event-1-bg: #edf2ff; /* プライマリーライトと統一 */
+  --event-2-bg: #FEECEC;
+  --event-3-bg: #E6F8FF;
+  --event-4-bg: #ECFDF5;
+  --event-5-bg: #FEF3E6;
+  --radius: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.08);
+  --transition: all 0.3s ease;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  background-color: #f5f7fa;
+}

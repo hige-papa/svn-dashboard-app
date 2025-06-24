@@ -1,0 +1,21 @@
+{
+  "labels": ["1月", "2月", "3月", "4月", "5月"],
+  "datasets": [
+    {
+      "label": "今年",
+      "data": [820, 840, 860, 890, 700],
+      "backgroundColor": "rgba(76, 201, 240, 0.2)",
+      "borderColor": "rgba(76, 201, 240, 1)",
+      "borderWidth": 2,
+      "tension": 0.3
+    },
+    {
+      "label": "昨年",
+      "data": [790, 810, 830, 850, 870],
+      "backgroundColor": "rgba(67, 97, 238, 0.2)",
+      "borderColor": "rgba(67, 97, 238, 1)",
+      "borderWidth": 2,
+      "tension": 0.3
+    }
+  ]
+}
