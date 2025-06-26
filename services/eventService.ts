@@ -1,6 +1,6 @@
 // services/eventService.ts
 import { useFirestore } from '~/composables/firebase/useFirestore'
-import { useFirestoreGeneral } from '~/composables/firebase/useFirestoreGeneral'
+import { useFirestoreGeneral } from '~/composables/firestoreGeneral/useFirestoreGeneral'
 import { where, orderBy, Timestamp } from 'firebase/firestore'
 
 // 既存の型に合わせて拡張

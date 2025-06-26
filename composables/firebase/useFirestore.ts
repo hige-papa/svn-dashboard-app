@@ -25,6 +25,8 @@ import { useDocumentRoot } from '~/composables/firebase/useDocumentRoot'
 export const useFirestore = () => {
     const firestore = useState<Firestore>('db');
 
+    const { userProfileRoot } = useDocumentRoot()
+
     const getCollection = (c: string) => {
         return collection(firestore.value, c);
     };
@@ -65,9 +67,10 @@ export const useFirestore = () => {
             });
     };
 
-    const countCollectionAsync = async (c: string) => {
+    const countCollectionAsync = async (c: string, ...qc: QueryConstraint[]) => {
         const q = query(
             collection(firestore.value, c),
+            ...qc
         );
         return getCountFromServer(q)
             .then(response => {

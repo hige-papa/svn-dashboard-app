@@ -50,6 +50,13 @@ declare global {
     description: string
   }
 
+  interface EventData extends EventFormData {
+    id?: string
+    createdAt?: Timestamp
+    updatedAt?: Timestamp
+    createdBy?: string
+  }
+
   interface EventFormConflict {
     type: 'participant' | 'facility' | 'equipment'
     id: string

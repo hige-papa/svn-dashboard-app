@@ -6,6 +6,12 @@
         <div class="detail-time">{{ formattedDateTime }}</div>
       </div>
       <div class="detail-actions">
+        <button class="detail-view" @click="viewEvent" title="表示">
+          <svg class="view-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
         <button class="detail-edit" @click="editEvent" title="編集">
           <svg class="edit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -99,6 +105,13 @@ const closeDetails = () => {
   emit('close');
 };
 
+// 表示ページへ遷移
+const viewEvent = () => {
+  if (props.event && props.event.id) {
+    router.push(`/calendar/${props.event.id}`);
+  }
+};
+
 // 編集ページへ遷移
 const editEvent = () => {
   if (props.event && props.event.id) {
@@ -148,6 +161,7 @@ const editEvent = () => {
   gap: 4px;
 }
 
+.detail-view,
 .detail-edit,
 .detail-close {
   background: none;
@@ -161,6 +175,11 @@ const editEvent = () => {
   align-items: center;
   justify-content: center;
   transition: background-color 0.2s ease;
+}
+
+.detail-view:hover {
+  background-color: var(--success-light, #e8f5e8);
+  color: var(--success, #4caf50);
 }
 
 .detail-edit:hover {
@@ -177,6 +196,7 @@ const editEvent = () => {
   color: var(--text-primary);
 }
 
+.view-icon,
 .edit-icon {
   width: 16px;
   height: 16px;

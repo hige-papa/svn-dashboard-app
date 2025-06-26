@@ -1,3 +1,4 @@
+import { orderBy, QueryConstraint, startAfter, limit, or, } from 'firebase/firestore';
 import { useDocumentRoot } from "~/composables/firebase/useDocumentRoot";
 import { useFirestore } from "~/composables/firebase/useFirestore";
 import { useUuid } from '~/composables/common/useUuid';
@@ -5,7 +6,7 @@ import { useUuid } from '~/composables/common/useUuid';
 export const useFirestoreGeneral = (key: string) => {
     const { generateUuid } = useUuid();
     const { generalDocRoot } = useDocumentRoot();
-    const { updateDocWithRefAsync, addDocWithRefAsync, getDocRef, getDocWithRefAsync, getCollectionAsync, deleteDocWithRefAsync } = useFirestore();
+    const { updateDocWithRefAsync, addDocWithRefAsync, getDocRef, getDocWithRefAsync, getCollectionAsync, deleteDocWithRefAsync, countCollectionAsync } = useFirestore();
 
     const addAsync = async (m: any) => {
         const id = generateUuid();
@@ -34,9 +35,9 @@ export const useFirestoreGeneral = (key: string) => {
         });
     };
 
-    const getListAsync = async () => {
+    const getListAsync = async (...qc: QueryConstraint[]) => {
         const result = [] as any[]
-        await getCollectionAsync(generalDocRoot.collection(key)).then(async response => {
+        await getCollectionAsync(generalDocRoot.collection(key), ...qc).then(async response => {
             if (!response.empty) {
                 response.docs.forEach(e => {
                     const data = e.data() as any;
@@ -49,6 +50,61 @@ export const useFirestoreGeneral = (key: string) => {
         });
         return result;
     };
+
+    const countAsync = async (...qc: QueryConstraint[]) => {
+        return await countCollectionAsync(generalDocRoot.collection(key), ...qc).catch(_ => {
+            return 0;
+        });
+    };
+
+    const lastVisible = ref<any>(null);
+
+    const loadedItems = ref<any[]>([]);
+
+    const loadAsync = async (take: number = 20) => {
+        const query = [
+            orderBy('created_at', 'desc'),
+            limit(take),
+        ] as QueryConstraint[];
+
+        if (lastVisible.value) {
+            query.push(startAfter(lastVisible.value));
+        }
+        const response = await getCollectionAsync(generalDocRoot.collection(key), ...query);
+        lastVisible.value = response.docs[response.docs.length - 1];
+        for (const e of response.docs) {
+            const data = e.data() as any;
+            data.id = e.id;
+            loadedItems.value.push(data);
+        }
+        return response.size
+    }
+
+    const loadChunkAsync = async (take: number = 20) => {
+        const query = [
+            orderBy('created_at', 'desc'),
+            limit(take),
+        ] as QueryConstraint[];
+
+        while (true) {
+            if (lastVisible.value) {
+                query.push(startAfter(lastVisible.value));
+            }
+            const response = await getCollectionAsync(generalDocRoot.collection(key), ...query);
+            if (response.empty) {
+                break;
+            }
+            lastVisible.value = response.docs[response.docs.length - 1];
+            for (const e of response.docs) {
+                const data = e.data() as any;
+                data.id = e.id;
+                loadedItems.value.push(data);
+            }
+        }
+        if (loadedItems.value.length === 0) {
+            lastVisible.value = null;
+        }
+    }
 
     const updateAsync = async (id: string, m: any) => {
         const ref = getDocRef(generalDocRoot.document(key, id))
@@ -64,6 +120,11 @@ export const useFirestoreGeneral = (key: string) => {
         addAsync,
         getAsync,
         getListAsync,
+        loadAsync,
+        loadedItems,
+        loadChunkAsync,
+        lastVisible,
+        countAsync,
         updateAsync,
         deleteAsync,
     };
