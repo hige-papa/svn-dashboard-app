@@ -1,7 +1,7 @@
 // pages/index.vue
 <template>
   <v-container>
-    <h1 class="page-title">ダッシュボード</h1>
+    <h1 class="page-title">ダッシュボード11111</h1>
 
     <div class="dashboard-row">
       <v-card>
