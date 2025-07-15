@@ -1,536 +1,349 @@
 // services/eventService.ts
-import { useFirestore } from '~/composables/firebase/useFirestore'
 import { useFirestoreGeneral } from '~/composables/firestoreGeneral/useFirestoreGeneral'
-import { where, orderBy, Timestamp } from 'firebase/firestore'
-
-// 既存の型に合わせて拡張
-interface EventData {
-  id?: string
-  title: string
-  dateType: 'single' | 'range' | 'recurring'
-  
-  // 日付情報
-  date?: string // 単一日用
-  startDate?: string // 期間・繰り返し開始日
-  endDate?: string // 期間終了日
-  
-  // 時間情報
-  startTime: string
-  endTime: string
-  allDay?: boolean
-  
-  // 繰り返し情報
-  recurringPattern?: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'weekdays'
-  selectedWeekdays?: number[]
-  monthlyType?: 'date' | 'weekday'
-  monthlyDate?: number
-  monthlyWeek?: string
-  monthlyWeekday?: number
-  recurringEndType?: 'never' | 'date' | 'count'
-  recurringEndDate?: string
-  recurringCount?: number
-  
-  // その他の情報
-  location?: string
-  description?: string
-  priority: 'low' | 'medium' | 'high'
-  participantIds?: string[]
-  facilityIds?: string[]
-  equipmentIds?: string[]
-  
-  // システム情報
-  createdBy?: string
-  createdAt?: any
-  updatedAt?: any
-}
-
-interface RecurrenceRule {
-  id?: string
-  masterId: string
-  frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'
-  interval: number
-  byDay?: number[]
-  byMonthDay?: number
-  bySetPos?: number
-  until?: string
-  count?: number
-  exceptions?: string[]
-  createdAt?: any
-  updatedAt?: any
-}
-
-interface EventInstance {
-  id?: string
-  masterId: string
-  instanceDate: string
-  originalDate?: string
-  isException: boolean
-  isModified: boolean
-  
-  // オーバーライド可能フィールド
-  title?: string
-  startTime?: string
-  endTime?: string
-  location?: string
-  description?: string
-  participantIds?: string[]
-  facilityIds?: string[]
-  equipmentIds?: string[]
-  
-  status: 'active' | 'cancelled' | 'deleted'
-  createdAt?: any
-  updatedAt?: any
-}
+import { where } from 'firebase/firestore'
 
 export const useEventService = () => {
-  const { 
-    addWithBatch, 
-    updateWithBatch, 
-    deleteWithBatch,
-    getCollectionAsync,
-    getDocAsync
-  } = useFirestore()
-  
   const eventsService = useFirestoreGeneral('events')
   const rulesService = useFirestoreGeneral('recurrence_rules')
   const instancesService = useFirestoreGeneral('event_instances')
 
-  // イベント作成（期間・繰り返し対応）
-  const createEvent = async (formData: EventFormData): Promise<string> => {
-    try {
-      const eventData: EventData = {
-        title: formData.title,
-        dateType: formData.dateType,
-        startTime: formData.startTime,
-        endTime: formData.endTime,
-        location: formData.location,
-        description: formData.description,
-        priority: formData.priority,
-        participantIds: formData.participantIds,
-        facilityIds: formData.facilityIds,
-        equipmentIds: formData.equipmentIds,
-        createdBy: 'current-user', // 実際はauthから取得
-      }
-
-      // 日付タイプに応じた処理
-      switch (formData.dateType) {
-        case 'single':
-          eventData.date = formData.date
-          break
-          
-        case 'range':
-          eventData.startDate = formData.startDate
-          eventData.endDate = formData.endDate
-          break
-          
-        case 'recurring':
-          eventData.startDate = formData.recurringStartDate
-          eventData.recurringPattern = formData.recurringPattern
-          eventData.selectedWeekdays = formData.selectedWeekdays
-          eventData.monthlyType = formData.monthlyType
-          eventData.monthlyDate = formData.monthlyDate
-          eventData.monthlyWeek = formData.monthlyWeek
-          eventData.monthlyWeekday = formData.monthlyWeekday
-          eventData.recurringEndType = formData.recurringEndType
-          eventData.recurringEndDate = formData.recurringEndDate
-          eventData.recurringCount = formData.recurringCount
-          break
-      }
-
-      // マスターイベントを作成
-      const masterEvent = await eventsService.addAsync(eventData)
-      
-      if (!masterEvent?.id) {
-        throw new Error('マスターイベントの作成に失敗しました')
-      }
-
-      // 繰り返し予定の場合、ルールとインスタンスを作成
-      if (formData.dateType === 'recurring') {
-        const rule = await createRecurrenceRule(masterEvent.id, formData)
-        if (rule?.id) {
-          // 初期インスタンス生成（3ヶ月分）
-          await generateInitialInstances(masterEvent.id, formData, 3)
-        }
-      }
-
-      return masterEvent.id
-
-    } catch (error) {
-      console.error('イベント作成エラー:', error)
-      throw error
-    }
-  }
-
-  // 繰り返しルールの作成
-  const createRecurrenceRule = async (
-    masterId: string, 
-    formData: EventFormData
-  ): Promise<RecurrenceRule | null> => {
-    if (formData.dateType !== 'recurring') return null
-
-    const rule: RecurrenceRule = {
-      masterId,
-      frequency: mapPatternToFrequency(formData.recurringPattern),
-      interval: 1,
-      exceptions: []
-    }
-
-    // パターンに応じた設定
-    switch (formData.recurringPattern) {
-      case 'weekly':
-        if (formData.selectedWeekdays.length > 0) {
-          rule.byDay = formData.selectedWeekdays
-        }
-        break
-        
-      case 'weekdays':
-        rule.frequency = 'WEEKLY'
-        rule.byDay = [1, 2, 3, 4, 5] // 月-金
-        break
-        
-      case 'monthly':
-        if (formData.monthlyType === 'date') {
-          rule.byMonthDay = formData.monthlyDate
-        } else if (formData.monthlyType === 'weekday') {
-          rule.byDay = [formData.monthlyWeekday]
-          rule.bySetPos = parseInt(formData.monthlyWeek)
-        }
-        break
-    }
-
-    // 終了条件
-    if (formData.recurringEndType === 'date' && formData.recurringEndDate) {
-      rule.until = formData.recurringEndDate
-    } else if (formData.recurringEndType === 'count' && formData.recurringCount > 0) {
-      rule.count = formData.recurringCount
-    }
-
-    return await rulesService.addAsync(rule)
-  }
-
-  // 初期インスタンス生成
-  const generateInitialInstances = async (
-    masterId: string,
-    formData: EventFormData,
-    months: number = 3
-  ): Promise<void> => {
-    const startDate = new Date(formData.recurringStartDate)
-    const endDate = new Date(startDate)
-    endDate.setMonth(endDate.getMonth() + months)
-
-    const instances = generateRecurringDates(formData, startDate, endDate)
-    
-    const batchActions = instances.map(date => {
-      const instance: EventInstance = {
-        masterId,
-        instanceDate: date,
-        isException: false,
-        isModified: false,
-        status: 'active'
-      }
-      return { entity: instance, reference: null } // 実際の参照は内部で生成
-    })
-
-    // バッチで一括作成
-    for (const instance of instances) {
-      await instancesService.addAsync({
-        masterId,
-        instanceDate: instance,
-        isException: false,
-        isModified: false,
-        status: 'active'
-      })
-    }
-  }
-
-  // 繰り返し日付生成
-  const generateRecurringDates = (
-    formData: EventFormData,
-    startDate: Date,
-    endDate: Date
-  ): string[] => {
-    const dates: string[] = []
-    const current = new Date(startDate)
-    const end = new Date(endDate)
-    
-    // 終了条件の設定
-    let maxDate = end
-    if (formData.recurringEndType === 'date' && formData.recurringEndDate) {
-      maxDate = new Date(Math.min(end.getTime(), new Date(formData.recurringEndDate).getTime()))
-    }
-    
-    let count = 0
-    const maxCount = formData.recurringEndType === 'count' ? formData.recurringCount : Number.MAX_SAFE_INTEGER
-
-    while (current <= maxDate && count < maxCount) {
-      if (matchesRecurrencePattern(current, formData)) {
-        dates.push(formatDateForDb(current))
-        count++
-      }
-      current.setDate(current.getDate() + 1)
-    }
-
-    return dates
-  }
-
-  // パターンマッチング
-  const matchesRecurrencePattern = (date: Date, formData: EventFormData): boolean => {
-    const startDate = new Date(formData.recurringStartDate)
-    
-    switch (formData.recurringPattern) {
-      case 'daily':
-        return true
-        
-      case 'weekly':
-        if (formData.selectedWeekdays.length > 0) {
-          return formData.selectedWeekdays.includes(date.getDay())
-        }
-        return date.getDay() === startDate.getDay()
-        
-      case 'weekdays':
-        const day = date.getDay()
-        return day >= 1 && day <= 5
-        
-      case 'monthly':
-        if (formData.monthlyType === 'date') {
-          return date.getDate() === formData.monthlyDate
-        } else if (formData.monthlyType === 'weekday') {
-          return isNthWeekdayOfMonth(date, formData.monthlyWeekday, parseInt(formData.monthlyWeek))
-        }
-        return date.getDate() === startDate.getDate()
-        
-      case 'yearly':
-        return date.getMonth() === startDate.getMonth() && date.getDate() === startDate.getDate()
-        
-      default:
-        return false
-    }
-  }
-
-  // 期間内のイベント取得
-  const getEventsInRange = async (startDate: string, endDate: string): Promise<Event[]> => {
-    const events: Event[] = []
-
-    try {
-      // 1. 単一・期間予定の取得
-      const singleEvents = await eventsService.getListAsync()
-      
-      for (const eventData of singleEvents) {
-        if (eventData.dateType === 'single') {
-          if (eventData.date >= startDate && eventData.date <= endDate) {
-            events.push(convertToEvent(eventData))
-          }
-        } else if (eventData.dateType === 'range') {
-          const eventEndDate = eventData.endDate || eventData.startDate
-          if (eventData.startDate <= endDate && eventEndDate >= startDate) {
-            // 期間内の各日付でイベントを展開
-            const rangeDates = getDateRangeArray(
-              Math.max(eventData.startDate, startDate),
-              Math.min(eventEndDate, endDate)
-            )
-            
-            rangeDates.forEach(date => {
-              events.push({
-                ...convertToEvent(eventData),
-                id: `${eventData.id}-${date}`,
-                date
-              })
-            })
-          }
-        }
-      }
-
-      // 2. 繰り返し予定のインスタンス取得
-      const instances = await instancesService.getListAsync()
-      
-      for (const instance of instances) {
-        if (instance.instanceDate >= startDate && 
-            instance.instanceDate <= endDate && 
-            instance.status === 'active') {
-          
-          // マスターイベントを取得
-          const masterEvent = await eventsService.getAsync(instance.masterId)
-          if (masterEvent) {
-            events.push(mergeInstanceWithMaster(instance, masterEvent))
-          }
-        }
-      }
-
-      // 3. 未生成の繰り返し予定を動的生成
-      await generateMissingRecurringEvents(startDate, endDate, events)
-
-      return events.sort((a, b) => {
-        const dateCompare = a.date.localeCompare(b.date)
-        if (dateCompare !== 0) return dateCompare
-        return a.startTime.localeCompare(b.startTime)
-      })
-
-    } catch (error) {
-      console.error('イベント取得エラー:', error)
-      throw error
-    }
-  }
-
-  // 競合チェック用のイベント取得
-  const getEventsForConflictCheck = async (
-    dateRange: { startDate: string; endDate: string },
-    excludeEventId?: string
-  ) => {
-    const events = await getEventsInRange(dateRange.startDate, dateRange.endDate)
-    
-    return events
-      .filter(event => event.id !== excludeEventId)
-      .map(event => ({
-        id: event.id,
-        title: event.title,
-        date: event.date,
-        startTime: event.startTime,
-        endTime: event.endTime,
-        participantIds: event.participantIds || [],
-        facilityIds: event.facilityIds || [],
-        equipmentIds: event.equipmentIds || []
-      }))
-  }
-
-  // 繰り返し予定の例外処理
-  const addRecurrenceException = async (
-    masterId: string,
-    instanceDate: string,
-    action: 'delete' | 'modify',
-    modifyData?: Partial<EventFormData>
-  ): Promise<void> => {
-    try {
-      // 繰り返しルールに例外を追加
-      const rules = await rulesService.getListAsync()
-      const rule = rules.find(r => r.masterId === masterId)
-      
-      if (rule) {
-        const exceptions = [...(rule.exceptions || []), instanceDate]
-        await rulesService.updateAsync(rule.id, { exceptions })
-      }
-
-      // 修正の場合、カスタムインスタンスを作成
-      if (action === 'modify' && modifyData) {
-        const customInstance: EventInstance = {
-          masterId,
-          instanceDate,
-          title: modifyData.title,
-          startTime: modifyData.startTime,
-          endTime: modifyData.endTime,
-          location: modifyData.location,
-          description: modifyData.description,
-          participantIds: modifyData.participantIds,
-          facilityIds: modifyData.facilityIds,
-          equipmentIds: modifyData.equipmentIds,
-          isException: true,
-          isModified: true,
-          status: 'active'
-        }
-        
-        await instancesService.addAsync(customInstance)
-      }
-
-    } catch (error) {
-      console.error('例外処理エラー:', error)
-      throw error
-    }
-  }
-
-  // ヘルパー関数
-  const mapPatternToFrequency = (pattern: string): RecurrenceRule['frequency'] => {
-    switch (pattern) {
-      case 'daily':
-      case 'weekdays':
-        return 'DAILY'
-      case 'weekly':
-        return 'WEEKLY'
-      case 'monthly':
-        return 'MONTHLY'
-      case 'yearly':
-        return 'YEARLY'
-      default:
-        return 'DAILY'
-    }
-  }
-
-  const isNthWeekdayOfMonth = (date: Date, weekday: number, n: number): boolean => {
-    if (date.getDay() !== weekday) return false
-    
-    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1)
-    const firstWeekday = firstDay.getDay()
-    const firstOccurrence = 1 + (weekday - firstWeekday + 7) % 7
-    const nthOccurrence = firstOccurrence + (n - 1) * 7
-    
-    return date.getDate() === nthOccurrence
-  }
-
+  // --- Date Utility Functions (Timezone Safe) ---
   const formatDateForDb = (date: Date): string => {
-    const year = date.getFullYear()
-    const month = (date.getMonth() + 1).toString().padStart(2, '0')
-    const day = date.getDate().toString().padStart(2, '0')
-    return `${year}-${month}-${day}`
-  }
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const parseDateAsLocal = (dateStr: string): Date => new Date(`${dateStr}T00:00:00`);
 
-  const getDateRangeArray = (startDate: string, endDate: string): string[] => {
-    const dates: string[] = []
-    const current = new Date(startDate)
-    const end = new Date(endDate)
-    
-    while (current <= end) {
-      dates.push(formatDateForDb(current))
-      current.setDate(current.getDate() + 1)
+  // --- Main Functions ---
+  const createEvent = async (formData: EventFormData): Promise<string> => {
+    // 1. 常に共通のフィールドから、保存するデータをクリーンに構築する
+    const eventData: Partial<EventData> = {
+      title: formData.title,
+      dateType: formData.dateType,
+      startTime: formData.startTime,
+      endTime: formData.endTime,
+      location: formData.location,
+      description: formData.description,
+      priority: formData.priority,
+      participantIds: formData.participantIds,
+      facilityIds: formData.facilityIds,
+      equipmentIds: formData.equipmentIds,
+      createdBy: 'current-user',
+    };
+
+    // 2. dateTypeに応じてフィールドを追加
+    if (formData.dateType === 'single') {
+        eventData.date = formData.date;
+    } else if (formData.dateType === 'range') {
+        eventData.startDate = formData.startDate;
+        eventData.endDate = formData.endDate;
+    } else if (formData.dateType === 'recurring') {
+        eventData.startDate = formData.recurringStartDate;
+        eventData.recurringPattern = formData.recurringPattern;
+        eventData.recurringEndType = formData.recurringEndType;
+
+        // 3. 繰り返しパターンに応じて、必要なフィールドだけを追加する
+        if (formData.recurringPattern === 'weekly' || formData.recurringPattern === 'custom' || formData.recurringPattern === 'weekdays') {
+            eventData.selectedWeekdays = formData.selectedWeekdays;
+        } else if (formData.recurringPattern === 'monthly') {
+            eventData.monthlyType = formData.monthlyType;
+            if (formData.monthlyType === 'date') {
+                eventData.monthlyDate = formData.monthlyDate;
+            } else { // 'weekday'
+                eventData.monthlyWeek = formData.monthlyWeek;
+                eventData.monthlyWeekday = formData.monthlyWeekday;
+            }
+        }
+
+        // 4. 終了条件に応じて、必要なフィールドだけを追加する
+        if (formData.recurringEndType?.toLowerCase() === 'date') {
+            eventData.recurringEndDate = formData.recurringEndDate;
+        } else if (formData.recurringEndType?.toLowerCase() === 'count') {
+            eventData.recurringCount = formData.recurringCount;
+        }
     }
-    
-    return dates
-  }
 
-  const convertToEvent = (eventData: any): Event => {
-    return {
-      id: eventData.id,
-      title: eventData.title,
-      date: eventData.date || eventData.startDate,
-      startTime: eventData.startTime,
-      endTime: eventData.endTime,
-      location: eventData.location,
-      description: eventData.description,
-      priority: eventData.priority,
-      participantIds: eventData.participantIds || [],
-      facilityIds: eventData.facilityIds || [],
-      equipmentIds: eventData.equipmentIds || []
+    const masterEvent = await eventsService.addAsync(eventData);
+    if (!masterEvent?.id) {
+        throw new Error('Failed to create master event');
     }
-  }
 
-  const mergeInstanceWithMaster = (instance: EventInstance, masterEvent: any): Event => {
+    if (formData.dateType === 'recurring') {
+        const rule = await createRecurrenceRule(masterEvent.id, formData);
+        if (rule?.id) {
+            await generateInitialInstances(masterEvent.id, formData);
+        }
+    }
+    return masterEvent.id;
+  };
+
+  const getEventsInRange = async (startDate: string, endDate: string): Promise<EventDisplay[]> => {
+    const preliminaryEvents: EventDisplay[] = [];
+    try {
+      const nonRecurringEvents = await eventsService.getListAsync(where('dateType', 'in', ['single', 'range'])) as EventData[];
+      for (const eventData of nonRecurringEvents) {
+        if (eventData.dateType === 'single' && eventData.date && eventData.date >= startDate && eventData.date <= endDate) {
+          preliminaryEvents.push(convertToEvent(eventData));
+        } else if (eventData.dateType === 'range' && eventData.startDate) {
+          const eventEndDate = eventData.endDate || eventData.startDate;
+          if (eventData.startDate <= endDate && eventEndDate >= startDate) {
+            preliminaryEvents.push(convertToEvent(eventData));
+          }
+        }
+      }
+      const instances = await instancesService.getListAsync(where('instanceDate', '>=', startDate), where('instanceDate', '<=', endDate)) as EventInstance[];
+      const masterEventIds = [...new Set(instances.map(i => i.masterId))];
+      const masterEventsData = new Map<string, EventData>();
+      if (masterEventIds.length > 0) {
+        const masterEvents = await eventsService.getListAsync(where('__name__', 'in', masterEventIds)) as EventData[];
+        masterEvents.forEach(master => masterEventsData.set(master.id!, master));
+      }
+      for (const instance of instances) {
+        if (instance.status === 'active') {
+          const masterEvent = masterEventsData.get(instance.masterId);
+          if (masterEvent) preliminaryEvents.push(mergeInstanceWithMaster(instance, masterEvent));
+        }
+      }
+      await generateMissingRecurringEvents(startDate, endDate, preliminaryEvents);
+      const finalEvents: EventDisplay[] = [];
+      for (const event of preliminaryEvents) {
+        if (event.endDate && event.endDate > event.date) {
+          const current = parseDateAsLocal(event.date);
+          const end = parseDateAsLocal(event.endDate);
+          while (current <= end) {
+            const dateStr = formatDateForDb(current);
+            if (dateStr >= startDate && dateStr <= endDate) {
+              finalEvents.push({
+                ...event, id: event.id, segmentId: `${event.id}-${dateStr}`, date: dateStr,
+                isMultiDay: true, isFirstDay: dateStr === event.date, isLastDay: dateStr === event.endDate,
+              });
+            }
+            current.setDate(current.getDate() + 1);
+          }
+        } else {
+          if (event.date >= startDate && event.date <= endDate) {
+            finalEvents.push({ ...event, id: event.id, segmentId: event.id, isMultiDay: false });
+          }
+        }
+      }
+      return finalEvents.sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
+    } catch (error) {
+      console.error('getEventsInRange Error:', error);
+      throw error;
+    }
+  };
+
+  const generateInitialInstances = async (masterId: string, formData: EventFormData, months: number = 3): Promise<void> => {
+    const startDate = parseDateAsLocal(formData.recurringStartDate);
+    const endDate = new Date(startDate);
+    endDate.setMonth(endDate.getMonth() + months);
+    const instances = generateRecurringDates(formData, startDate, endDate);
+    for (const date of instances) {
+      await instancesService.addAsync({ masterId, instanceDate: date, isException: false, isModified: false, status: 'active' });
+    }
+  };
+
+  const createRecurrenceRule = async (masterId: string, formData: EventFormData): Promise<RecurrenceRule | null> => {
+    if (formData.dateType !== 'recurring') return null;
+    const rule: Omit<RecurrenceRule, 'id'> = {
+      masterId, frequency: mapPatternToFrequency(formData.recurringPattern), interval: 1, exceptions: []
+    };
+    if (['custom', 'weekly'].includes(formData.recurringPattern)) {
+      if (formData.selectedWeekdays?.length > 0) rule.byDay = formData.selectedWeekdays;
+    } else if (formData.recurringPattern === 'weekdays') {
+      rule.frequency = 'WEEKLY'; rule.byDay = [1, 2, 3, 4, 5];
+    } else if (formData.recurringPattern === 'monthly') {
+      if (formData.monthlyType === 'date') rule.byMonthDay = formData.monthlyDate;
+      else if (formData.monthlyType === 'weekday') {
+        rule.byDay = [formData.monthlyWeekday]; rule.bySetPos = parseInt(formData.monthlyWeek);
+      }
+    }
+    if (formData.recurringEndType?.toLowerCase() === 'date' && formData.recurringEndDate) {
+      rule.until = formData.recurringEndDate;
+    } else if (formData.recurringEndType?.toLowerCase() === 'count' && formData.recurringCount > 0) {
+      rule.count = formData.recurringCount;
+    }
+    return await rulesService.addAsync(rule) as RecurrenceRule | null;
+  };
+  
+  const generateMissingRecurringEvents = async (startDate: string, endDate: string, preliminaryEvents: EventDisplay[]): Promise<void> => {
+    const allRules = await rulesService.getListAsync() as RecurrenceRule[];
+    const recurringMasterEvents = await eventsService.getListAsync(where('dateType', '==', 'recurring')) as EventData[];
+    const masterEventsMap = new Map(recurringMasterEvents.map(e => [e.id!, e]));
+    for (const rule of allRules) {
+      const masterEvent = masterEventsMap.get(rule.masterId);
+      if (!masterEvent || !masterEvent.startDate) continue;
+      if (rule.until && rule.until < startDate) continue;
+      if (masterEvent.startDate > endDate) continue;
+      const formData = { ...masterEvent, recurringStartDate: masterEvent.startDate } as EventFormData;
+      const recurringDates = generateRecurringDates(formData, parseDateAsLocal(startDate), parseDateAsLocal(endDate), rule.interval);
+      for (const date of recurringDates) {
+        if (rule.exceptions?.includes(date)) continue;
+        if (preliminaryEvents.some(e => e.masterId === rule.masterId && e.date === date)) continue;
+        preliminaryEvents.push(mergeInstanceWithMaster({ masterId: rule.masterId, instanceDate: date } as EventInstance, masterEvent));
+      }
+    }
+  };
+
+  const convertToEvent = (eventData: EventData): EventDisplay => {
+    const correctStartDate = eventData.dateType === 'single' ? eventData.date! : eventData.startDate!;
     return {
-      id: instance.id,
-      title: instance.title || masterEvent.title,
-      date: instance.instanceDate,
-      startTime: instance.startTime || masterEvent.startTime,
-      endTime: instance.endTime || masterEvent.endTime,
-      location: instance.location || masterEvent.location,
-      description: instance.description || masterEvent.description,
-      priority: masterEvent.priority,
+      id: eventData.id!, title: eventData.title, date: correctStartDate,
+      endDate: eventData.endDate, startTime: eventData.startTime, endTime: eventData.endTime,
+      location: eventData.location, description: eventData.description, priority: eventData.priority,
+      participantIds: eventData.participantIds || [], facilityIds: eventData.facilityIds || [],
+      equipmentIds: eventData.equipmentIds || [], isRecurring: eventData.dateType === 'recurring',
+    };
+  };
+  
+  const calculateInstanceEndDate = (instanceStartDateStr: string, masterEvent: EventData): string | undefined => {
+    if (masterEvent.startDate && masterEvent.endDate && masterEvent.startDate !== masterEvent.endDate) {
+      const masterStart = parseDateAsLocal(masterEvent.startDate);
+      const masterEnd = parseDateAsLocal(masterEvent.endDate);
+      const durationMs = masterEnd.getTime() - masterStart.getTime();
+      const instanceStart = parseDateAsLocal(instanceStartDateStr);
+      const instanceEnd = new Date(instanceStart.getTime() + durationMs);
+      return formatDateForDb(instanceEnd);
+    }
+    return undefined;
+  };
+  
+  const mergeInstanceWithMaster = (instance: EventInstance, masterEvent: EventData): EventDisplay => {
+    const instanceEndDate = calculateInstanceEndDate(instance.instanceDate, masterEvent);
+    return {
+      id: masterEvent.id!, title: instance.title || masterEvent.title, date: instance.instanceDate,
+      endDate: instanceEndDate, startTime: instance.startTime || masterEvent.startTime,
+      endTime: instance.endTime || masterEvent.endTime, location: instance.location || masterEvent.location,
+      description: instance.description || masterEvent.description, priority: masterEvent.priority,
       participantIds: instance.participantIds || masterEvent.participantIds || [],
       facilityIds: instance.facilityIds || masterEvent.facilityIds || [],
-      equipmentIds: instance.equipmentIds || masterEvent.equipmentIds || []
+      equipmentIds: instance.equipmentIds || masterEvent.equipmentIds || [],
+      isRecurring: true, masterId: instance.masterId, isException: !!instance.isException,
+    };
+  };
+
+  const generateRecurringDates = (
+    formData: EventFormData,
+    viewStartDate: Date,
+    viewEndDate: Date,
+    interval?: number
+  ): string[] => {
+    const resultDates: string[] = [];
+    const recurrenceStartDate = parseDateAsLocal(formData.recurringStartDate);
+    const current = new Date(recurrenceStartDate);
+    let generatedCount = 0;
+    const maxCount = formData.recurringEndType?.toLowerCase() === 'count' ? formData.recurringCount : Infinity;
+    const recurringEndDate = formData.recurringEndType?.toLowerCase() === 'date' && formData.recurringEndDate
+      ? parseDateAsLocal(formData.recurringEndDate)
+      : null;
+    const hardLimitDate = new Date(recurrenceStartDate);
+    hardLimitDate.setFullYear(hardLimitDate.getFullYear() + 20);
+    while (true) {
+      if (generatedCount >= maxCount) break;
+      if (recurringEndDate && current > recurringEndDate) break;
+      if (current > hardLimitDate) break;
+      if (formData.recurringEndType?.toLowerCase() !== 'count' && current > viewEndDate) break;
+      if (matchesRecurrencePattern(current, formData, interval)) {
+        generatedCount++;
+        if (current >= viewStartDate && current <= viewEndDate) {
+          resultDates.push(formatDateForDb(current));
+        }
+      }
+      current.setDate(current.getDate() + 1);
     }
-  }
+    return resultDates;
+  };
 
-  const generateMissingRecurringEvents = async (
-    startDate: string,
-    endDate: string,
-    existingEvents: Event[]
-  ): Promise<void> => {
-    // 実装省略（複雑なロジックのため）
-    // 既存インスタンスにない繰り返し予定を動的生成
-  }
+  const getDayDiff = (d1: Date, d2: Date): number => {
+    const utc1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
+    const utc2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
+    return Math.floor((utc2 - utc1) / (1000 * 60 * 60 * 24));
+  };
 
-  return {
-    createEvent,
-    getEventsInRange,
-    getEventsForConflictCheck,
-    addRecurrenceException,
-    generateRecurringDates,
-    matchesRecurrencePattern
-  }
-}
+  const getWeekDiff = (d1: Date, d2: Date, startOfWeek: number = 0): number => {
+      const date1 = new Date(d1.getTime());
+      const date2 = new Date(d2.getTime());
+      date1.setHours(0,0,0,0);
+      date2.setHours(0,0,0,0);
+      const day1 = (date1.getDay() - startOfWeek + 7) % 7;
+      const day2 = (date2.getDay() - startOfWeek + 7) % 7;
+      date1.setDate(date1.getDate() - day1);
+      date2.setDate(date2.getDate() - day2);
+      return Math.round((date2.getTime() - date1.getTime()) / (7 * 24 * 60 * 60 * 1000));
+  };
+
+  const matchesRecurrencePattern = (date: Date, formData: EventFormData, interval: number = 1): boolean => {
+    const startDate = parseDateAsLocal(formData.recurringStartDate);
+    if (date < startDate) return false;
+    const effectiveInterval = interval > 0 ? interval : 1;
+    switch (formData.recurringPattern) {
+        case 'daily':
+            return getDayDiff(startDate, date) % effectiveInterval === 0;
+        case 'weekdays':
+            if (effectiveInterval > 1) {
+                 if(getWeekDiff(startDate, date, 1) % effectiveInterval !== 0) return false;
+            }
+            return date.getDay() >= 1 && date.getDay() <= 5;
+        case 'custom':
+        case 'weekly': {
+            if (getWeekDiff(startDate, date, 1) % effectiveInterval !== 0) return false;
+            if (!formData.selectedWeekdays || formData.selectedWeekdays.length === 0) {
+              return date.getDay() === startDate.getDay();
+            }
+            return formData.selectedWeekdays.includes(date.getDay());
+        }
+        case 'monthly': {
+            const monthDiff = (date.getFullYear() - startDate.getFullYear()) * 12 + date.getMonth() - startDate.getMonth();
+            if (monthDiff < 0 || monthDiff % effectiveInterval !== 0) return false;
+            if (formData.monthlyType === 'date') {
+                const lastDayOfTargetMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+                const targetDate = Math.min(formData.monthlyDate, lastDayOfTargetMonth);
+                return date.getDate() === targetDate;
+            } else if (formData.monthlyType === 'weekday') {
+                return isNthWeekdayOfMonth(date, formData.monthlyWeekday ?? 0, parseInt(formData.monthlyWeek ?? '1'));
+            }
+            return date.getDate() === startDate.getDate();
+        }
+        case 'yearly': {
+            const yearDiff = date.getFullYear() - startDate.getFullYear();
+            if (yearDiff < 0 || yearDiff % effectiveInterval !== 0) return false;
+            if (startDate.getMonth() === 1 && startDate.getDate() === 29) {
+                const isLeapYear = (year: number) => new Date(year, 1, 29).getDate() === 29;
+                if (!isLeapYear(date.getFullYear())) {
+                    return date.getMonth() === 1 && date.getDate() === 28;
+                }
+            }
+            return date.getMonth() === startDate.getMonth() && date.getDate() === startDate.getDate();
+        }
+        default:
+            return false;
+    }
+  };
+
+  const mapPatternToFrequency = (pattern: RecurringPattern): RecurrenceRule['frequency'] => {
+    switch (pattern) {
+      case 'daily': return 'DAILY';
+      case 'custom':
+      case 'weekdays':
+      case 'weekly': return 'WEEKLY';
+      case 'monthly': return 'MONTHLY';
+      case 'yearly': return 'YEARLY';
+      default: return 'DAILY';
+    }
+  };
+
+  const isNthWeekdayOfMonth = (date: Date, weekday: number, n: number): boolean => {
+    if (date.getDay() !== weekday) return false;
+    const dayOfMonth = date.getDate();
+    if (n > 0) {
+      return Math.ceil(dayOfMonth / 7) === n;
+    } else {
+      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+      return Math.ceil((lastDay - dayOfMonth + 1) / 7) === Math.abs(n);
+    }
+  };
+  
+  return { createEvent, getEventsInRange };
+};

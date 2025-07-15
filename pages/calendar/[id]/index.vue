@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { useTransaction } from '~/composables/transaction/useTransaction'
 
-const { getAsync } = useTransaction('events')
+const { getAsync, deleteAsync } = useTransaction('events')
 
 const { params } = useRoute()
 
@@ -19,8 +19,11 @@ const handleEdit = (data: any) => {
   router.push(`/calendar/${data.id}/edit`);
 }
 
-const handleDelete = (id: string) => {
+const handleDelete = async (id: string) => {
   // 削除処理
+  await deleteAsync(id)
+
+  router.back()
 }
 
 const handleCopy = (data: any) => {

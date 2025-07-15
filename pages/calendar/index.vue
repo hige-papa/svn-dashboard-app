@@ -83,7 +83,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import { useCalendar } from '~/composables/useCalendar';
 
 // コンポーネントのインポート
@@ -103,6 +103,9 @@ import { useCalendar } from '~/composables/useCalendar';
 // import WeekdayHeader from '~/components/MonthlyView/WeekdayHeader.vue';
 // import CalendarGrid from '~/components/MonthlyView/CalendarGrid.vue';
 // import SelectedDayDetail from '~/components/MonthlyView/SelectedDayDetail.vue';
+
+// タブ状態保持用のキー
+const CALENDAR_VIEW_STORAGE_KEY = 'calendar-current-view';
 
 // カレンダーの状態とユーティリティ関数
 const {
@@ -134,7 +137,7 @@ const {
   toggleUserVisibility,
   loadData,
   refreshEvents,
-  setView
+  setView,
 } = useCalendar();
 
 // イベント詳細表示用の状態
@@ -146,8 +149,40 @@ const detailPosition = ref({ top: 0, left: 0 });
 const currentDayEvents = ref([]);
 const selectedDayEvents = ref([]);
 
+// タブ状態を保存する関数
+const saveViewToStorage = (view) => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(CALENDAR_VIEW_STORAGE_KEY, view);
+    }
+  } catch (error) {
+    console.warn('Failed to save view to localStorage:', error);
+  }
+};
+
+// タブ状態を読み込む関数
+const loadViewFromStorage = () => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const savedView = localStorage.getItem(CALENDAR_VIEW_STORAGE_KEY);
+      if (savedView && ['daily', 'weekly', 'monthly'].includes(savedView)) {
+        return savedView;
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to load view from localStorage:', error);
+  }
+  return 'monthly'; // デフォルトビュー
+};
+
 // 初期化
 onMounted(async () => {
+  // 保存されたビューを読み込んで設定
+  const savedView = loadViewFromStorage();
+  if (savedView !== currentView.value) {
+    await setView(savedView);
+  }
+
   // 初期表示時にデータを読み込む
   await loadData();
 
@@ -193,9 +228,11 @@ watch(selectedDate, async () => {
   await updateSelectedDayEvents();
 });
 
-// currentViewの変更を監視
-watch(currentView, async () => {
+// currentViewの変更を監視（ストレージへの保存を追加）
+watch(currentView, async (newView) => {
   await updateCurrentDayEvents();
+  // ビューが変更された時にlocalStorageに保存
+  saveViewToStorage(newView);
 });
 
 // ナビゲーションのラベル

@@ -1,90 +1,165 @@
-export { MasterItem, FormData, Conflict, Errors, Notification, Holiday };
+export { };
 
 declare global {
 
-  // TypeScript型定義
-  type DateType = 'single' | 'range' | 'recurring'
-  type RecurringPattern = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'weekdays' | 'custom'
-  type RecurringEndType = 'never' | 'date' | 'count'
-  type MonthlyType = 'date' | 'weekday'
-  type ModalType = 'participant' | 'facility' | 'equipment' | null
+  type DateType = 'single' | 'range' | 'recurring';
+  type RecurringPattern = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'weekdays' | 'custom';
+  type RecurringEndType = 'never' | 'date' | 'count';
+  type MonthlyType = 'date' | 'weekday';
+  type ModalType = 'participant' | 'facility' | 'equipment' | null;
+  type CalendarView = 'daily' | 'weekly' | 'monthly';
 
   interface MasterItem {
-    id: string
-    name: string
-    department?: string
-    capacity?: number
-    quantity?: number
-    isConflict?: boolean
-    conflictInfo?: string
+    id: string;
+    name: string;
+    department?: string;
+    capacity?: number;
+    quantity?: number;
+    isConflict?: boolean;
+    conflictInfo?: string;
   }
 
   interface EventFormData {
-    title: string
-    dateType: DateType
-    // 単一日
-    date: string
-    // 期間
-    startDate: string
-    endDate: string
-    // 繰り返し
-    recurringStartDate: string
-    recurringPattern: RecurringPattern
-    selectedWeekdays: number[]
-    monthlyType: MonthlyType
-    monthlyDate: number
-    monthlyWeek: string
-    monthlyWeekday: number
-    recurringEndType: RecurringEndType
-    recurringEndDate: string
-    recurringCount: number
-    // 共通
-    startTime: string
-    endTime: string
-    location: string
-    participantIds: string[]
-    participants: string[]
-    facilityIds: string[]
-    equipmentIds: string[]
-    priority: 'low' | 'medium' | 'high'
-    description: string
+    title: string;
+    dateType: DateType;
+    date: string;
+    startDate: string;
+    endDate: string;
+    recurringStartDate: string;
+    recurringPattern: RecurringPattern;
+    selectedWeekdays: number[];
+    monthlyType: MonthlyType;
+    monthlyDate: number;
+    monthlyWeek: string;
+    monthlyWeekday: number;
+    recurringEndType: RecurringEndType;
+    recurringEndDate: string;
+    recurringCount: number;
+    startTime: string;
+    endTime: string;
+    location: string;
+    participantIds: string[];
+    participants: string[];
+    facilityIds: string[];
+    equipmentIds: string[];
+    priority: 'low' | 'medium' | 'high';
+    description: string;
   }
 
-  interface EventData extends EventFormData {
-    id?: string
-    createdAt?: Timestamp
-    updatedAt?: Timestamp
-    createdBy?: string
+  interface EventData {
+    id?: string;
+    title: string;
+    dateType: DateType;
+    date?: string;
+    startDate?: string;
+    endDate?: string;
+    startTime: string;
+    endTime: string;
+    allDay?: boolean;
+    recurringPattern?: RecurringPattern;
+    selectedWeekdays?: number[];
+    monthlyType?: MonthlyType;
+    monthlyDate?: number;
+    monthlyWeek?: string;
+    monthlyWeekday?: number;
+    recurringEndType?: RecurringEndType;
+    recurringEndDate?: string;
+    recurringCount?: number;
+    location?: string;
+    description?: string;
+    priority: 'low' | 'medium' | 'high';
+    participantIds?: string[];
+    facilityIds?: string[];
+    equipmentIds?: string[];
+    createdBy?: string;
+    createdAt?: any;
+    updatedAt?: any;
   }
 
-  interface EventFormConflict {
-    type: 'participant' | 'facility' | 'equipment'
-    id: string
-    name: string
-    date: string
-    startTime: string
-    endTime: string
-    eventTitle: string
+  interface EventDisplay {
+    id: string;
+    segmentId?: string;
+    originalStartDate?: string;
+    title: string;
+    date: string;
+    endDate?: string;
+    startTime: string;
+    endTime: string;
+    userId?: string;
+    location?: string;
+    description?: string;
+    priority: 'low' | 'medium' | 'high';
+    participantIds?: string[];
+    facilityIds?: string[];
+    equipmentIds?: string[];
+    isRecurring?: boolean;
+    masterId?: string;
+    isException?: boolean;
+    originalDate?: string;
+    isMultiDay?: boolean;
+    isFirstDay?: boolean;
+    isLastDay?: boolean;
   }
 
-  interface EventFormErrors {
-    eventTitle?: string
-    eventDate?: string
-    startDate?: string
-    endDate?: string
-    recurringStartDate?: string
-    time?: string
+  interface RecurrenceRule {
+    id: string;
+    frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+    interval: number;
+    masterId: string;
+    byDay?: number[];
+    byMonthDay?: number;
+    bySetPos?: number;
+    until?: string;
+    count?: number;
+    exceptions?: string[];
   }
 
-  interface EventFormNotification {
-    show: boolean
-    message: string
-    type: 'success' | 'error'
+  interface EventInstance {
+    id?: string;
+    masterId: string;
+    instanceDate: string;
+    originalDate?: string;
+    isException: boolean;
+    isModified: boolean;
+    title?: string;
+    startTime?: string;
+    endTime?: string;
+    location?: string;
+    description?: string;
+    participantIds?: string[];
+    facilityIds?: string[];
+    equipmentIds?: string[];
+    status: 'active' | 'cancelled' | 'deleted';
+    createdAt?: any;
+    updatedAt?: any;
+  }
+
+  interface ExtendedUserProfile {
+    uid: string;
+    displayName: string;
+    email: string;
+    photoURL?: string;
+    department?: string;
+    position?: string;
+  }
+
+  interface UserWithVisibility extends ExtendedUserProfile {
+    visible: boolean;
+  }
+
+  interface CalendarDay {
+    date: Date;
+    currentMonth: boolean;
+  }
+
+  interface DateRange {
+    startDate: string;
+    endDate: string;
   }
 
   interface Holiday {
-    id: string
-    date: string
-    name: string
+    id: string;      // 祝日データの一意なID
+    date: string;    // 日付 (例: "2025-01-01")
+    name: string;    // 祝日名 (例: "元日")
   }
 }

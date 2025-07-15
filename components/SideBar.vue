@@ -3,7 +3,7 @@ import menu from '~/assets/data/menu.json'
 import { useDisplay } from 'vuetify'
 import type { User } from 'firebase/auth'
 
-const user = useState<User>('user')
+const user = useState<ExtendedUserProfile>('userProfile')
 
 const { mobile } = useDisplay()
 
@@ -14,7 +14,13 @@ const state = useState<AppState>('appState')
   <v-navigation-drawer v-model="state.drawer" :rail="state.rail" :permanent="!mobile">
 
     <v-list>
-      <v-list-item prepend-avatar="https://randomuser.me/api/portraits/men/85.jpg" :title="user.displayName ?? 'ユーザー'" :subtitle="user.email ?? undefined">
+      <v-list-item :title="user?.displayName ?? 'ユーザー'" :subtitle="user?.role ?? undefined">
+        <template v-slot:prepend>
+          <v-avatar>
+            <v-img v-if="user?.avatar" :src="user?.avatar" cover></v-img>
+            <v-icon v-else>mdi-account</v-icon>
+          </v-avatar>
+        </template>
       </v-list-item>
     </v-list>
 

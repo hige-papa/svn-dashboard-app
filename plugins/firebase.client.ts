@@ -8,6 +8,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import firebaseConfig from '~/firebase.config';
 import { getVertexAI, getGenerativeModel, type ModelParams } from "firebase/vertexai";
 // import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
+import { useUserProfile } from '~/composables/useUserProfile'
 
 export default defineNuxtPlugin(async () => {
     // Initialize Firebase
@@ -22,7 +23,11 @@ export default defineNuxtPlugin(async () => {
     const analytics = getAnalytics(firebaseApp);
     const twitterAuthProvider = new TwitterAuthProvider();
     const user = ref<User | null>();
+    const userProfile = ref<ExtendedUserProfile | null>(null);
     const isAdmin = ref<boolean>();
+
+    // useUserProfileを使用
+    const { getUserProfile } = useUserProfile()
 
     watch(user, async () => {
         if (user.value) {
@@ -48,9 +53,10 @@ export default defineNuxtPlugin(async () => {
 
     user.value = await getUserAsync();
 
-    onAuthStateChanged(auth, () => {
+    onAuthStateChanged(auth, async () => {
         if (auth.currentUser) {
             user.value = auth.currentUser;
+            userProfile.value = await getUserProfile(auth.currentUser.uid);
             console.log('user logged in');
         } else {
             user.value = undefined;
@@ -78,6 +84,7 @@ export default defineNuxtPlugin(async () => {
     useState('functions', () => functions)
     useState('twitterAuthProvider', () => twitterAuthProvider);
     useState('user', () => user);
+    useState('userProfile', () => userProfile);
     useState('analytics', () => analytics);
     useState('isAdmin', () => isAdmin);
     useState('ai', () => model);

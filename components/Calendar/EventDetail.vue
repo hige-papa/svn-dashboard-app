@@ -50,73 +50,66 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useCalendar } from '~/composables/useCalendar';
 
-const props = defineProps({
-  event: {
-    type: Object,
-    required: true
-  },
-  visible: {
-    type: Boolean,
-    default: false
-  },
-  position: {
-    type: Object,
-    default: () => ({ top: 0, left: 0 })
-  }
-});
+const props = defineProps<{
+  event: EventDisplay;
+  visible: boolean;
+  position: { top: number; left: number };
+}>();
 
 const emit = defineEmits(['close']);
 
-const { formatDate } = useCalendar();
-
-// ルーター
+const { formatDate, users } = useCalendar();
 const router = useRouter();
 
-// 表示位置
 const top = ref(props.position.top);
 const left = ref(props.position.left);
 
-// 位置の更新
 watch(() => props.position, (newPosition) => {
   top.value = newPosition.top;
   left.value = newPosition.left;
-}, { immediate: true });
+}, { immediate: true, deep: true });
 
-// フォーマットされた日時
+// ★ 修正: 期間表示を正しく行う
 const formattedDateTime = computed(() => {
-  if (!props.event) return '';
-  
-  const date = new Date(props.event.date);
-  return `${formatDate(date)} ${props.event.startTime} - ${props.event.endTime}`;
+  if (!props.event?.date) return '';
+
+  const time = `${props.event.startTime} - ${props.event.endTime}`;
+
+  if (props.event.isMultiDay && props.event.originalStartDate && props.event.endDate) {
+    const startStr = formatDate(new Date(`${props.event.originalStartDate}T00:00:00`));
+    const endStr = formatDate(new Date(`${props.event.endDate}T00:00:00`));
+    return `期間: ${startStr} 〜 ${endStr} (${time})`;
+  }
+
+  const dateStr = formatDate(new Date(`${props.event.date}T00:00:00`));
+  return `${dateStr} ${time}`;
 });
 
-// フォーマットされた参加者
+// ★ 修正: 参加者IDを名前に変換して表示する
 const formattedParticipants = computed(() => {
-  if (!props.event || !props.event.participants) return 'なし';
-  return props.event.participants.join(', ');
+  if (!props.event?.participantIds || props.event.participantIds.length === 0) {
+    return 'なし';
+  }
+  
+  const userMap = new Map(users.value.map(u => [u.uid, u.displayName]));
+  
+  return props.event.participantIds
+    .map(id => userMap.get(id) || '不明なユーザー')
+    .join(', ');
 });
 
-// 詳細を閉じる
-const closeDetails = () => {
-  emit('close');
-};
+const closeDetails = () => emit('close');
 
-// 表示ページへ遷移
 const viewEvent = () => {
-  if (props.event && props.event.id) {
-    router.push(`/calendar/${props.event.id}`);
-  }
+  if (props.event?.id) router.push(`/calendar/${props.event.id}`);
 };
 
-// 編集ページへ遷移
 const editEvent = () => {
-  if (props.event && props.event.id) {
-    router.push(`/calendar/${props.event.id}/edit`);
-  }
+  if (props.event?.id) router.push(`/calendar/${props.event.id}/edit`);
 };
 </script>
 
@@ -128,9 +121,9 @@ const editEvent = () => {
   box-shadow: var(--shadow-lg);
   padding: 16px;
   width: 320px;
-  z-index: 1000; /* 高い値を設定してポップアップを最前面に */
+  z-index: 1000;
   border: 1px solid var(--border-color);
-  animation: fade-in 0.2s ease-out; /* アニメーション追加 */
+  animation: fade-in 0.2s ease-out;
 }
 
 @keyframes fade-in {
@@ -141,6 +134,7 @@ const editEvent = () => {
 .detail-header {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 12px;
 }
 
@@ -153,7 +147,8 @@ const editEvent = () => {
 
 .detail-time {
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .detail-actions {
@@ -178,21 +173,22 @@ const editEvent = () => {
 }
 
 .detail-view:hover {
-  background-color: var(--success-light, #e8f5e8);
-  color: var(--success, #4caf50);
+  background-color: #e8f5e8;
+  color: #4caf50;
 }
 
 .detail-edit:hover {
-  background-color: var(--primary-light, #e3f2fd);
-  color: var(--primary, #1976d2);
+  background-color: #e3f2fd;
+  color: #1976d2;
 }
 
 .detail-close {
-  font-size: 18px;
+  font-size: 20px;
+  line-height: 1;
 }
 
 .detail-close:hover {
-  background-color: var(--background-light);
+  background-color: #f5f5f5;
   color: var(--text-primary);
 }
 
@@ -204,6 +200,7 @@ const editEvent = () => {
 
 .detail-item {
   display: flex;
+  align-items: flex-start;
   margin-top: 12px;
 }
 
@@ -213,17 +210,13 @@ const editEvent = () => {
   margin-right: 12px;
   flex-shrink: 0;
   color: var(--text-secondary);
+  margin-top: 2px;
 }
 
 .detail-content {
   font-size: 14px;
   color: var(--text-primary);
   line-height: 1.5;
-}
-
-@media (max-width: 768px) {
-  .event-details {
-    width: 280px;
-  }
+  word-break: break-all;
 }
 </style>

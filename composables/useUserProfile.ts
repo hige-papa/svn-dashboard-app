@@ -1,4 +1,4 @@
-import type { UserInfo } from 'firebase/auth';
+import type { Auth, User, UserInfo } from 'firebase/auth';
 import { where, orderBy, limit, QueryConstraint, Timestamp } from 'firebase/firestore';
 import { useAuth } from '~/composables/firebase/useAuth';
 import { useMaster } from '~/composables/master/useMaster';
@@ -90,6 +90,7 @@ export const useUserProfile = () => {
    */
   const getUserProfile = async (uid: string): Promise<ExtendedUserProfile | null> => {
     try {
+      const auth = useState<Auth>('auth')
       const userProfile = await getAsync(uid);
       
       if (userProfile) {
