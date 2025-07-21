@@ -65,6 +65,13 @@
     "title": "設定",
     "menu": [
       {
+        "id": "maintenace",
+        "label": "メンテナンス",
+        "icon": "mdi-cog",
+        "isActive": false,
+        "path": "/maintenance"
+      },
+      {
         "id": "user-management",
         "label": "ユーザー管理",
         "icon": "mdi-account-multiple",

@@ -57,7 +57,7 @@
               :class="['day-cell', { 'today-cell': isToday(day) }]"
             >
               <div 
-                v-for="(event, index) in getUserEventsForDay(user.uid, day)" 
+                v-for="(event, index) in getVisibleEvents(getUserEventsForDay(user.uid, day))" 
                 :key="event.id"
                 :class="['event', `event-type-${(event.userId || index % 5) + 1}`]"
                 :style="{ top: `${10 + (index * 28)}px` }"
@@ -65,6 +65,13 @@
               >
                 <span class="event-time">{{ event.startTime }}</span>
                 <span class="event-title">{{ event.title }}</span>
+              </div>
+        
+              <div 
+                v-if="getUserEventsForDay(user.uid, day).length > 2" 
+                class="more-events"
+              >
+                +{{ getUserEventsForDay(user.uid, day).length - 2 }}件
               </div>
             </div>
           </div>
@@ -142,6 +149,11 @@ const getUserEventsForDay = (userId, date) => {
     
     return false;
   });
+};
+
+// 各日ごとに表示するイベント（最初の2つまで）
+const getVisibleEvents = (events) => {
+  return events.slice(0, 2);
 };
 
 // イベントクリック時のイベント
@@ -398,5 +410,18 @@ const onEventClick = (event, eventData) => {
   .day-name, .day-date {
     font-size: 12px;
   }
+}
+
+.more-events {
+  position: absolute;
+  height: 26px;
+  left: 4px;
+  right: 4px;
+  top: 65px;
+  font-size: 11px;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-weight: 500;
+  text-align: center;
 }
 </style>

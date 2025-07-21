@@ -11,7 +11,7 @@
         :class="['day-cell', { 'today-cell': isToday(day) }]"
       >
         <div 
-          v-for="(event, index) in getUserSchedulesForDay(user.uid, day)" 
+          v-for="(event, index) in getVisibleEvents(user.uid, day)" 
           :key="event.id"
           :class="['event', event.type]"
           :style="{ top: `${10 + (index * 28)}px` }"
@@ -55,6 +55,12 @@ const isToday = (date) => {
   return date.getDate() === today.getDate() &&
          date.getMonth() === today.getMonth() &&
          date.getFullYear() === today.getFullYear();
+};
+
+// 各日ごとに表示するイベント（最初の2つまで）
+const getVisibleEvents = (uid, date) => {
+  const events = getUserSchedulesForDay(uid, date);
+  return events.slice(0, 2);
 };
 
 // イベントクリック時のイベント
