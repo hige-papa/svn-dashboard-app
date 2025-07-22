@@ -4,5 +4,6 @@ interface Menu {
     icon: string,
     isActive: boolean,
     path: string,
-    section: string
+    section: string,
+    roles: string[]
 }

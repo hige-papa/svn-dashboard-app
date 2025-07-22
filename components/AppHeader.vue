@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { useAuth } from '~/composables/firebase/useAuth'
+// import { useAuth } from '~/composables/firebase/useAuth'
 import { useDisplay } from 'vuetify'
 
-const { logoutAsync } = useAuth()
+// const { logoutAsync } = useAuth()
 const { mobile } = useDisplay()
 
 const state = useState<AppState>('appState')
@@ -16,11 +16,11 @@ const state = useState<AppState>('appState')
             <h3 class="title">TASCAL</h3>
         </v-app-bar-title>
         <v-spacer></v-spacer>
-        <v-tooltip text="ログアウト">
+        <!-- <v-tooltip text="ログアウト">
             <template v-slot:activator="{ props }">
                 <v-icon v-bind="props" icon="mdi-logout" @click="logoutAsync" class="mr-5"></v-icon>
             </template>
-        </v-tooltip>
+        </v-tooltip> -->
         
         <!-- <template v-slot:append>
             <v-menu open-on-click location="bottom">
