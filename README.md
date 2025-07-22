@@ -1,10 +1,12 @@
-# Nuxt Minimal Starter
+# 開発者ガイド：機能追加・改修マニュアル
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+このドキュメントは、本プロジェクトの機能追加や既存機能の改修を行う開発者向けのマニュアルです。プロジェクトの構造、主要な技術、開発ワークフロー、およびベストプラクティスについて説明します。
 
-## Setup
+## 1. 開発環境のセットアップ
 
-Make sure to install dependencies:
+### 依存関係のインストール
+
+プロジェクトのルートディレクトリで、以下のいずれかのコマンドを実行して依存関係をインストールします。
 
 ```bash
 # npm
@@ -20,9 +22,9 @@ yarn install
 bun install
 ```
 
-## Development Server
+### 開発サーバーの起動
 
-Start the development server on `http://localhost:3000`:
+開発サーバーを起動し、`http://localhost:3000` でアプリケーションにアクセスします。
 
 ```bash
 # npm
@@ -38,9 +40,9 @@ yarn dev
 bun run dev
 ```
 
-## Production
+### プロダクションビルド
 
-Build the application for production:
+プロダクション用にアプリケーションをビルドします。
 
 ```bash
 # npm
@@ -56,7 +58,9 @@ yarn build
 bun run build
 ```
 
-Locally preview production build:
+### ローカルでのプロダクションビルドのプレビュー
+
+ビルドされたプロダクションアプリケーションをローカルでプレビューします。
 
 ```bash
 # npm
@@ -72,4 +76,62 @@ yarn preview
 bun run preview
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## 2. プロジェクトのアーキテクチャ概要
+
+本プロジェクトはNuxt.js 3をベースとしたシングルページアプリケーション（SPA）であり、Firebaseをバックエンドとして利用しています。
+
+-   **Nuxt.js**: Vue.jsアプリケーションを構築するためのフレームワーク。ファイルベースルーティング、自動インポート、コンポーザブルなどの機能を提供します。
+-   **Vue.js**: UI構築のためのプログレッシブフレームワーク。コンポーネント指向で開発を行います。
+-   **Vuetify**: Vue.jsのためのマテリアルデザインコンポーネントフレームワーク。UIの構築を効率化します。
+-   **Firebase**:
+    -   **Firestore**: NoSQLクラウドデータベース。リアルタイムなデータ同期と柔軟なデータ構造を提供します。
+    -   **Authentication**: ユーザー認証機能を提供します。
+    -   **Storage**: ファイルストレージサービス。
+-   **TypeScript**: 型安全なJavaScript。開発時のエラーを減らし、コードの可読性と保守性を向上させます。
+
+### 主要なディレクトリと役割
+
+-   `pages/`: アプリケーションのルーティングに対応するページコンポーネント。ファイル名がそのままURLパスになります。
+-   `components/`: 再利用可能なVueコンポーネント。UIの部品を定義します。
+    -   `components/Calendar/`: カレンダー機能に特化したコンポーネント群。日次、週次、月次ビューなど、複雑なUIを構成します。
+-   `composables/`: Nuxt 3のコンポーザブル。VueのComposition APIを活用し、再利用可能なロジックを定義します。
+    -   `composables/firebase/`: Firebaseの各サービス（Firestore, Auth, Storage）との連携ロジック。
+    -   `composables/firestoreGeneral/`: FirestoreのCRUD操作に関する汎用的なロジック。
+    -   `composables/useCalendar.ts`, `useEventForm.ts` など: 各機能に特化したビジネスロジックや状態管理。
+-   `services/`: ビジネスロジックや外部API連携など、特定の機能に特化したサービス層のロジック。`eventService.ts` のように、Firestoreの操作を抽象化し、アプリケーション固有のデータ操作を提供します。
+-   `types/`: TypeScriptの型定義ファイル。データ構造やインターフェースを定義し、型安全な開発を促進します。
+-   `assets/`: 静的ファイル（CSS、画像、データファイルなど）。
+-   `plugins/`: Nuxtアプリケーションの起動時に実行されるプラグイン。Firebaseの初期化やVuetifyの設定などを行います。
+-   `layouts/`: アプリケーションの共通レイアウトを定義します。
+-   `middleware/`: ルートのナビゲーションガード。認証チェックなどを行います。
+-   `utils/`: 汎用的なユーティリティ関数。
+
+## 3. コーディング規約とベストプラクティス
+
+-   **TypeScriptの活用**: 変数、関数の引数、戻り値には可能な限り型を明示し、型安全なコードを記述してください。
+-   **Composition APIの利用**: ロジックの再利用性向上のため、`composables` ディレクトリにロジックを抽出し、Composition APIを活用してください。
+-   **コンポーネントの責務**: 各Vueコンポーネントは単一の責務を持つように設計し、再利用性を高めてください。
+-   **Firebaseデータ構造**: Firestoreのデータ構造は、読み取り効率とスケーラビリティを考慮して設計してください。コレクションとドキュメントの関係、サブコレクションの利用、インデックスの最適化を意識してください。
+-   **エラーハンドリング**: 非同期処理（Firebase操作など）では、`try-catch` ブロックを使用して適切にエラーハンドリングを行ってください。
+-   **命名規則**: キャメルケース（`camelCase`）を推奨します。コンポーネント名はパスカルケース（`PascalCase`）を使用してください。
+
+## 4. 機能追加・改修のワークフロー
+
+1.  **要件定義**: 追加・改修する機能の要件を明確にします。
+2.  **関連ファイルの特定**: 変更が必要な `pages`, `components`, `composables`, `services`, `types` などのファイルを特定します。
+3.  **データモデルの検討**: 必要に応じてFirestoreのデータ構造の変更や、`types/` ディレクトリ内の型定義の更新を検討します。
+4.  **ロジックの実装**:
+    -   再利用可能なロジックは `composables/` に、特定の機能のビジネスロジックは `services/` に記述することを検討します。
+    -   Firebaseとの連携は、既存の `composables/firebase/` や `composables/firestoreGeneral/` を活用します。
+5.  **UIの実装**:
+    -   新しいページは `pages/` に、再利用可能なUI部品は `components/` に作成します。
+    -   Vuetifyコンポーネントを積極的に利用し、一貫性のあるUIを構築します。
+6.  **ルーティングの追加**: 新しいページを追加した場合は、Nuxt.jsのファイルベースルーティングにより自動的にルーティングが生成されますが、必要に応じてミドルウェアやレイアウトの適用を検討します。
+7.  **テスト**: 開発サーバーで動作確認を行い、期待通りに機能することを確認します。
+
+## 5. デバッグとテスト
+
+-   **Nuxt DevTools**: 開発サーバー起動時に利用できるNuxt DevTools (`http://localhost:3000/_nuxt_devtools`) を活用し、コンポーネントの状態、ルーティング、コンポーザブルなどを検査します。
+-   **ブラウザのデベロッパーツール**: コンソールログ、ネットワークリクエスト、DOM要素の検査など、標準のブラウザデベロッパーツールを積極的に利用します。
+-   **Firebaseコンソール**: Firestoreのデータ、Authenticationのユーザー、Storageのファイルなどを直接確認し、データが正しく保存・取得されているか検証します。
+-   **ログ出力**: 開発中は `console.log` を活用して変数の値や処理の流れを確認します。プロダクションビルド時には削除するか、適切なロギングメカニズムに置き換えてください。
