@@ -1,11 +1,18 @@
 <template>
-    <v-container>
-        <v-row>
-            <v-col cols="6" sm="2" v-for="(m, index) in menu" :key="`menu-${index}`">
-                <v-btn color="primary" height="150px" class="w-100" :prepend-icon="m.icon" @click="goTo(m.path)">{{ m.label }}</v-btn>
-            </v-col>
-        </v-row>
-    </v-container>
+    <div class="page-container">
+        <v-container class="h-100">
+            <v-row>
+                <v-col cols="6" sm="2" v-for="(m, index) in menu" :key="`menu-${index}`">
+                    <v-btn height="150px" class="w-100" @click="goTo(m.path)" stacked>
+                        <template v-slot:prepend>
+                            <v-icon color="primary" :icon="m.icon"></v-icon>
+                        </template>
+                        {{ m.label }}
+                    </v-btn>
+                </v-col>
+            </v-row>
+        </v-container>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -20,14 +27,14 @@ const menu = [
     {
         id: 'facilities',
         label: '施設',
-        icon: 'mdi-cog',
+        icon: 'mdi-sofa',
         isActive: false,
         path: '/facility'
     },
     {
         id: 'equipments',
         label: '備品',
-        icon: 'mdi-help-circle',
+        icon: 'mdi-tools',
         isActive: false,
         path: '/equipment'
     }
@@ -37,3 +44,19 @@ const goTo = (path: string) => {
     navigateTo(path)
 }
 </script>
+
+<style lang="css" scoped>
+/* 全体のページスタイル */
+.page-container {
+    background-color: var(--background-light);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 24px;
+}
+
+.card {
+    color: white;
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+}
+</style>

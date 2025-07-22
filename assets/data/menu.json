@@ -70,27 +70,6 @@
         "icon": "mdi-cog",
         "isActive": false,
         "path": "/maintenance"
-      },
-      {
-        "id": "user-management",
-        "label": "ユーザー管理",
-        "icon": "mdi-account-multiple",
-        "isActive": false,
-        "path": "/users"
-      },
-      {
-        "id": "settings",
-        "label": "設定",
-        "icon": "mdi-cog",
-        "isActive": false,
-        "path": "/setting"
-      },
-      {
-        "id": "help",
-        "label": "ヘルプ",
-        "icon": "mdi-help-circle",
-        "isActive": false,
-        "path": "/help"
       }
     ]
   }

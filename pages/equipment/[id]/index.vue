@@ -183,10 +183,13 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
+import { useEquipment } from '~/composables/useEquipment'
 
 // Nuxt3を想定
 const { back, push } = useRouter()
 const route = useRoute()
+
+const { getAsync, deleteAsync } = useEquipment()
 
 // 型定義
 interface Equipment {
@@ -199,32 +202,6 @@ interface Equipment {
   status: 'available' | 'in_use' | 'maintenance'
   imageUrl?: string
 }
-
-// ---ダミーのComposableとAPIモック---
-// 実際のアプリケーションでは、これをバックエンドAPIとの通信に置き換えます。
-const useEquipment = () => {
-  const getEquipment = async (id: string): Promise<Equipment | null> => {
-    console.log(`Fetching equipment ${id}...`);
-    // ダミーデータの中からIDに一致するものを探す
-    const dummyData: Equipment[] = [
-      { id: '1', code: 'PC-001', name: 'ノートパソコン A', description: '開発部向け 第12世代Core i7, 32GB RAM', capacity: 15, category: 'PC', status: 'available', imageUrl: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=400' },
-      { id: '2', code: 'MON-005', name: '27インチ 4Kモニター', description: 'デザイナー向け高解像度モニター', capacity: 25, category: 'モニター', status: 'in_use', imageUrl: 'https://images.unsplash.com/photo-1527814223028-769a7d3c0042?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=400' },
-      { id: '3', code: 'PRJ-002', name: '会議室用プロジェクター', description: '大会議室設置のレーザープロジェクター', capacity: 3, category: 'プロジェクター', status: 'maintenance' },
-    ];
-    const foundItem = dummyData.find(d => d.id === id);
-    return new Promise(resolve => setTimeout(() => resolve(foundItem || null), 500));
-  };
-
-  const deleteEquipment = async (id: string): Promise<void> => {
-    console.log(`Deleting equipment ${id}...`);
-    return new Promise(resolve => setTimeout(resolve, 500));
-  };
-
-  return { getEquipment, deleteEquipment };
-};
-const { getEquipment, deleteEquipment } = useEquipment();
-// ---ここまで---
-
 
 // SEOメタタグ設定
 useHead({
@@ -283,7 +260,7 @@ const statusIcon = computed(() => {
 const loadItem = async () => {
   try {
     isLoading.value = true
-    const fetchedItem = await getEquipment(itemId.value)
+    const fetchedItem = await getAsync(itemId.value)
     item.value = fetchedItem
   } catch (error) {
     console.error('備品データの読み込みに失敗しました:', error)
@@ -316,7 +293,7 @@ const confirmDelete = async () => {
   if (!item.value) return
   try {
     isDeleting.value = true
-    await deleteEquipment(item.value.id)
+    await deleteAsync(item.value.id)
     showNotification('備品を削除しました')
     
     setTimeout(() => {

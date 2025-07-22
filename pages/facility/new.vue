@@ -26,7 +26,7 @@
                   v-model="formData.name"
                   type="text" 
                   class="form-input" 
-                  placeholder="例：27インチ 4Kモニター"
+                  placeholder="例：大会議室"
                   @blur="validateField('name')"
                   @input="clearError('name')"
                 >
@@ -185,10 +185,13 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
+import { useFacility } from '~/composables/useFacility'
 
 // Nuxt3を想定
 const { back, push } = useRouter()
 const route = useRoute()
+
+const { getAsync, addAsync, updateAsync } = useFacility()
 
 // SEOメタタグ設定
 useHead({
@@ -218,32 +221,10 @@ interface EquipmentFormErrors {
   category?: string
 }
 
-// ---ダミーのComposableとAPIモック---
-// 実際のアプリケーションでは、これをバックエンドAPIとの通信に置き換えます。
-const useEquipment = () => {
-  const getEquipment = async (id: string) => {
-    console.log(`Fetching equipment ${id}...`)
-    // ダミーデータから検索
-    const item = { id: '2', code: 'MON-005', name: '27インチ 4Kモニター', description: 'デザイナー向け高解像度モニター', capacity: 25, category: 'モニター', imageUrl: 'https://images.unsplash.com/photo-1527814223028-769a7d3c0042?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=400' }
-    return new Promise(resolve => setTimeout(() => resolve(item), 500));
-  }
-  const createEquipment = async (data: any) => {
-    console.log('Creating equipment:', data);
-    return new Promise(resolve => setTimeout(() => resolve({ ...data, id: 'new-id' }), 500));
-  }
-  const updateEquipment = async (id: string, data: any) => {
-    console.log(`Updating equipment ${id}:`, data);
-    return new Promise(resolve => setTimeout(() => resolve({ ...data, id }), 500));
-  }
-  const getCategories = async () => {
-    console.log('Fetching categories...');
-    return new Promise<string[]>(resolve => setTimeout(() => resolve(['PC', 'モニター', 'プロジェクター', '周辺機器', 'タブレット', 'その他']), 200));
-  }
-  return { getEquipment, createEquipment, updateEquipment, getCategories }
+const getCategories = async () => {
+  console.log('Fetching categories...');
+  return new Promise<string[]>(resolve => setTimeout(() => resolve(['会議室', '応接室']), 200));
 }
-const { getEquipment, createEquipment, updateEquipment, getCategories } = useEquipment()
-// ---ここまで---
-
 
 // リアクティブデータ
 const isEditMode = computed(() => !!route.params.id)
@@ -277,7 +258,7 @@ const loadEquipment = async () => {
   
   try {
     isLoading.value = true;
-    const item = await getEquipment(itemId.value)
+    const item = await getAsync(itemId.value)
     
     if (item) {
       formData.name = item.name
@@ -381,14 +362,14 @@ const handleSubmit = async () => {
 
   try {
     if (isEditMode.value) {
-      await updateEquipment(itemId.value, dataToSave)
+      await updateAsync(itemId.value, dataToSave)
       showNotification('施設情報を更新しました！', 'success')
     } else {
-      await createEquipment(dataToSave)
+      await addAsync(dataToSave)
       showNotification('施設を作成しました！', 'success')
     }
     
-    setTimeout(() => push('/equipment'), 1500)
+    setTimeout(() => push('/facility'), 1500)
     
   } catch (error) {
     console.error('保存エラー:', error)

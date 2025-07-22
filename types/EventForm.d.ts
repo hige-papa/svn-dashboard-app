@@ -41,7 +41,9 @@ declare global {
     participantIds: string[];
     participants: string[];
     facilityIds: string[];
+    facilities: string[];
     equipmentIds: string[];
+    equipments: string[];
     priority: 'low' | 'medium' | 'high';
     description: string;
   }

@@ -702,6 +702,9 @@
                       {{ item.conflictInfo }}
                     </div>
                   </div>
+                  <span>
+                    <v-btn variant="text" color="primary" @click="viewUsageStatus(item)">使用状況を確認</v-btn>
+                  </span>
                 </label>
               </div>
             </div>
@@ -717,6 +720,19 @@
         </div>
       </Transition>
     </Teleport>
+
+    <v-dialog v-model="dialog" :width="mobile ? '100%' : '50%'">
+      <v-card>
+        <v-card-title>
+          <v-list-item :title="date?.toISOString().split('T')[0]"></v-list-item>
+          <v-list-item :title="selected?.name"></v-list-item>
+        </v-card-title>
+        <v-card-text>
+          <DailyTimeline :events="events" :time-slots="timeSlots" :date="date"
+              :time-to-pixels="timeToPixels" @event-click="() => {}" />
+        </v-card-text>
+      </v-card>
+    </v-dialog>
     
     <Transition name="notification">
       <div v-if="notification.show" class="notification" :class="notification.type">
@@ -728,11 +744,25 @@
 </template>
 
 <script setup lang="ts">
+import type { User } from 'firebase/auth'
 import { ref, reactive, onMounted, nextTick, computed, watch } from 'vue'
 import { useMaster } from '~/composables/master/useMaster'
+import { useFacility } from '~/composables/useFacility'
+import { useEquipment } from '~/composables/useEquipment'
+import { useCalendar } from '~/composables/useCalendar';
+import { useEventService } from '~/services/eventService'
+import { useDisplay } from 'vuetify'
+
+const user = useState<User>('user')
+
+const { mobile } = useDisplay()
 
 const { back } = useRouter()
 const { getListAsync: getUsersAsync } = useMaster('users')
+const { getListAsync: getFacilitiesAsync } = useFacility()
+const { getListAsync: getEquipmentsAsync } = useEquipment()
+const { timeToPixels, timeSlots } = useCalendar();
+const { getEventsByEquipmentInRange, getEventsByFacilityInRange } = useEventService();
 
 interface Props {
   initialData?: EventFormData
@@ -761,7 +791,9 @@ const props = withDefaults(defineProps<Props>(), {
     participantIds: [],
     participants: [],
     facilityIds: [],
+    facilities: [],
     equipmentIds: [],
+    equipments: [],
     priority: 'medium',
     description: ''
   })
@@ -791,14 +823,8 @@ const searchQuery = ref('')
 const tempSelection = ref<string[]>([])
 
 const participantsMaster = ref<MasterItem[]>([])
-const facilitiesMaster = ref<MasterItem[]>([
-  { id: '1', name: '会議室A', capacity: 10 },
-  { id: '2', name: '会議室B', capacity: 20 },
-])
-const equipmentMaster = ref<MasterItem[]>([
-  { id: '1', name: 'プロジェクター', quantity: 5 },
-  { id: '2', name: 'ホワイトボード', quantity: 10 },
-])
+const facilitiesMaster = ref<MasterItem[]>([])
+const equipmentMaster = ref<MasterItem[]>([])
 
 const selectedParticipantsData = computed(() => participantsMaster.value.filter(p => formData.participantIds.includes(p.id)))
 const selectedFacilitiesData = computed(() => facilitiesMaster.value.filter(f => formData.facilityIds.includes(f.id)))
@@ -873,8 +899,14 @@ const confirmSelection = () => {
       formData.participantIds = [...tempSelection.value];
       formData.participants = participantsMaster.value.filter(p => tempSelection.value.includes(p.id)).map(p => p.name);
       break
-    case 'facility': formData.facilityIds = [...tempSelection.value]; break
-    case 'equipment': formData.equipmentIds = [...tempSelection.value]; break
+    case 'facility':
+      formData.facilityIds = [...tempSelection.value];
+      formData.facilities = facilitiesMaster.value.filter(p => tempSelection.value.includes(p.id)).map(p => p.name);
+      break
+    case 'equipment':
+      formData.equipmentIds = [...tempSelection.value];
+      formData.equipments = equipmentMaster.value.filter(p => tempSelection.value.includes(p.id)).map(p => p.name);
+      break
   }
   checkConflicts()
   closeModal()
@@ -977,6 +1009,25 @@ const resetForm = () => {
   setDefaultValues()
 }
 
+const dialog = ref<boolean>(false)
+
+const date = ref<Date>();
+
+const selected = ref<MasterItem>();
+
+const events = ref<EventDisplay[]>([])
+
+const viewUsageStatus = async (item: MasterItem) => {
+  selected.value = item
+  date.value = new Date(`${formData.date}T00:00:00`) ?? new Date()
+  if (modalType.value === 'facility') {
+    events.value = await getEventsByFacilityInRange(item.id, date.value.toISOString().split('T')[0], date.value.toDateString())
+  } else if (modalType.value === 'equipment') {
+    events.value = await getEventsByEquipmentInRange(item.id, date.value.toISOString().split('T')[0], date.value.toDateString())
+  }
+  dialog.value = true
+}
+
 onMounted(() => {
   getUsersAsync().then(users => {
     participantsMaster.value = (users as ExtendedUserProfile[]).map(user => ({
@@ -985,7 +1036,22 @@ onMounted(() => {
       department: user.department || ''
     }))
   })
+  getEquipmentsAsync().then(equipments => {
+    equipmentMaster.value = equipments.map(equipment => ({
+      id: equipment.id,
+      name: equipment.name,
+      capacity: equipment.capacity,
+    }))
+  })
+  getFacilitiesAsync().then(facilities => {
+    facilitiesMaster.value = facilities.map(facility => ({
+      id: facility.id,
+      name: facility.name,
+      capacity: facility.capacity,
+    }))
+  })
   setDefaultValues(props.initialData)
+  formData.participantIds.push(user.value.uid)
 })
 </script>
 

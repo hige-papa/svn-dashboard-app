@@ -261,9 +261,12 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useFacility } from '~/composables/useFacility'
 
 // Nuxt3の場合
 const { push } = useRouter()
+
+const { getListAsync, deleteAsync } = useFacility()
 
 // SEOメタタグ設定
 useHead({
@@ -277,7 +280,7 @@ useHead({
 })
 
 // 型定義
-interface Equipment {
+interface Facility {
   id: string
   code: string
   name: string
@@ -288,14 +291,14 @@ interface Equipment {
 }
 
 // リアクティブデータ
-const items = ref<Equipment[]>([])
-const filteredItems = ref<Equipment[]>([])
+const items = ref<Facility[]>([])
+const filteredItems = ref<Facility[]>([])
 const searchQuery = ref('')
 const viewMode = ref<'grid' | 'list'>('grid')
 const currentPage = ref(1)
 const itemsPerPage = 12
 const showDeleteModal = ref(false)
-const selectedItem = ref<Equipment | null>(null)
+const selectedItem = ref<Facility | null>(null)
 
 const notification = reactive({
   show: false,
@@ -318,27 +321,18 @@ const paginatedItems = computed(() => {
 
 // ---ダミーデータとAPIモック---
 // 実際のアプリケーションでは、これをAPI呼び出しに置き換えます。
-const dummyData: Equipment[] = [
-  { id: '1', code: 'PC-001', name: 'ノートパソコン A', description: '開発部向け 第12世代Core i7, 32GB RAM', capacity: 15, category: 'PC', imageUrl: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=400' },
-  { id: '2', code: 'MON-005', name: '27インチ 4Kモニター', description: 'デザイナー向け高解像度モニター', capacity: 25, category: 'モニター', imageUrl: 'https://images.unsplash.com/photo-1527814223028-769a7d3c0042?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=400' },
-  { id: '3', code: 'PRJ-002', name: '会議室用プロジェクター', description: '大会議室設置のレーザープロジェクター', capacity: 3, category: 'プロジェクター', imageUrl: 'https://images.unsplash.com/photo-1599923583398-387063a83e60?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=400' },
-  { id: '4', code: 'KBD-010', name: 'メカニカルキーボード', description: 'HHKB Professional HYBRID Type-S', capacity: 50, category: '周辺機器' },
-  { id: '5', code: 'CAM-007', name: 'Webカメラ', description: '4K対応 高画質Webカメラ', capacity: 30, category: '周辺機器', imageUrl: 'https://images.unsplash.com/photo-1616421392922-313d42f56b7c?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=400' },
-  { id: '6', code: 'TAB-003', name: '11インチ タブレット', description: '営業部向け M2チップ搭載', capacity: 20, category: 'タブレット', imageUrl: 'https://images.unsplash.com/photo-1561154464-82e9adf32764?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=400' },
-]
+const facilities = ref<Facility[]>([])
 
-const fetchAllItems = async (): Promise<Equipment[]> => {
+const fetchAllItems = async (): Promise<Facility[]> => {
   console.log('Fetching all items...')
-  return new Promise(resolve => setTimeout(() => resolve(dummyData), 500))
+  return await getListAsync()
 }
 
 const deleteItemApi = async (itemId: string): Promise<void> => {
   console.log(`Deleting item ${itemId}...`)
-  const index = dummyData.findIndex(item => item.id === itemId)
-  if (index > -1) {
-    dummyData.splice(index, 1)
-  }
-  return new Promise(resolve => setTimeout(resolve, 300))
+  return await deleteAsync(itemId).then(_ => {
+    facilities.value.splice(facilities.value.findIndex(e => { return e.id === itemId }), 1)
+  })
 }
 // ---ここまで---
 
@@ -365,18 +359,18 @@ const filterItems = () => {
 }
 
 const navigateToItemForm = () => {
-  push('/equipment/new')
+  push('/facility/new')
 }
 
-const viewItemDetail = (item: Equipment) => {
-  push(`/equipment/${item.id}`)
+const viewItemDetail = (item: Facility) => {
+  push(`/facility/${item.id}`)
 }
 
-const editItem = (item: Equipment) => {
-  push(`/equipment/${item.id}/edit`)
+const editItem = (item: Facility) => {
+  push(`/facility/${item.id}/edit`)
 }
 
-const deleteItem = (item: Equipment) => {
+const deleteItem = (item: Facility) => {
   selectedItem.value = item
   showDeleteModal.value = true
 }
