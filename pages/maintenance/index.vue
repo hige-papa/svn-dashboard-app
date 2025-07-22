@@ -37,6 +37,27 @@ const menu = [
         icon: 'mdi-tools',
         isActive: false,
         path: '/equipment'
+    },
+    {
+        id: 'user-help',
+        label: 'ユーザーヘルプ',
+        icon: 'mdi-help-circle-outline',
+        isActive: false,
+        path: '/manuals/user-help'
+    },
+    {
+        id: 'project-manual',
+        label: 'プロジェクトマニュアル',
+        icon: 'mdi-apps',
+        isActive: false,
+        path: '/manuals/project-manual'
+    },
+    {
+        id: 'developer-guide',
+        label: '開発者マニュアル',
+        icon: 'mdi-application-braces-outline',
+        isActive: false,
+        path: '/manuals/developer-guide'
     }
 ]
 
