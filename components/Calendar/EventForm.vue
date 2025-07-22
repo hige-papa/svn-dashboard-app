@@ -703,7 +703,7 @@
                     </div>
                   </div>
                   <span>
-                    <v-btn variant="text" color="primary" @click="viewUsageStatus(item)">使用状況を確認</v-btn>
+                    <v-btn variant="text" color="primary" @click="viewUsageStatus(item)" :disabled="!formData.date">使用状況を確認</v-btn>
                   </span>
                 </label>
               </div>
@@ -1018,14 +1018,16 @@ const selected = ref<MasterItem>();
 const events = ref<EventDisplay[]>([])
 
 const viewUsageStatus = async (item: MasterItem) => {
-  selected.value = item
-  date.value = new Date(`${formData.date}T00:00:00`) ?? new Date()
-  if (modalType.value === 'facility') {
-    events.value = await getEventsByFacilityInRange(item.id, date.value.toISOString().split('T')[0], date.value.toDateString())
-  } else if (modalType.value === 'equipment') {
-    events.value = await getEventsByEquipmentInRange(item.id, date.value.toISOString().split('T')[0], date.value.toDateString())
+  if (item && formData.date) {
+    selected.value = item
+    date.value = new Date(`${formData.date}T00:00:00`)
+    if (modalType.value === 'facility') {
+      events.value = await getEventsByFacilityInRange(item.id, date.value.toISOString().split('T')[0], date.value.toDateString())
+    } else if (modalType.value === 'equipment') {
+      events.value = await getEventsByEquipmentInRange(item.id, date.value.toISOString().split('T')[0], date.value.toDateString())
+    }
+    dialog.value = true
   }
-  dialog.value = true
 }
 
 onMounted(() => {
