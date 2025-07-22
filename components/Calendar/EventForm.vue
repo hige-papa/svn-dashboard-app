@@ -724,7 +724,7 @@
     <v-dialog v-model="dialog" :width="mobile ? '100%' : '50%'">
       <v-card>
         <v-card-title>
-          <v-list-item :title="date?.toISOString().split('T')[0]"></v-list-item>
+          <v-list-item :title="formData.date"></v-list-item>
           <v-list-item :title="selected?.name"></v-list-item>
         </v-card-title>
         <v-card-text>
@@ -1022,9 +1022,9 @@ const viewUsageStatus = async (item: MasterItem) => {
     selected.value = item
     date.value = new Date(`${formData.date}T00:00:00`)
     if (modalType.value === 'facility') {
-      events.value = await getEventsByFacilityInRange(item.id, date.value.toISOString().split('T')[0], date.value.toDateString())
+      events.value = await getEventsByFacilityInRange(item.id, formData.date, formData.date)
     } else if (modalType.value === 'equipment') {
-      events.value = await getEventsByEquipmentInRange(item.id, date.value.toISOString().split('T')[0], date.value.toDateString())
+      events.value = await getEventsByEquipmentInRange(item.id, formData.date, formData.date)
     }
     dialog.value = true
   }
