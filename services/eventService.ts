@@ -6,6 +6,8 @@ export const useEventService = () => {
   const eventsService = useFirestoreGeneral('events')
   const rulesService = useFirestoreGeneral('recurrence_rules')
   const instancesService = useFirestoreGeneral('event_instances')
+  const equipments = useFirestoreGeneral('equipment')
+  const facilities = useFirestoreGeneral('facility')
 
   // --- Date Utility Functions (Timezone Safe) ---
   const formatDateForDb = (date: Date): string => {
@@ -344,6 +346,130 @@ export const useEventService = () => {
       return Math.ceil((lastDay - dayOfMonth + 1) / 7) === Math.abs(n);
     }
   };
+
+/**
+   * リソース（施設または備品）と期間を指定してイベントを取得する内部ヘルパー関数
+   */
+  const getEventsByResourceInRange = async (
+    resourceType: 'facility' | 'equipment',
+    resourceId: string,
+    startDate: string,
+    endDate: string
+  ): Promise<EventDisplay[]> => {
+    const fieldName = resourceType === 'facility' ? 'facilityIds' : 'equipmentIds';
+    const preliminaryEvents: EventDisplay[] = [];
+    try {
+      // 1. 指定されたリソースIDを含む非繰り返しイベントを取得
+      const nonRecurringEvents = await eventsService.getListAsync(
+        where(fieldName, 'array-contains', resourceId),
+        where('dateType', 'in', ['single', 'range'])
+      ) as EventData[];
+
+      for (const eventData of nonRecurringEvents) {
+        if (eventData.dateType === 'single' && eventData.date && eventData.date >= startDate && eventData.date <= endDate) {
+          preliminaryEvents.push(convertToEvent(eventData));
+        } else if (eventData.dateType === 'range' && eventData.startDate) {
+          const eventEndDate = eventData.endDate || eventData.startDate;
+          if (eventData.startDate <= endDate && eventEndDate >= startDate) {
+            preliminaryEvents.push(convertToEvent(eventData));
+          }
+        }
+      }
+
+      // 2. 指定されたリソースIDを含む繰り返しイベントのマスターを取得
+      const recurringMasterEvents = await eventsService.getListAsync(
+        where(fieldName, 'array-contains', resourceId),
+        where('dateType', '==', 'recurring')
+      ) as EventData[];
+      const masterEventIds = recurringMasterEvents.map(e => e.id!);
+
+      if (masterEventIds.length > 0) {
+        const masterEventsData = new Map<string, EventData>();
+        recurringMasterEvents.forEach(master => masterEventsData.set(master.id!, master));
+
+        // 3. 該当マスターイベントのインスタンスを日付範囲で取得
+        const instances = await instancesService.getListAsync(
+          where('masterId', 'in', masterEventIds),
+          where('instanceDate', '>=', startDate),
+          where('instanceDate', '<=', endDate)
+        ) as EventInstance[];
+
+        for (const instance of instances) {
+          if (instance.status === 'active') {
+            const masterEvent = masterEventsData.get(instance.masterId);
+            if (masterEvent) {
+              preliminaryEvents.push(mergeInstanceWithMaster(instance, masterEvent));
+            }
+          }
+        }
+        
+        // 4. まだインスタンスが生成されていない繰り返しイベントを検索して追加
+        const rules = await rulesService.getListAsync(where('masterId', 'in', masterEventIds)) as RecurrenceRule[];
+        for (const rule of rules) {
+            const masterEvent = masterEventsData.get(rule.masterId);
+            if (!masterEvent || !masterEvent.startDate) continue;
+            if (rule.until && rule.until < startDate) continue;
+            if (masterEvent.startDate > endDate) continue;
+      
+            const formData = { ...masterEvent, recurringStartDate: masterEvent.startDate } as EventFormData;
+            const recurringDates = generateRecurringDates(formData, parseDateAsLocal(startDate), parseDateAsLocal(endDate), rule.interval);
+      
+            for (const date of recurringDates) {
+                if (rule.exceptions?.includes(date)) continue;
+                if (preliminaryEvents.some(e => e.masterId === rule.masterId && e.date === date)) continue;
+                preliminaryEvents.push(mergeInstanceWithMaster({ masterId: rule.masterId, instanceDate: date } as EventInstance, masterEvent));
+            }
+        }
+      }
+
+      // 5. 複数日にまたがるイベントを展開し、最終的なイベントリストを作成
+      const finalEvents: EventDisplay[] = [];
+      for (const event of preliminaryEvents) {
+        if (event.endDate && event.endDate > event.date) {
+          const current = parseDateAsLocal(event.date);
+          const end = parseDateAsLocal(event.endDate);
+          while (current <= end) {
+            const dateStr = formatDateForDb(current);
+            if (dateStr >= startDate && dateStr <= endDate) {
+              finalEvents.push({
+                ...event,
+                id: event.id,
+                segmentId: `${event.id}-${dateStr}`,
+                date: dateStr,
+                isMultiDay: true,
+                isFirstDay: dateStr === event.date,
+                isLastDay: dateStr === event.endDate,
+              });
+            }
+            current.setDate(current.getDate() + 1);
+          }
+        } else {
+          if (event.date >= startDate && event.date <= endDate) {
+            finalEvents.push({ ...event, id: event.id, segmentId: event.id, isMultiDay: false });
+          }
+        }
+      }
+
+      return finalEvents.sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
+    } catch (error) {
+      console.error(`getEventsByResourceInRange (${resourceType}) Error:`, error);
+      throw error;
+    }
+  };
+
+  /**
+   * 施設IDと期間を指定してイベントを取得する
+   */
+  const getEventsByFacilityInRange = async (facilityId: string, startDate: string, endDate: string): Promise<EventDisplay[]> => {
+    return getEventsByResourceInRange('facility', facilityId, startDate, endDate);
+  };
+
+  /**
+   * 備品IDと期間を指定してイベントを取得する
+   */
+  const getEventsByEquipmentInRange = async (equipmentId: string, startDate: string, endDate: string): Promise<EventDisplay[]> => {
+    return getEventsByResourceInRange('equipment', equipmentId, startDate, endDate);
+  };
   
-  return { createEvent, getEventsInRange };
+  return { createEvent, getEventsInRange, getEventsByFacilityInRange, getEventsByEquipmentInRange };
 };

@@ -265,6 +265,8 @@
 <script setup lang="ts">
 import type { Timestamp } from 'firebase/firestore'
 import { ref, reactive, computed } from 'vue'
+import { useFacility } from '~/composables/useFacility'
+import { useEquipment } from '~/composables/useEquipment'
 
 const { back } = useRouter()
 
@@ -273,6 +275,9 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const { getListAsync: getFacilitiesAsync } = useFacility()
+const { getListAsync: getEquipmentsAsync } = useEquipment()
 
 // 曜日定義
 const weekDays = ['日', '月', '火', '水', '木', '金', '土']
@@ -297,21 +302,9 @@ const notification = reactive({
 })
 
 // マスタデータ（実際はAPIから取得またはpropsで受け取る）
-const facilitiesMaster = ref([
-  { id: '1', name: '会議室A', capacity: 10 },
-  { id: '2', name: '会議室B', capacity: 20 },
-  { id: '3', name: '大会議室', capacity: 50 },
-  { id: '4', name: '応接室1', capacity: 6 },
-  { id: '5', name: '応接室2', capacity: 8 },
-])
+const facilitiesMaster = ref([])
 
-const equipmentMaster = ref([
-  { id: '1', name: 'プロジェクター', quantity: 5 },
-  { id: '2', name: 'ホワイトボード', quantity: 10 },
-  { id: '3', name: 'ノートPC', quantity: 15 },
-  { id: '4', name: 'マイク', quantity: 8 },
-  { id: '5', name: 'ビデオカメラ', quantity: 3 },
-])
+const equipmentMaster = ref([])
 
 // ヘルパー関数
 const formatDate = (dateStr: string) => {
@@ -445,6 +438,23 @@ const confirmDelete = () => {
   }
   closeDeleteModal()
 }
+
+onMounted(() => {
+  getEquipmentsAsync().then(equipments => {
+    equipmentMaster.value = equipments.map(equipment => ({
+      id: equipment.id,
+      name: equipment.name,
+      capacity: equipment.capacity,
+    }))
+  })
+  getFacilitiesAsync().then(facilities => {
+    facilitiesMaster.value = facilities.map(facility => ({
+      id: facility.id,
+      name: facility.name,
+      capacity: facility.capacity,
+    }))
+  })
+})
 </script>
 
 <style scoped>

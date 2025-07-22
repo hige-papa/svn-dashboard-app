@@ -17,9 +17,31 @@ export const useDocumentRoot = () => {
       return `${key}/${id}`;
     },
   };
+  
+  
+  const facilityDocRoot = {
+    collection: () => {
+      return `facility`;
+    },
+    document: (id: string) => {
+      return `facility/${id}`;
+    },
+  };
+  
+  
+  const equipmentDocRoot = {
+    collection: () => {
+      return `equipment`;
+    },
+    document: (id: string) => {
+      return `equipment/${id}`;
+    },
+  };
 
   return {
     userProfileRoot,
     generalDocRoot,
+    facilityDocRoot,
+    equipmentDocRoot,
   };
 };
