@@ -12,7 +12,7 @@ const { params } = useRoute()
 // ルーター
 const router = useRouter();
 
-const event = ref<any>()
+const event = ref<EventData>()
 
 const handleEdit = (data: any) => {
   // 編集画面に遷移

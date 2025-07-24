@@ -82,6 +82,11 @@ const onNext = () => {
   .nav-controls {
     width: 100%;
     justify-content: space-between;
+    font-size: 12px;
+  }
+
+  .current-date {
+    font-size: 12px;
   }
 }
 </style>

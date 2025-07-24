@@ -23,6 +23,7 @@ export const useEventService = () => {
     // 1. 常に共通のフィールドから、保存するデータをクリーンに構築する
     const eventData: Partial<EventData> = {
       title: formData.title,
+      eventType: formData.eventType,
       dateType: formData.dateType,
       startTime: formData.startTime,
       endTime: formData.endTime,
@@ -195,8 +196,11 @@ export const useEventService = () => {
       id: eventData.id!, title: eventData.title, date: correctStartDate,
       endDate: eventData.endDate, startTime: eventData.startTime, endTime: eventData.endTime,
       location: eventData.location, description: eventData.description, priority: eventData.priority,
-      participantIds: eventData.participantIds || [], facilityIds: eventData.facilityIds || [],
-      equipmentIds: eventData.equipmentIds || [], isRecurring: eventData.dateType === 'recurring',
+      participantIds: eventData.participantIds || [], participants: eventData.participants,
+      facilityIds: eventData.facilityIds || [], facilities: eventData.facilities,
+      equipmentIds: eventData.equipmentIds || [], equipments: eventData.equipments,
+      isRecurring: eventData.dateType === 'recurring',
+      eventType: eventData.eventType, eventTypeName: eventData.eventTypeName, eventTypeColor: eventData.eventTypeColor,
     };
   };
   
@@ -220,9 +224,13 @@ export const useEventService = () => {
       endTime: instance.endTime || masterEvent.endTime, location: instance.location || masterEvent.location,
       description: instance.description || masterEvent.description, priority: masterEvent.priority,
       participantIds: instance.participantIds || masterEvent.participantIds || [],
+      participants: instance.participants || masterEvent.participants || [],
       facilityIds: instance.facilityIds || masterEvent.facilityIds || [],
+      facilities: instance.facilities || masterEvent.facilities || [],
       equipmentIds: instance.equipmentIds || masterEvent.equipmentIds || [],
+      equipments: instance.equipments || masterEvent.equipments || [],
       isRecurring: true, masterId: instance.masterId, isException: !!instance.isException,
+      eventType: masterEvent.eventType, eventTypeName: masterEvent.eventTypeName, eventTypeColor: masterEvent.eventTypeColor,
     };
   };
 
@@ -351,12 +359,22 @@ export const useEventService = () => {
    * リソース（施設または備品）と期間を指定してイベントを取得する内部ヘルパー関数
    */
   const getEventsByResourceInRange = async (
-    resourceType: 'facility' | 'equipment',
+    resourceType: 'participant' | 'facility' | 'equipment',
     resourceId: string,
     startDate: string,
     endDate: string
   ): Promise<EventDisplay[]> => {
-    const fieldName = resourceType === 'facility' ? 'facilityIds' : 'equipmentIds';
+    const getFieldName = () => {
+      switch (resourceType) {
+        case 'participant':
+          return 'participantIds'
+        case 'facility':
+          return 'facilityIds'
+        case 'equipment':
+          return 'equipmentIds'
+      }
+    }
+    const fieldName = getFieldName()
     const preliminaryEvents: EventDisplay[] = [];
     try {
       // 1. 指定されたリソースIDを含む非繰り返しイベントを取得
@@ -458,6 +476,13 @@ export const useEventService = () => {
   };
 
   /**
+   * ユーザーIDと期間を指定してイベントを取得する
+   */
+  const getEventsByParticipantInRange = async (uid: string, startDate: string, endDate: string): Promise<EventDisplay[]> => {
+    return getEventsByResourceInRange('participant', uid, startDate, endDate);
+  };
+
+  /**
    * 施設IDと期間を指定してイベントを取得する
    */
   const getEventsByFacilityInRange = async (facilityId: string, startDate: string, endDate: string): Promise<EventDisplay[]> => {
@@ -471,5 +496,5 @@ export const useEventService = () => {
     return getEventsByResourceInRange('equipment', equipmentId, startDate, endDate);
   };
   
-  return { createEvent, getEventsInRange, getEventsByFacilityInRange, getEventsByEquipmentInRange };
+  return { createEvent, getEventsInRange, getEventsByParticipantInRange, getEventsByFacilityInRange, getEventsByEquipmentInRange };
 };

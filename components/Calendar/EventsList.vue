@@ -1,12 +1,12 @@
 <template>
   <div class="events-list">
-    <h3 class="list-title">本日の予定一覧</h3>
-    <div v-if="events.length === 0" class="no-events">
+    <h3 class="list-title">{{ dateString }}の予定一覧</h3>
+    <div v-if="props.events.length === 0" class="no-events">
       予定はありません
     </div>
     <div v-else>
       <EventCard 
-        v-for="event in events" 
+        v-for="event in props.events" 
         :key="event.id" 
         :event="event"
         @event-click="onEventClick"
@@ -15,19 +15,28 @@
   </div>
 </template>
 
-<script setup>
-import EventCard from './EventCard.vue';
+<script setup lang="ts">
+interface Props {
+  date?: Date
+  events?: EventDisplay[]
+}
 
-const props = defineProps({
-  events: {
-    type: Array,
-    default: () => []
-  }
+const dateString = computed(() => {
+  if (props.date.toLocaleDateString() === new Date().toLocaleDateString()) return '本日'
+  const year = props.date.getFullYear()
+  const month = props.date.getMonth() + 1
+  const date = props.date.getDate()
+  return `${year}年${month}月${date}日`
+})
+
+const props = withDefaults(defineProps<Props>(), {
+  date: () => new Date(),
+  events: () => []
 });
 
 const emit = defineEmits(['eventClick']);
 
-const onEventClick = (data) => {
+const onEventClick = (data: EventDisplay) => {
   emit('eventClick', data);
 };
 </script>

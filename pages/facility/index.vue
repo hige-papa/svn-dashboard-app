@@ -279,17 +279,6 @@ useHead({
   ]
 })
 
-// 型定義
-interface Facility {
-  id: string
-  code: string
-  name: string
-  description: string
-  capacity: number
-  category: string
-  imageUrl?: string
-}
-
 // リアクティブデータ
 const items = ref<Facility[]>([])
 const filteredItems = ref<Facility[]>([])
@@ -308,7 +297,7 @@ const notification = reactive({
 
 // 計算プロパティ
 const totalItems = computed(() => items.value.length)
-const totalCapacity = computed(() => items.value.reduce((sum, item) => sum + item.capacity, 0))
+const totalCapacity = computed(() => items.value.reduce((sum, item) => sum + (item.capacity ?? 0), 0))
 const categories = computed(() => [...new Set(items.value.map(item => item.category))])
 
 const totalPages = computed(() => Math.ceil(filteredItems.value.length / itemsPerPage))
@@ -984,8 +973,8 @@ onMounted(() => {
   opacity: 0;
 }
 @media (max-width: 768px) {
-  .page-container { padding: 12px; }
-  .container { border-radius: var(--radius-md); }
+  .page-container { padding: 0; }
+  .container { border-radius: 0; }
   .header { padding: 24px 20px; }
   .content { padding: 24px 20px; }
   .search-filter-section { flex-direction: column; align-items: stretch; gap: 16px; }

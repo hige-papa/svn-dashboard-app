@@ -204,23 +204,6 @@ useHead({
   ]
 })
 
-// 型定義
-interface EquipmentFormData {
-  name: string
-  code: string
-  description: string
-  capacity: number | null
-  category: string
-  imageUrl: string
-}
-
-interface EquipmentFormErrors {
-  name?: string
-  code?: string
-  capacity?: string
-  category?: string
-}
-
 const getCategories = async () => {
   console.log('Fetching categories...');
   return new Promise<string[]>(resolve => setTimeout(() => resolve(['会議室', '応接室']), 200));
@@ -237,6 +220,7 @@ const formData = reactive<EquipmentFormData>({
   capacity: null,
   category: '',
   imageUrl: '',
+  status: 'available',
 })
 
 const errors = reactive<EquipmentFormErrors>({})
@@ -700,8 +684,8 @@ onMounted(async () => {
   opacity: 0;
 }
 @media (max-width: 768px) {
-  .page-container { padding: 12px; }
-  .container { border-radius: var(--radius-md); }
+  .page-container { padding: 0; }
+  .container { border-radius: 0; }
   .header { padding: 24px 20px; }
   .form-content { padding: 24px 16px; }
   .form-section { padding: 20px 16px; }

@@ -2,32 +2,18 @@
   <!-- {{ props.weekDays }} -->
   <!-- {{ props.visibleUsers }} -->
   <!-- {{ props.events }} -->
-  <div class="calendar-container">
-    <div class="user-column">
-      <div class="user-header">メンバー</div>
-      <div class="user-list">
-        <div 
-          v-for="user in visibleUsers" 
-          :key="user.uid"
-          class="user-row"
-        >
-          <div :class="['user-icon', user.color]">{{ user.initial }}</div>
-          <div class="user-name">{{ user.displayName }}</div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="calendar-grid-wrapper">
-      <div class="calendar-header">
-        <div class="days-row">
-          <div 
+  <div class="calendar-container w-100">
+    <v-table>
+      <thead>
+        <tr>
+          <td class="day-header">メンバー</td>
+          <td
             v-for="day in weekDays" 
             :key="`${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`"
             :class="[
               'day-header', 
               { 'today-header': isToday(day) }
-            ]"
-          >
+            ]">
             <div 
               :class="[
                 'day-name', 
@@ -40,27 +26,27 @@
               {{ getDayOfWeek(day) }}曜日
             </div>
             <div class="day-date">{{ formatShortDate(day) }}</div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="calendar-body">
-        <div class="schedule-grid">
-          <div 
-            v-for="user in visibleUsers" 
-            :key="user.uid"
-            class="schedule-row"
-          >
-            <div 
-              v-for="day in weekDays" 
-              :key="`${user.uid}-${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`"
-              :class="['day-cell', { 'today-cell': isToday(day) }]"
-            >
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="user in visibleUsers" 
+          :key="user.uid"
+          class="schedule-row"
+        >
+          <td class="user-cell">
+            <div class="user-name">{{ user.displayName }}</div>
+          </td>
+          <td
+            v-for="day in weekDays" 
+            :key="`${user.uid}-${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`"
+            :class="['day-cell', { 'today-cell': isToday(day) }]">
               <div 
                 v-for="(event, index) in getVisibleEvents(getUserEventsForDay(user.uid, day))" 
                 :key="event.id"
-                :class="['event', `event-type-${(event.userId || index % 5) + 1}`]"
-                :style="{ top: `${10 + (index * 28)}px` }"
+                :class="['event', 'event-type']"
+                :style="{ top: `${10 + (index * 28)}px`, '--event-color': `${eventTypeDetails[event.eventType]?.color}` }"
                 @click="onEventClick($event, event)"
               >
                 <span class="event-time">{{ event.startTime }}</span>
@@ -73,17 +59,17 @@
               >
                 +{{ getUserEventsForDay(user.uid, day).length - 2 }}件
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+          </td>
+        </tr>
+      </tbody>
+    </v-table>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue';
 import { useCalendar } from '~/composables/useCalendar';
+import { useConstants } from '~/composables/common/useConstants'
 
 const props = defineProps({
   users: {
@@ -100,7 +86,9 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['eventClick']);
+const emit = defineEmits(['eventClick', 'selectDay']);
+
+const { eventTypeDetails } = useConstants()
 
 const { 
   getDayOfWeek, 
@@ -160,6 +148,10 @@ const getVisibleEvents = (events) => {
 const onEventClick = (event, eventData) => {
   emit('eventClick', { event, eventData });
 };
+
+const handleSelectDay = (events) => {
+  emit('selectDay', events)
+}
 </script>
 
 <style scoped>
@@ -168,7 +160,7 @@ const onEventClick = (event, eventData) => {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   overflow: hidden;
-  height: 600px; /* 高さを増加 */
+  /* height: 600px; */
   width: 100%; /* 幅を100%に設定 */
 }
 
@@ -176,6 +168,15 @@ const onEventClick = (event, eventData) => {
   width: 180px; /* 少し幅を減らす */
   min-width: 120px;
   border-right: 1px solid var(--border-color);
+}
+
+.user-cell {
+  flex: 1;
+  vertical-align: middle;
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  max-width: 176.5px;
+  overflow: hidden;
 }
 
 .user-header {
@@ -247,16 +248,18 @@ const onEventClick = (event, eventData) => {
 }
 
 .day-header {
-  flex: 1;
+  /* flex: 1; */
   height: 60px;
   background-color: var(--background-light);
   border-right: 1px solid var(--border-color);
   border-bottom: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 0;
+  /* display: flex; */
+  /* flex-direction: column; */
+  /* align-items: center; */
+  /* justify-content: center; */
+  /* padding: 8px 0; */
+  min-width: 110px;
+  text-align: center;
 }
 
 .day-header:last-child {
@@ -300,17 +303,21 @@ const onEventClick = (event, eventData) => {
 }
 
 .schedule-row {
-  display: flex;
+  /* display: flex; */
   height: 80px;
   min-height: 80px;
   width: 100%;
+  vertical-align: top;
 }
 
 .day-cell {
   flex: 1;
-  position: relative;
+  /* position: relative; */
   border-right: 1px solid var(--border-color);
   border-bottom: 1px solid var(--border-color);
+  min-width: 174.5px;
+  max-width: 174.5px;
+  overflow: hidden;
 }
 
 .day-cell:last-child {
@@ -326,15 +333,16 @@ const onEventClick = (event, eventData) => {
 }
 
 .event {
-  position: absolute;
-  height: 26px;
-  left: 4px;
-  right: 4px;
+  /* position: absolute; */
+  /* height: 26px; */
+  /* left: 4px; */
+  /* right: 4px; */
   border-radius: var(--radius-sm);
-  padding: 0 8px;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
+  margin-top: 5px;
+  padding: 4px 8px;
+  font-size: 11px;
+  /* display: flex; */
+  /* align-items: center; */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -363,8 +371,13 @@ const onEventClick = (event, eventData) => {
 }
 
 /* 日次・月次ビューと統一したイベントスタイル */
-.event-type-1 {
-  background-color: #e6f2ff; /* var(--event-1-bg) に近い色 */
+.event-type {
+  background-color: color-mix(in srgb, var(--event-color) 15%, #FFF);
+  border-left: 4px solid var(--event-color);
+  color: var(--event-color);
+}
+/* .event-type-1 {
+  background-color: #e6f2ff;
   border-left: 4px solid var(--primary-color);
   color: var(--text-primary);
 }
@@ -391,11 +404,11 @@ const onEventClick = (event, eventData) => {
   background-color: var(--event-5-bg);
   border-left: 4px solid var(--event-5);
   color: var(--text-primary);
-}
+} */
 
 @media (max-width: 768px) {
   .calendar-container {
-    height: 500px;
+    /* height: 500px; */
   }
   
   .user-column {
@@ -406,6 +419,10 @@ const onEventClick = (event, eventData) => {
   .user-name {
     font-size: 12px;
   }
+
+  .day-cell {
+    min-width: 110px;
+  }
   
   .day-name, .day-date {
     font-size: 12px;
@@ -413,11 +430,12 @@ const onEventClick = (event, eventData) => {
 }
 
 .more-events {
-  position: absolute;
+  /* position: absolute; */
   height: 26px;
-  left: 4px;
-  right: 4px;
-  top: 65px;
+  /* left: 4px; */
+  /* right: 4px; */
+  /* top: 65px; */
+  margin-top: 5px;
   font-size: 11px;
   color: var(--primary-color);
   cursor: pointer;

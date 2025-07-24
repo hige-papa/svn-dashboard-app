@@ -8,6 +8,7 @@ declare global {
   type MonthlyType = 'date' | 'weekday';
   type ModalType = 'participant' | 'facility' | 'equipment' | null;
   type CalendarView = 'daily' | 'weekly' | 'monthly';
+  type EventType = 'meeting' | 'focus' | 'away' | 'other' | 'vacation' | 'normal';
 
   interface MasterItem {
     id: string;
@@ -46,6 +47,18 @@ declare global {
     equipments: string[];
     priority: 'low' | 'medium' | 'high';
     description: string;
+    /**
+     * イベント種別コード
+     */
+    eventType: EventType;
+    /**
+     * イベント種別名 (日本語表示用)
+     */
+    eventTypeName: string;
+    /**
+     * イベント種別のカラーコード
+     */
+    eventTypeColor: string;
   }
 
   interface EventData {
@@ -71,11 +84,27 @@ declare global {
     description?: string;
     priority: 'low' | 'medium' | 'high';
     participantIds?: string[];
+    participants: string[];
     facilityIds?: string[];
-    equipmentIds?: string[];
+    facilityIds: string[];
+    facilities: string[];
+    equipmentIds: string[];
+    equipments: string[];
     createdBy?: string;
     createdAt?: any;
     updatedAt?: any;
+    /**
+     * イベント種別コード
+     */
+    eventType: EventType;
+    /**
+     * イベント種別名 (日本語表示用)
+     */
+    eventTypeName: string;
+    /**
+     * イベント種別のカラーコード
+     */
+    eventTypeColor: string;
   }
 
   interface EventDisplay {
@@ -92,8 +121,12 @@ declare global {
     description?: string;
     priority: 'low' | 'medium' | 'high';
     participantIds?: string[];
+    participants: string[];
     facilityIds?: string[];
-    equipmentIds?: string[];
+    facilityIds: string[];
+    facilities: string[];
+    equipmentIds: string[];
+    equipments: string[];
     isRecurring?: boolean;
     masterId?: string;
     isException?: boolean;
@@ -101,6 +134,18 @@ declare global {
     isMultiDay?: boolean;
     isFirstDay?: boolean;
     isLastDay?: boolean;
+    /**
+     * イベント種別コード
+     */
+    eventType: EventType;
+    /**
+     * イベント種別名 (日本語表示用)
+     */
+    eventTypeName: string;
+    /**
+     * イベント種別のカラーコード
+     */
+    eventTypeColor: string;
   }
 
   interface RecurrenceRule {
@@ -129,8 +174,12 @@ declare global {
     location?: string;
     description?: string;
     participantIds?: string[];
+    participants: string[];
     facilityIds?: string[];
-    equipmentIds?: string[];
+    facilityIds: string[];
+    facilities: string[];
+    equipmentIds: string[];
+    equipments: string[];
     status: 'active' | 'cancelled' | 'deleted';
     createdAt?: any;
     updatedAt?: any;

@@ -204,23 +204,6 @@ useHead({
   ]
 })
 
-// 型定義
-interface EquipmentFormData {
-  name: string
-  code: string
-  description: string
-  capacity: number | null
-  category: string
-  imageUrl: string
-}
-
-interface EquipmentFormErrors {
-  name?: string
-  code?: string
-  capacity?: string
-  category?: string
-}
-
 const getCategories = async () => {
   console.log('Fetching categories...');
   return new Promise<string[]>(resolve => setTimeout(() => resolve(['会議室', '応接室']), 200));
@@ -230,16 +213,17 @@ const getCategories = async () => {
 const isEditMode = computed(() => !!route.params.id)
 const itemId = computed(() => route.params.id as string)
 
-const formData = reactive<EquipmentFormData>({
+const formData = reactive<FacilityFormData>({
   name: '',
   code: '',
   description: '',
   capacity: null,
   category: '',
   imageUrl: '',
+  status: 'available',
 })
 
-const errors = reactive<EquipmentFormErrors>({})
+const errors = reactive<FacilityFormErrors>({})
 const isLoading = ref(false)
 const previewImage = ref('')
 const fileInput = ref<HTMLInputElement>()
@@ -253,7 +237,7 @@ const notification = reactive({
 
 
 // 施設データの読み込み（編集時）
-const loadEquipment = async () => {
+const loadFacility = async () => {
   if (!isEditMode.value) return
   
   try {
@@ -287,7 +271,7 @@ const loadCategories = async () => {
 }
 
 // バリデーション
-const validateField = (fieldName: keyof EquipmentFormErrors) => {
+const validateField = (fieldName: keyof FacilityFormErrors) => {
   switch (fieldName) {
     case 'name':
       if (!formData.name.trim()) errors.name = '名称を入力してください'
@@ -307,7 +291,7 @@ const validateField = (fieldName: keyof EquipmentFormErrors) => {
 }
 
 const validateForm = (): boolean => {
-  Object.keys(errors).forEach(key => delete errors[key as keyof EquipmentFormErrors])
+  Object.keys(errors).forEach(key => delete errors[key as keyof FacilityFormErrors])
   validateField('name')
   validateField('code')
   validateField('category')
@@ -315,7 +299,7 @@ const validateForm = (): boolean => {
   return Object.keys(errors).length === 0
 }
 
-const clearError = (fieldName: keyof EquipmentFormErrors) => {
+const clearError = (fieldName: keyof FacilityFormErrors) => {
   if (errors[fieldName]) delete errors[fieldName]
 }
 
@@ -397,7 +381,7 @@ const showNotification = (message: string, type: 'success' | 'error' = 'success'
 onMounted(async () => {
   await loadCategories()
   if (isEditMode.value) {
-    await loadEquipment()
+    await loadFacility()
   }
 })
 </script>
@@ -700,8 +684,8 @@ onMounted(async () => {
   opacity: 0;
 }
 @media (max-width: 768px) {
-  .page-container { padding: 12px; }
-  .container { border-radius: var(--radius-md); }
+  .page-container { padding: 0; }
+  .container { border-radius: 0; }
   .header { padding: 24px 20px; }
   .form-content { padding: 24px 16px; }
   .form-section { padding: 20px 16px; }

@@ -25,7 +25,38 @@
             >
             <div v-if="errors.eventTitle" class="form-error">{{ errors.eventTitle }}</div>
           </div>
-
+          
+          <div class="form-group">
+            <label class="form-label">
+              <i class="mdi mdi-tag-outline icon"></i>
+              予定種別
+              <span class="required">*</span>
+            </label>
+            <div class="event-type-options">
+              <div 
+                v-for="(type, key) in eventTypeDetails" 
+                :key="key" 
+                class="event-type-option"
+              >
+                <input 
+                  :id="`eventType-${key}`" 
+                  v-model="formData.eventType"
+                  type="radio" 
+                  name="eventType" 
+                  :value="key" 
+                  class="event-type-radio"
+                >
+                <label 
+                  :for="`eventType-${key}`" 
+                  class="event-type-label"
+                  :style="{ '--event-type-color': type.color }"
+                >
+                  <span class="event-type-color-dot"></span>
+                  {{ type.name }}
+                </label>
+              </div>
+            </div>
+          </div>
           <div class="form-group">
             <label class="form-label">
               <i class="mdi mdi-calendar-multiple icon"></i>
@@ -703,7 +734,9 @@
                     </div>
                   </div>
                   <span>
-                    <v-btn variant="text" color="primary" @click="viewUsageStatus(item)" :disabled="!formData.date">使用状況を確認</v-btn>
+                    <v-btn variant="text" color="primary" @click="viewUsageStatus(item)" :disabled="!formData.date">
+                      {{ modalType === 'participant' ? '予定を確認' : '使用状況を確認' }}
+                    </v-btn>
                   </span>
                 </label>
               </div>
@@ -722,12 +755,13 @@
     </Teleport>
 
     <v-dialog v-model="dialog" :width="mobile ? '100%' : '50%'">
-      <v-card>
-        <v-card-title>
-          <v-list-item :title="formData.date"></v-list-item>
-          <v-list-item :title="selected?.name"></v-list-item>
-        </v-card-title>
-        <v-card-text>
+      <v-card rounded="lg">
+        <v-toolbar density="compact" class="position-fixed top-0" style="z-index: 5000;">
+          <span class="ml-3">{{ `「${selected?.name}」の${formData.date}の予定` }}</span>
+          <v-spacer></v-spacer>
+          <v-icon icon="mdi-close" class="mr-3" @click="dialog=false" size="small"></v-icon>
+        </v-toolbar>
+        <v-card-text class="mt-10">
           <DailyTimeline :events="events" :time-slots="timeSlots" :date="date"
               :time-to-pixels="timeToPixels" @event-click="() => {}" />
         </v-card-text>
@@ -745,13 +779,15 @@
 
 <script setup lang="ts">
 import type { User } from 'firebase/auth'
-import { ref, reactive, onMounted, nextTick, computed, watch } from 'vue'
 import { useMaster } from '~/composables/master/useMaster'
 import { useFacility } from '~/composables/useFacility'
 import { useEquipment } from '~/composables/useEquipment'
 import { useCalendar } from '~/composables/useCalendar';
 import { useEventService } from '~/services/eventService'
+import { useConstants } from '~/composables/common/useConstants'
 import { useDisplay } from 'vuetify'
+
+const { eventTypeDetails } = useConstants()
 
 const user = useState<User>('user')
 
@@ -762,15 +798,58 @@ const { getListAsync: getUsersAsync } = useMaster('users')
 const { getListAsync: getFacilitiesAsync } = useFacility()
 const { getListAsync: getEquipmentsAsync } = useEquipment()
 const { timeToPixels, timeSlots } = useCalendar();
-const { getEventsByEquipmentInRange, getEventsByFacilityInRange } = useEventService();
+const { getEventsByParticipantInRange, getEventsByEquipmentInRange, getEventsByFacilityInRange } = useEventService();
 
 interface Props {
   initialData?: EventFormData
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  initialData: () => ({
+  // initialData: () => ({
+  //   title: '',
+  //   dateType: 'single',
+  //   date: '',
+  //   startDate: '',
+  //   endDate: '',
+  //   recurringStartDate: '',
+  //   recurringPattern: 'weekly',
+  //   selectedWeekdays: [],
+  //   monthlyType: 'date',
+  //   monthlyDate: 1,
+  //   monthlyWeek: '1',
+  //   monthlyWeekday: 1,
+  //   recurringEndType: 'never',
+  //   recurringEndDate: '',
+  //   recurringCount: 10,
+  //   startTime: '',
+  //   endTime: '',
+  //   location: '',
+  //   participantIds: [],
+  //   participants: [],
+  //   facilityIds: [],
+  //   facilities: [],
+  //   equipmentIds: [],
+  //   equipments: [],
+  //   priority: 'medium',
+  //   description: ''
+  // })
+})
+
+const weekDays = ['日', '月', '火', '水', '木', '金', '土']
+
+useHead({
+  title: 'TASCAL - 予定登録',
+  meta: [
+    { name: 'description', content: 'TASCALシステムで新しい予定を登録できます' }
+  ],
+  link: [
+    { rel: 'stylesheet', href: 'https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/7.2.96/css/materialdesignicons.min.css' }
+  ]
+})
+
+const formData = reactive<EventFormData>({
     title: '',
+    eventType: 'normal', // ◀◀◀ 追加
     dateType: 'single',
     date: '',
     startDate: '',
@@ -795,27 +874,14 @@ const props = withDefaults(defineProps<Props>(), {
     equipmentIds: [],
     equipments: [],
     priority: 'medium',
-    description: ''
+    description: '',
+    eventTypeColor: '',
+    eventTypeName: '',
   })
-})
-
-const weekDays = ['日', '月', '火', '水', '木', '金', '土']
-
-useHead({
-  title: 'TASCAL - 予定登録',
-  meta: [
-    { name: 'description', content: 'TASCALシステムで新しい予定を登録できます' }
-  ],
-  link: [
-    { rel: 'stylesheet', href: 'https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/7.2.96/css/materialdesignicons.min.css' }
-  ]
-})
-
-const formData = reactive<EventFormData>({ ...props.initialData })
-const errors = reactive<EventFormErrors>({})
+const errors = reactive<any>({})
 const isLoading = ref(false)
-const conflicts = ref<EventFormConflict[]>([])
-const notification = reactive<EventFormNotification>({ show: false, message: '', type: 'success' })
+const conflicts = ref<any[]>([])
+const notification = reactive<any>({ show: false, message: '', type: 'success' })
 
 const showModal = ref(false)
 const modalType = ref<ModalType>(null)
@@ -844,30 +910,47 @@ const filteredItems = computed(() => {
 
 const setDefaultValues = (form?: EventFormData) => {
   const defaults = {
-    title: '', dateType: 'single', date: '', startDate: '', endDate: '', recurringStartDate: '',
-    recurringPattern: 'weekly', selectedWeekdays: [], monthlyType: 'date', monthlyDate: 1,
-    monthlyWeek: '1', monthlyWeekday: 1, recurringEndType: 'never', recurringEndDate: '',
-    recurringCount: 10, startTime: '', endTime: '', location: '', participantIds: [],
-    participants: [], facilityIds: [], equipmentIds: [], priority: 'medium', description: ''
+    title: '', eventType: 'normal', dateType: 'single', date: '', startDate: '', endDate: '',
+    recurringStartDate: '', recurringPattern: 'weekly', selectedWeekdays: [], monthlyType: 'date',
+    monthlyDate: 1, monthlyWeek: '1', monthlyWeekday: 1, recurringEndType: 'never',
+    recurringEndDate: '', recurringCount: 10, startTime: '', endTime: '', location: '',
+    participantIds: [], participants: [], facilityIds: [], equipmentIds: [],
+    priority: 'medium', description: ''
   };
   Object.assign(formData, defaults, form);
-  
+
   if (!form) {
-    const now = new Date()
-    const today = now.toISOString().split('T')[0]
-    formData.date = today
-    formData.startDate = today
-    formData.endDate = today
-    formData.recurringStartDate = today
+    const now = new Date();
+
+    // ローカルタイムゾーンでYYYY-MM-DD形式の文字列を生成
+    const toLocaleDateString = (date: Date) => {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
     
-    const startTime = new Date(now.getTime() + 60 * 60 * 1000)
-    const endTime = new Date(startTime.getTime() + 60 * 60 * 1000)
-    formData.startTime = startTime.toTimeString().slice(0, 5)
-    formData.endTime = endTime.toTimeString().slice(0, 5)
-    
-    const threeMonthsLater = new Date(now)
-    threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3)
-    formData.recurringEndDate = threeMonthsLater.toISOString().split('T')[0]
+    // ローカルタイムゾーンでHH:mm形式の文字列を生成
+    const toLocaleTimeString = (date: Date) => {
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
+    };
+
+    const today = toLocaleDateString(now);
+    formData.date = today;
+    formData.startDate = today;
+    formData.endDate = today;
+    formData.recurringStartDate = today;
+
+    const startTime = new Date(now.getTime() + 60 * 60 * 1000);
+    const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+    formData.startTime = toLocaleTimeString(startTime);
+    formData.endTime = toLocaleTimeString(endTime);
+
+    const threeMonthsLater = new Date(now);
+    threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+    formData.recurringEndDate = toLocaleDateString(threeMonthsLater);
   }
 }
 
@@ -961,10 +1044,10 @@ const getConflictIcon = (type: string) => { /* ... */ }
 const getConflictTypeName = (type: string) => { /* ... */ }
 const formatDate = (date: string) => new Date(date).toLocaleDateString('ja-JP')
 
-const validateField = (fieldName: keyof EventFormErrors) => { /* ... */ }
+const validateField = (fieldName: keyof any) => { /* ... */ }
 const validateTimeFields = () => { /* ... */ }
 const validateForm = (): boolean => {
-  Object.keys(errors).forEach(key => delete errors[key as keyof EventFormErrors])
+  Object.keys(errors).forEach(key => delete errors[key as keyof any])
   validateField('eventTitle')
   switch (formData.dateType) {
     case 'single': validateField('eventDate'); break
@@ -974,7 +1057,7 @@ const validateForm = (): boolean => {
   validateTimeFields()
   return Object.keys(errors).length === 0
 }
-const clearError = (fieldName: keyof EventFormErrors) => { if (errors[fieldName]) delete errors[fieldName] }
+const clearError = (fieldName: keyof any) => { if (errors[fieldName]) delete errors[fieldName] }
 
 const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
   notification.message = message; notification.type = type; notification.show = true
@@ -992,7 +1075,8 @@ const handleSubmit = async () => {
     emit('submit', { ...formData })
     showNotification('予定が正常に保存されました！')
     resetForm()
-    back()
+    // back()
+    // navigateTo('/calendar')
   } catch (error) {
     console.error('保存エラー:', error)
     showNotification('保存に失敗しました', 'error')
@@ -1003,7 +1087,7 @@ const handleSubmit = async () => {
 
 const handleCancel = () => { if (confirm('入力内容が失われますが、よろしいですか？')) { resetForm(); back() } }
 const resetForm = () => {
-  Object.keys(errors).forEach(key => delete errors[key as keyof EventFormErrors])
+  Object.keys(errors).forEach(key => delete errors[key as keyof any])
   conflicts.value = []
   updateMasterConflicts()
   setDefaultValues()
@@ -1021,7 +1105,9 @@ const viewUsageStatus = async (item: MasterItem) => {
   if (item && formData.date) {
     selected.value = item
     date.value = new Date(`${formData.date}T00:00:00`)
-    if (modalType.value === 'facility') {
+    if (modalType.value === 'participant') {
+      events.value = await getEventsByParticipantInRange(item.id, formData.date, formData.date)
+    } else if (modalType.value === 'facility') {
       events.value = await getEventsByFacilityInRange(item.id, formData.date, formData.date)
     } else if (modalType.value === 'equipment') {
       events.value = await getEventsByEquipmentInRange(item.id, formData.date, formData.date)
@@ -1053,7 +1139,11 @@ onMounted(() => {
     }))
   })
   setDefaultValues(props.initialData)
-  formData.participantIds.push(user.value.uid)
+  // alert(JSON.stringify(props.initialData))
+  if (!props.initialData) {
+    formData.participantIds.push(user.value.uid)
+    formData.participants = participantsMaster.value.filter(p => formData.participantIds.includes(p.id)).map(p => p.name);
+  }
 })
 </script>
 
@@ -1162,6 +1252,54 @@ onMounted(() => {
   min-height: 100px;
   resize: vertical;
 }
+
+/* ▼▼▼ ここから追加 ▼▼▼ */
+.event-type-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.event-type-option {
+  position: relative;
+}
+.event-type-radio {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.event-type-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 14px;
+  font-weight: 500;
+}
+.event-type-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--event-type-color);
+}
+.event-type-label:hover {
+  border-color: var(--event-type-color);
+  background-color: color-mix(in srgb, var(--event-type-color) 10%, white);
+}
+.event-type-radio:checked + .event-type-label {
+  border-color: var(--event-type-color);
+  background-color: var(--event-type-color);
+  color: white;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--event-type-color) 40%, transparent);
+}
+.event-type-radio:checked + .event-type-label .event-type-color-dot {
+  background-color: white;
+}
+/* ▲▲▲ ここまで追加 ▲▲▲ */
+
 .date-type-options {
   display: flex;
   gap: 12px;
@@ -1716,12 +1854,15 @@ onMounted(() => {
   transform: scale(0.9);
 }
 @media (max-width: 768px) {
-  .page-container { padding: 12px; }
-  .container { border-radius: var(--radius-md); }
+  .page-container { padding: 0; }
+  .container { border-radius: 0; }
   .header { padding: 24px 20px; }
   .form-content { padding: 24px 20px; }
   .form-group.row { grid-template-columns: 1fr; gap: 24px; }
-  .date-type-options { flex-direction: column; }
+  .event-type-options, /* ◀◀◀ 追加 */
+  .date-type-options { 
+    flex-direction: column; 
+  }
   .time-inputs { grid-template-columns: 1fr; gap: 16px; }
   .time-separator { display: none; }
   .weekday-options { justify-content: space-between; }

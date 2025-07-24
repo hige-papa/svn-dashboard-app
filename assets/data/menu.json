@@ -73,5 +73,18 @@
         "path": "/maintenance"
       }
     ]
+  },
+  {
+    "id": "manual",
+    "title": "マニュアル",
+    "menu": [
+      {
+        "id": "開発者マニュアル",
+        "label": "開発者ガイド",
+        "icon": "mdi-book-open-variant-outline",
+        "isActive": false,
+        "path": "/manuals/developer-guide"
+      }
+    ]
   }
 ]

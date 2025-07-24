@@ -23,11 +23,13 @@
   --event-3: #00C2FF;
   --event-4: #34D399;
   --event-5: #F59E0B;
+  --event-6: var(--secondary-color);       /* #6c757d */
   --event-1-bg: #edf2ff; /* プライマリーライトと統一 */
   --event-2-bg: #FEECEC;
   --event-3-bg: #E6F8FF;
   --event-4-bg: #ECFDF5;
   --event-5-bg: #FEF3E6;
+  --event-6-bg: #e9ecef;                 /* --border-color と同じ薄いグレー */
   --radius: 4px;
   --radius-sm: 6px;
   --radius-md: 10px;

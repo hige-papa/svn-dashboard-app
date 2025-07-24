@@ -2,14 +2,20 @@
   <div class="header">
     <!-- <div class="app-title">TASCAL</div> -->
     <!-- <div class="app-title"></div> -->
-    <button class="today-btn" @click="navigateTo('/calendar/register')">
-      <i class="mdi mdi-pencil icon mr-2"></i>
-      予定登録
-    </button>
-    <button class="today-btn" @click="goToToday">
-      <i class="mdi mdi-calendar icon mr-2"></i>
-      今日
-    </button>
+     <v-list-item class="ma-0 pa-0">
+      <template v-slot:prepend>
+        <button class="today-btn" @click="navigateTo('/calendar/register')">
+          <i class="mdi mdi-pencil icon mr-2"></i>
+          予定登録
+        </button>
+      </template>
+      <template v-slot:append>
+        <button class="today-btn" @click="goToToday">
+          <i class="mdi mdi-calendar icon mr-2"></i>
+          今日
+        </button>
+      </template>
+     </v-list-item>
   </div>
 </template>
 
@@ -23,8 +29,8 @@ const goToToday = () => {
 
 <style scoped>
 .header {
-  display: flex;
-  justify-content: space-between;
+  /* display: flex; */
+  /* justify-content: space-between; */
   align-items: center;
   margin-bottom: 24px;
   padding-bottom: 16px;
