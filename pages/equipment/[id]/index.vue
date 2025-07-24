@@ -191,18 +191,6 @@ const route = useRoute()
 
 const { getAsync, deleteAsync } = useEquipment()
 
-// 型定義
-interface Equipment {
-  id: string
-  code: string
-  name: string
-  description: string
-  capacity: number
-  category: string
-  status: 'available' | 'in_use' | 'maintenance'
-  imageUrl?: string
-}
-
 // SEOメタタグ設定
 useHead({
   title: 'TASCAL - 備品詳細',
@@ -714,8 +702,8 @@ onMounted(async () => {
     margin-top: 1rem;
 }
 @media (max-width: 768px) {
-  .page-container { padding: 12px; }
-  .container { border-radius: var(--radius-md); }
+  .page-container { padding: 0; }
+  .container { border-radius: 0; }
   .header { padding: 24px 20px; }
   .content { padding: 24px 16px; }
   .profile-section { padding: 20px 16px; }

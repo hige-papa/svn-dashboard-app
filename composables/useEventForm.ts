@@ -18,7 +18,7 @@ interface ConflictCheckParams {
 }
 
 export const useEventForm = (initialData?: EventFormData) => {
-  const { createEvent, getEventsForConflictCheck } = useEventService()
+  const { createEvent } = useEventService()
   
   // フォームデータ
   const formData = reactive<EventFormData>({
@@ -45,12 +45,17 @@ export const useEventForm = (initialData?: EventFormData) => {
     facilityIds: [],
     equipmentIds: [],
     priority: 'low',
-    description: ''
+    description: '',
+    equipments: [],
+    facilities: [],
+    eventType: 'normal',
+    eventTypeName: '',
+    eventTypeColor: '',
   })
 
   // 状態管理
-  const errors = reactive<EventFormErrors>({})
-  const conflicts = ref<EventFormConflict[]>([])
+  const errors = reactive<any>({})
+  const conflicts = ref<any[]>([])
   const isLoading = ref(false)
   const isCheckingConflicts = ref(false)
 
@@ -106,7 +111,7 @@ export const useEventForm = (initialData?: EventFormData) => {
   }
 
   // バリデーション
-  const validateField = (fieldName: keyof EventFormErrors) => {
+  const validateField = (fieldName: keyof any) => {
     switch (fieldName) {
       case 'eventTitle':
         if (!formData.title.trim()) {
@@ -153,7 +158,7 @@ export const useEventForm = (initialData?: EventFormData) => {
   const validateForm = (): boolean => {
     // エラーをクリア
     Object.keys(errors).forEach(key => {
-      delete errors[key as keyof EventFormErrors]
+      delete errors[key as keyof any]
     })
 
     // 必須フィールドチェック
@@ -184,7 +189,7 @@ export const useEventForm = (initialData?: EventFormData) => {
     return Object.keys(errors).length === 0
   }
 
-  const clearError = (fieldName: keyof EventFormErrors) => {
+  const clearError = (fieldName: keyof any) => {
     if (errors[fieldName]) {
       delete errors[fieldName]
     }
@@ -205,16 +210,16 @@ export const useEventForm = (initialData?: EventFormData) => {
         return
       }
 
-      // 既存イベントを取得
-      const existingEvents = await getEventsForConflictCheck(dateRange)
+      // // 既存イベントを取得
+      // const existingEvents = await getEventsForConflictCheck(dateRange)
       
-      // 競合チェック実行
-      const foundConflicts = await performConflictCheck({
-        formData,
-        existingEvents
-      })
+      // // 競合チェック実行
+      // const foundConflicts = await performConflictCheck({
+      //   formData,
+      //   existingEvents
+      // })
       
-      conflicts.value = foundConflicts
+      // conflicts.value = foundConflicts
       
     } catch (error) {
       console.error('競合チェックエラー:', error)
@@ -251,8 +256,8 @@ export const useEventForm = (initialData?: EventFormData) => {
   }
 
   // 実際の競合チェック処理
-  const performConflictCheck = async (params: ConflictCheckParams): Promise<EventFormConflict[]> => {
-    const foundConflicts: EventFormConflict[] = []
+  const performConflictCheck = async (params: ConflictCheckParams): Promise<any[]> => {
+    const foundConflicts: any[] = []
     const timeSlots = generateTimeSlots(params.formData)
     
     for (const slot of timeSlots) {
@@ -390,8 +395,8 @@ export const useEventForm = (initialData?: EventFormData) => {
       equipmentIds?: string[]
     }>,
     excludeEventId?: string
-  ): EventFormConflict[] => {
-    const slotConflicts: EventFormConflict[] = []
+  ): any[] => {
+    const slotConflicts: any[] = []
     
     // 同日の既存イベントをフィルタ
     const eventsOnDate = existingEvents.filter(event => 
@@ -517,7 +522,7 @@ export const useEventForm = (initialData?: EventFormData) => {
   // フォームリセット
   const resetForm = () => {
     Object.keys(errors).forEach(key => {
-      delete errors[key as keyof EventFormErrors]
+      delete errors[key as keyof any]
     })
     
     conflicts.value = []

@@ -919,11 +919,11 @@ onMounted(async () => {
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
   .page-container {
-    padding: 12px;
+    padding: 0;
   }
   
   .container {
-    border-radius: var(--radius-md);
+    border-radius: 0;
   }
   
   .header {

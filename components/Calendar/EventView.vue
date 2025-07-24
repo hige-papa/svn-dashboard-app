@@ -67,7 +67,7 @@
                 <div v-if="eventData.dateType === 'recurring'" class="datetime-recurring">
                   <div class="datetime-item">
                     <div class="datetime-label">開始日</div>
-                    <div class="datetime-value">{{ formatDate(eventData.recurringStartDate ?? '') }}</div>
+                    <div class="datetime-value">{{ formatDate(eventData.startDate ?? '') }}</div>
                   </div>
                   <div class="datetime-item">
                     <div class="datetime-label">時間</div>
@@ -263,8 +263,6 @@
 </template>
 
 <script setup lang="ts">
-import type { Timestamp } from 'firebase/firestore'
-import { ref, reactive, computed } from 'vue'
 import { useFacility } from '~/composables/useFacility'
 import { useEquipment } from '~/composables/useEquipment'
 
@@ -302,9 +300,9 @@ const notification = reactive({
 })
 
 // マスタデータ（実際はAPIから取得またはpropsで受け取る）
-const facilitiesMaster = ref([])
+const facilitiesMaster = ref<MasterItem[]>([])
 
-const equipmentMaster = ref([])
+const equipmentMaster = ref<MasterItem[]>([])
 
 // ヘルパー関数
 const formatDate = (dateStr: string) => {
@@ -407,11 +405,13 @@ const emit = defineEmits<{
   (event: 'edit', data: EventData): void
   (event: 'delete', id: string): void
   (event: 'copy', data: EventData): void
+  (event: 'back'): void
 }>()
 
 // アクション関数
 const handleBack = () => {
-  back()
+  // back()
+  emit('back')
 }
 
 const handleEdit = () => {
@@ -463,14 +463,14 @@ onMounted(() => {
   color: var(--text-primary);
   line-height: 1.6;
   min-height: 100vh;
-  padding: 24px;
+  /* padding: 24px; */
 }
 
 .container {
   max-width: 900px;
   margin: 0 auto;
   background-color: var(--background-white);
-  border-radius: var(--radius-lg);
+  /* border-radius: var(--radius-lg); */
   box-shadow: var(--shadow-md);
   overflow: hidden;
 }
@@ -923,11 +923,11 @@ onMounted(() => {
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
   .page-container {
-    padding: 12px;
+    padding: 0;
   }
   
   .container {
-    border-radius: var(--radius-md);
+    /* border-radius: var(--radius-md); */
   }
   
   .header {

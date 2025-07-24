@@ -3,7 +3,7 @@
         <v-container class="h-100">
             <v-row>
                 <v-col cols="6" sm="2" v-for="(m, index) in menu" :key="`menu-${index}`">
-                    <v-btn height="150px" class="w-100" @click="goTo(m.path)" stacked>
+                    <v-btn height="140px" class="w-100" @click="goTo(m.path)" stacked>
                         <template v-slot:prepend>
                             <v-icon color="primary" :icon="m.icon"></v-icon>
                         </template>
@@ -79,5 +79,11 @@ const goTo = (path: string) => {
 .card {
     color: white;
     background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+}
+
+@media (max-width: 768px) {
+    .page-container {
+        padding: 8px;
+    }
 }
 </style>

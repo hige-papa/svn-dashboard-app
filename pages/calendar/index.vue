@@ -43,10 +43,10 @@
     <div v-if="currentView === 'daily'" class="daily-view">
       <h2 class="view-title">デイリースケジュール</h2>
 
-      <DailyTimeline :events="currentDayEvents" :time-slots="timeSlots" :date="currentDate"
-        :time-to-pixels="timeToPixels" @event-click="showEventDetails" />
+      <DailyTimeline :events="myCurrentDayEvents" :time-slots="timeSlots" :date="currentDate"
+        :time-to-pixels="timeToPixels" @event-click="handleShowEventDetails" />
 
-      <EventsList :events="currentDayEvents" @event-click="showEventDetails" />
+      <!-- <EventsList :events="currentDayEvents" @event-click="handleShowEventDetails" /> -->
     </div>
 
     <!-- 週間ビュー -->
@@ -55,20 +55,25 @@
 
       <!-- WeeklyCalendarViewコンポーネントを使用 -->
       <WeeklyCalendarView :users="users" :week-days="weekDays" :events="events"
-        :get-user-schedules-for-day="getUserSchedulesForDay" @event-click="showEventDetails" />
+        :get-user-schedules-for-day="getUserSchedulesForDay" @event-click="handleShowEventDetails" />
     </div>
 
     <!-- 月間ビュー -->
-    <div v-else-if="currentView === 'monthly'" class="monthly-view">
+    <div v-else-if="currentView === 'monthly'" class="monthly-view pa-1">
       <h2 class="view-title">月間カレンダー</h2>
 
-      <WeekdayHeader />
+      <!-- <WeekdayHeader /> -->
 
-      <CalendarGrid :calendar-days="calendarDays" :selected-date="selectedDate" :events="events"
+      <CalendarGrid v-if="selectedDate && events" :calendar-days="calendarDays" :selected-date="selectedDate" :events="myEvents"
         :get-schedules-for-day="getSchedulesForDay" :is-holiday="isHoliday" :get-holiday-name="getHolidayName"
-        @day-click="handleDayClick" @event-click="showEventDetails" />
+        @day-click="handleDayClick" @event-click="handleShowEventDetails" />
 
-      <SelectedDayDetail :selected-date="selectedDate" :events="selectedDayEvents" @event-click="showEventDetails" />
+      <!-- <SelectedDayDetail v-if="selectedDate" :selected-date="selectedDate" :events="selectedDayEvents" @event-click="handleShowEventDetails" /> -->
+    </div>
+
+    <div>
+      <EventsList v-if="currentView === 'daily'" :date="currentDate ?? new Date()" :events="myCurrentDayEvents" @event-click="handleShowEventDetails" />
+      <EventsList v-else-if="currentView === 'monthly' && selectedDate" :date="selectedDate ?? new Date()" :events="mySelectedDayEvents" @event-click="handleShowEventDetails" />
     </div>
 
     <!-- フッター -->
@@ -77,14 +82,33 @@
     </div>
 
     <!-- イベント詳細ポップアップ -->
-    <EventDetail v-if="showDetail" :event="selectedEvent" :visible="showDetail" :position="detailPosition"
-      @close="hideEventDetails" />
+    <!-- <EventDetail v-if="showDetail" :event="selectedEvent" :visible="showDetail" :position="detailPosition"
+      @close="hideEventDetails" /> -->
+
+    <v-dialog v-model="eventDetailDialog" :width="mobile ? '100%' : '50%'">
+      <EventDetail v-if="selectedEvent" :event="selectedEvent" @close="handleCloseEventDetails" @view="handleViewEvent" @edit="handleEditEvent" />
+    </v-dialog>
+
+    <v-dialog v-model="viewDialog" width="50%" :fullscreen="mobile">
+      <v-card>
+        <EventView v-if="eventData" :event-data="eventData" @edit="handleEditEvent" @delete="handleDelete" @copy="handleCopy" @back="handleCloseView" />
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import { useCalendar } from '~/composables/useCalendar';
+import { useDisplay } from 'vuetify'
+import { useTransaction } from '~/composables/transaction/useTransaction'
+import type { User } from 'firebase/auth';
+
+const user = useState<User>('user')
+
+const { getAsync, deleteAsync } = useTransaction('events')
+
+const { mobile } = useDisplay()
 
 // コンポーネントのインポート
 // import CalendarHeader from '~/components/CalendarHeader.vue';
@@ -141,16 +165,28 @@ const {
 } = useCalendar();
 
 // イベント詳細表示用の状態
-const showDetail = ref(false);
-const selectedEvent = ref(null);
-const detailPosition = ref({ top: 0, left: 0 });
+// const showDetail = ref<boolean>(false);
+// const selectedEvent = ref<EventDisplay | null>(null);
+// const detailPosition = ref<{ top: number, left: number }>({ top: 0, left: 0 });
 
 // 各ビュー用のローカルイベントデータ
-const currentDayEvents = ref([]);
-const selectedDayEvents = ref([]);
+const currentDayEvents = ref<EventDisplay[]>([]);
+const selectedDayEvents = ref<EventDisplay[]>([]);
+
+const myCurrentDayEvents = computed(() => {
+  return currentDayEvents.value.filter(e => { return e.participantIds?.includes(user.value?.uid) })
+})
+
+const myEvents = computed(() => {
+  return events.value.filter(e => { return e.participantIds?.includes(user.value?.uid) })
+})
+
+const mySelectedDayEvents = computed(() => {
+  return selectedDayEvents.value.filter(e => { return e.participantIds?.includes(user.value?.uid) })
+})
 
 // タブ状態を保存する関数
-const saveViewToStorage = (view) => {
+const saveViewToStorage = (view: CalendarView) => {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.setItem(CALENDAR_VIEW_STORAGE_KEY, view);
@@ -161,10 +197,10 @@ const saveViewToStorage = (view) => {
 };
 
 // タブ状態を読み込む関数
-const loadViewFromStorage = () => {
+const loadViewFromStorage = (): CalendarView => {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
-      const savedView = localStorage.getItem(CALENDAR_VIEW_STORAGE_KEY);
+      const savedView = localStorage.getItem(CALENDAR_VIEW_STORAGE_KEY) as CalendarView;
       if (savedView && ['daily', 'weekly', 'monthly'].includes(savedView)) {
         return savedView;
       }
@@ -292,16 +328,16 @@ const calendarDays = computed(() => {
 });
 
 // 日付選択ハンドラ（月間ビュー用）
-const handleDayClick = async (date) => {
+const handleDayClick = async (date: Date) => {
   selectDay(date);
   await updateSelectedDayEvents();
 };
 
 // ビューの切り替え
-const switchView = async (view) => {
+const switchView = async (view: CalendarView) => {
   if (isLoading.value) return; // ローディング中は無効
 
-  showDetail.value = false;
+  // showDetail.value = false;
   await setView(view);
 
   // ビュー切り替え後のデータ更新
@@ -318,7 +354,7 @@ const switchView = async (view) => {
 const handlePrevious = async () => {
   if (isLoading.value) return; // ローディング中は無効
 
-  showDetail.value = false;
+  // showDetail.value = false;
 
   if (currentView.value === 'daily') {
     await previousDay();
@@ -341,7 +377,7 @@ const handlePrevious = async () => {
 const handleNext = async () => {
   if (isLoading.value) return; // ローディング中は無効
 
-  showDetail.value = false;
+  // showDetail.value = false;
 
   if (currentView.value === 'daily') {
     await nextDay();
@@ -364,7 +400,7 @@ const handleNext = async () => {
 const handleGoToToday = async () => {
   if (isLoading.value) return; // ローディング中は無効
 
-  showDetail.value = false;
+  // showDetail.value = false;
   await goToToday();
 
   // イベントデータを更新
@@ -377,47 +413,95 @@ const handleGoToToday = async () => {
   }
 };
 
+const eventDetailDialog = ref<boolean>(false)
+
+const selectedEvent = ref<EventDisplay | null>(null)
+
 // イベント詳細を表示
-const showEventDetails = (data) => {
+const handleShowEventDetails = (data: any) => {
   const { event, eventData } = data;
   selectedEvent.value = eventData;
 
-  const rect = event.currentTarget.getBoundingClientRect();
-
-  // スクロール位置を考慮
-  const scrollTop = window.scrollY || document.documentElement.scrollTop;
-  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-
-  // ポップアップの位置を調整（画面外にはみ出さないように）
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
-  const detailsWidth = 320;
-
-  let leftPos = rect.left + scrollLeft - 70;
-  let topPos = rect.bottom + scrollTop - 70;
-
-  // 右端にはみ出る場合は左側に表示
-  if (leftPos + detailsWidth > viewportWidth - 50) {
-    leftPos = viewportWidth - detailsWidth - 150;
-  }
-
-  // 下端にはみ出る場合は上側に表示
-  if (topPos + 300 > viewportHeight + scrollTop - 20) {
-    topPos = rect.top + scrollTop - 300 - 10;
-  }
-
-  detailPosition.value = {
-    top: topPos,
-    left: leftPos
-  };
-
-  showDetail.value = true;
-};
+  eventDetailDialog.value = true
+}
 
 // イベント詳細を非表示
-const hideEventDetails = () => {
-  showDetail.value = false;
+const handleCloseEventDetails = () => {
+  eventDetailDialog.value = false
 };
+
+// イベント詳細を表示
+// const showEventDetails = (data: any) => {
+//   const { event, eventData } = data;
+//   selectedEvent.value = eventData;
+
+//   const rect = event.currentTarget.getBoundingClientRect();
+
+//   // スクロール位置を考慮
+//   const scrollTop = window.scrollY || document.documentElement.scrollTop;
+//   const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+
+//   // ポップアップの位置を調整（画面外にはみ出さないように）
+//   const viewportWidth = window.innerWidth;
+//   const viewportHeight = window.innerHeight;
+//   const detailsWidth = 320;
+
+//   let leftPos = rect.left + scrollLeft - 70;
+//   let topPos = rect.bottom + scrollTop - 70;
+
+//   // 右端にはみ出る場合は左側に表示
+//   if (leftPos + detailsWidth > viewportWidth - 50) {
+//     leftPos = viewportWidth - detailsWidth - 150;
+//   }
+
+//   // 下端にはみ出る場合は上側に表示
+//   if (topPos + 300 > viewportHeight + scrollTop - 20) {
+//     topPos = rect.top + scrollTop - 300 - 10;
+//   }
+
+//   detailPosition.value = {
+//     top: topPos,
+//     left: leftPos
+//   };
+
+//   showDetail.value = true;
+// };
+
+// イベント詳細を非表示
+// const hideEventDetails = () => {
+//   showDetail.value = false;
+// };
+
+const viewDialog = ref<boolean>(false)
+
+const eventData = ref<EventData>()
+
+const handleViewEvent = (event: EventDisplay) => {
+  // alert(`view => ${JSON.stringify(event)}`)
+  getAsync(event.id).then(response  => {
+    eventData.value = response
+    viewDialog.value = true
+  })
+};
+
+const handleEditEvent = (event: EventDisplay | EventData) => {
+  // alert(`edit => ${JSON.stringify(event)}`)
+  if (event?.id) navigateTo(`/calendar/${event.id}/edit`);
+};
+
+const handleCloseView = () => {
+  viewDialog.value = false
+}
+
+const handleDelete = (id: string) => {
+  deleteAsync(id).then(_ => {
+    loadData()
+  })
+}
+
+const handleCopy = () => {
+
+}
 
 // エラーハンドリング用のwatcher
 watch(isLoading, (newValue, oldValue) => {
@@ -441,6 +525,12 @@ body {
   padding: 20px;
   color: var(--text-primary);
   line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 0;
+  }
 }
 </style>
 
@@ -498,6 +588,18 @@ body {
   font-weight: 600;
   margin-bottom: 16px;
   color: var(--text-primary);
+  display: flex;
+  align-items: center;
+}
+
+.view-title::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 20px;
+  background-color: var(--primary-color);
+  margin-right: 10px;
+  border-radius: 2px;
 }
 
 .nav-wrapper {

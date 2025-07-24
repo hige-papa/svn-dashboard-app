@@ -44,7 +44,8 @@
         class="event" 
         :style="{
           top: `${timeToPixels(event.startTime)}px`,
-          height: `${timeToPixels(event.endTime) - timeToPixels(event.startTime)}px`
+          height: `${timeToPixels(event.endTime) - timeToPixels(event.startTime)}px`,
+          '--event-color': `${eventTypeDetails[event.eventType]?.color}`
         }"
         @click="onEventClick($event, event)"
       >
@@ -80,7 +81,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
+import { useConstants } from '~/composables/common/useConstants'
 
 const props = defineProps({
   events: {
@@ -102,6 +103,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['eventClick']);
+
+const { eventTypeDetails } = useConstants()
 
 // 今日の日付かどうか
 const isToday = computed(() => {
@@ -238,8 +241,9 @@ onBeforeUnmount(() => {
   position: absolute;
   left: 8px;
   right: 8px;
-  background-color: #e6f2ff;
-  border-left: 4px solid var(--primary-color);
+  background-color: color-mix(in srgb, var(--event-color) 15%, #FFF);
+  border-left: 4px solid var(--event-color);
+  color: var(--event-color);
   box-shadow: var(--shadow-sm);
   border-radius: var(--radius-sm);
   padding: 10px 12px;
