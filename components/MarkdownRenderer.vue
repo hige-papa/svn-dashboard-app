@@ -260,6 +260,7 @@ watch(() => props.content, async () => {
 
 .markdown-renderer-wrapper .markdown-content-container :deep(.md-code-block) {
     background-color: rgb(var(--v-theme-surface-variant));
+    color: rgb(var(--v-theme-on-surface-variant)); /* 修正点：文字色を追加 */
     border: 1px solid rgb(var(--v-theme-outline));
     border-radius: 6px;
     padding: 1rem;
@@ -269,7 +270,8 @@ watch(() => props.content, async () => {
 
 .markdown-renderer-wrapper .markdown-content-container :deep(.md-code) {
     background-color: rgb(var(--v-theme-surface-variant));
-    color: rgb(var(--v-theme-primary));
+    /* ↓ この行の値を --v-theme-primary から変更 */
+    color: rgb(var(--v-theme-on-surface-variant));
     padding: 0.2rem 0.4rem;
     border-radius: 3px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
