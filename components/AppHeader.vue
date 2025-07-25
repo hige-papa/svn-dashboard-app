@@ -10,7 +10,7 @@ const state = useState<AppState>('appState')
 
 <template>
     <v-app-bar app>
-        <v-app-bar-nav-icon v-if="mobile" @click.stop="state.drawer = !state.drawer"></v-app-bar-nav-icon>
+        <v-app-bar-nav-icon @click.stop="state.drawer = !state.drawer"></v-app-bar-nav-icon>
         <v-icon @click="navigateTo('/')" icon="mdi-calendar-check-outline" class="ml-5" color="primary" size="x-large"></v-icon>
         <v-app-bar-title>
             <h3 class="title">TASCAL</h3>

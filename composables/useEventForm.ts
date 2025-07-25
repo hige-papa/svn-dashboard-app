@@ -51,6 +51,7 @@ export const useEventForm = (initialData?: EventFormData) => {
     eventType: 'normal',
     eventTypeName: '',
     eventTypeColor: '',
+    private: false
   })
 
   // 状態管理

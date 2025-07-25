@@ -46,11 +46,16 @@
                 v-for="(event, index) in getVisibleEvents(getUserEventsForDay(user.uid, day))" 
                 :key="event.id"
                 :class="['event', 'event-type']"
-                :style="{ top: `${10 + (index * 28)}px`, '--event-color': `${eventTypeDetails[event.eventType]?.color}` }"
-                @click="onEventClick($event, event)"
+                :style="{ top: `${10 + (index * 28)}px`, '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey' }"
+                @click="($event) => { if (isViewable(event)) { onEventClick($event, event) } }"
               >
-                <span class="event-time">{{ event.startTime }}</span>
-                <span class="event-title">{{ event.title }}</span>
+                <template v-if="isViewable(event)">
+                  <span class="event-time">{{ event.startTime }}</span>
+                  <span class="event-title">{{ event.title }}</span>
+                </template>
+                <template v-else>
+                  <span>予定あり</span>
+                </template>
               </div>
         
               <div 
@@ -66,27 +71,34 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { useCalendar } from '~/composables/useCalendar';
 import { useConstants } from '~/composables/common/useConstants'
+import type { User } from 'firebase/auth';
+
+const user = useState<User>('user')
 
 const props = defineProps({
   users: {
-    type: Array,
+    type: Array<ExtendedUserProfile>,
     required: true
   },
   weekDays: {
-    type: Array,
+    type: Array<Date>,
     required: true
   },
   events: {
-    type: Array,
+    type: Array<EventDisplay>,
     required: true
   }
 });
 
 const emit = defineEmits(['eventClick', 'selectDay']);
+
+const isViewable = (event: EventDisplay) => {
+  return event.private ? (event.participantIds?.includes(user.value.uid)) ?? false : true
+}
 
 const { eventTypeDetails } = useConstants()
 
@@ -97,11 +109,11 @@ const {
 
 // 表示するユーザー（visible=trueのもののみ）
 const visibleUsers = computed(() => {
-  return props.users.filter(user => user.visible);
+  return props.users.filter(u => u.visible);
 });
 
 // 今日かどうかを判定
-const isToday = (date) => {
+const isToday = (date: Date) => {
   const today = new Date();
   return date.getDate() === today.getDate() &&
          date.getMonth() === today.getMonth() &&
@@ -109,7 +121,7 @@ const isToday = (date) => {
 };
 
 // 特定のユーザーと日付のイベントを取得（propsのeventsを使用）
-const getUserEventsForDay = (userId, date) => {
+const getUserEventsForDay = (userId: string, date: Date) => {
   if (!props.events || !Array.isArray(props.events)) {
     return [];
   }
@@ -118,12 +130,12 @@ const getUserEventsForDay = (userId, date) => {
   
   return props.events.filter(event => {
     // ユーザーIDでフィルタリング
-    if (!event.participantIds.includes(userId)) {
+    if (!event.participantIds?.includes(userId)) {
       return false;
     }
     
     // 日付でフィルタリング
-    if (event.date === dateStr || event.startDate === dateStr) {
+    if (event.date === dateStr) {
       return true;
     }
     
@@ -140,16 +152,16 @@ const getUserEventsForDay = (userId, date) => {
 };
 
 // 各日ごとに表示するイベント（最初の2つまで）
-const getVisibleEvents = (events) => {
+const getVisibleEvents = (events: EventDisplay[]) => {
   return events.slice(0, 2);
 };
 
 // イベントクリック時のイベント
-const onEventClick = (event, eventData) => {
+const onEventClick = (event: Event, eventData: EventDisplay) => {
   emit('eventClick', { event, eventData });
 };
 
-const handleSelectDay = (events) => {
+const handleSelectDay = (events: EventDisplay[]) => {
   emit('selectDay', events)
 }
 </script>

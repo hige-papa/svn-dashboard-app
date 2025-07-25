@@ -666,7 +666,27 @@
               placeholder="予定の詳細情報や議題などを記入してください..."
             ></textarea>
           </div>
-          
+
+          <div class="form-group">
+            <label class="form-label">
+              <i class="mdi mdi-lock-outline icon"></i>
+              プライバシー設定
+            </label>
+            <div class="privacy-option">
+              <input 
+                id="private-event-checkbox"
+                v-model="formData.private"
+                type="checkbox" 
+                class="privacy-checkbox"
+              >
+              <label for="private-event-checkbox" class="privacy-label">
+                <span class="privacy-text">プライベート予定にする</span>
+                <p class="form-helper-text">
+                  チェックを入れると、他のユーザー（参加者を除く）にはあなたの予定が「予定あり」とだけ表示され、詳細は非公開になります。
+                </p>
+              </label>
+            </div>
+          </div>
           <div class="form-actions">
             <button type="button" @click="handleCancel" class="btn btn-secondary">
               <i class="mdi mdi-close icon"></i>
@@ -877,6 +897,7 @@ const formData = reactive<EventFormData>({
     description: '',
     eventTypeColor: '',
     eventTypeName: '',
+    private: false,
   })
 const errors = reactive<any>({})
 const isLoading = ref(false)
@@ -915,8 +936,9 @@ const setDefaultValues = (form?: EventFormData) => {
     monthlyDate: 1, monthlyWeek: '1', monthlyWeekday: 1, recurringEndType: 'never',
     recurringEndDate: '', recurringCount: 10, startTime: '', endTime: '', location: '',
     participantIds: [], participants: [], facilityIds: [], equipmentIds: [],
-    priority: 'medium', description: ''
-  };
+    priority: 'medium', description: '', private: false, equipments: [], eventTypeColor: '',
+    eventTypeName: '', facilities: []
+  } as EventFormData;
   Object.assign(formData, defaults, form);
 
   if (!form) {
@@ -1877,4 +1899,48 @@ onMounted(() => {
   .btn { justify-content: center; }
   .modal-container { max-height: 90vh; }
 }
+/* ▼▼▼ ここから追加 ▼▼▼ */
+.privacy-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background-color: var(--background-light);
+  border-radius: var(--radius-md);
+  border: 2px solid transparent;
+  transition: var(--transition);
+}
+
+.privacy-option:has(.privacy-checkbox:checked) {
+  border-color: var(--primary-color);
+  background-color: color-mix(in srgb, var(--primary-color) 8%, white);
+}
+
+.privacy-checkbox {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+}
+
+.privacy-label {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.privacy-text {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.form-helper-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+/* ▲▲▲ ここまで追加 ▲▲▲ */
 </style>

@@ -59,6 +59,10 @@ declare global {
      * イベント種別のカラーコード
      */
     eventTypeColor: string;
+    /**
+     * プライベート
+     */
+    private: boolean;
   }
 
   interface EventData {
@@ -105,6 +109,10 @@ declare global {
      * イベント種別のカラーコード
      */
     eventTypeColor: string;
+    /**
+     * プライベート
+     */
+    private: boolean;
   }
 
   interface EventDisplay {
@@ -146,6 +154,10 @@ declare global {
      * イベント種別のカラーコード
      */
     eventTypeColor: string;
+    /**
+     * プライベート
+     */
+    private: boolean;
   }
 
   interface RecurrenceRule {
