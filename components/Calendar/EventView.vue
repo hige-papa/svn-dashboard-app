@@ -1,6 +1,6 @@
 <template>
   <div class="page-container">
-    <div class="container">
+    <div v-if="isViewable" class="container">
       <div class="header">
         <h1 class="app-title">TASCAL</h1>
         <p class="page-subtitle">予定の詳細</p>
@@ -233,6 +233,11 @@
         </div>
       </div>
     </div>
+    <div v-else>
+      <v-container>
+        <v-alert type="warning" text="閲覧権限がありません"></v-alert>
+      </v-container>
+    </div>
 
     <Teleport to="body">
       <Transition name="modal">
@@ -278,6 +283,9 @@
 import { useFacility } from '~/composables/useFacility'
 import { useEquipment } from '~/composables/useEquipment'
 import { useConstants } from '~/composables/common/useConstants'
+import type { User } from 'firebase/auth';
+
+const user = useState<User>('user');
 
 const { back } = useRouter()
 
@@ -290,6 +298,10 @@ const props = defineProps<Props>()
 const { getListAsync: getFacilitiesAsync } = useFacility()
 const { getListAsync: getEquipmentsAsync } = useEquipment()
 const { eventTypeDetails } = useConstants()
+
+const isViewable = computed(() => {
+  return props.eventData.private ? (props.eventData.participantIds?.includes(user.value.uid)) ?? false : true
+})
 
 // 曜日定義
 const weekDays = ['日', '月', '火', '水', '木', '金', '土']
