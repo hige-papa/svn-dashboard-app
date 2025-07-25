@@ -18,6 +18,7 @@ interface ExtendedUserProfile extends UserProfile {
     calendar: boolean;
     system: boolean;
   };
+  visible: boolean;
   lastLogin?: string | Date | Timestamp;
   createdAt?: string | Date | Timestamp;
   updatedAt?: string | Date | Timestamp;

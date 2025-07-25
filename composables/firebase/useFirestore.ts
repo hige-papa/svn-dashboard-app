@@ -21,11 +21,12 @@ import {
     type DocumentData,
 } from 'firebase/firestore';
 import { useDocumentRoot } from '~/composables/firebase/useDocumentRoot'
+import type { User } from 'firebase/auth';
 
 export const useFirestore = () => {
     const firestore = useState<Firestore>('db');
 
-    const { userProfileRoot } = useDocumentRoot()
+    const user = useState<User>('user')
 
     const getCollection = (c: string) => {
         return collection(firestore.value, c);
@@ -167,6 +168,8 @@ export const useFirestore = () => {
     const setDocWithRefAsync = async (r: DocumentReference, d: any) => {
         d.createdAt = d.createdAt ? d.createdAt : serverTimestamp();
         d.updatedAt = serverTimestamp();
+        d.createBy = d.createBy ? d.createBy : user.value.displayName;
+        d.updatedBy = user.value.displayName;
         return setDoc(r, d)
             .then(_ => {
                 console.log(`success add to firebase firestore => ${r.path}:${r.id}`);
@@ -181,6 +184,8 @@ export const useFirestore = () => {
     const addDocAsync = async (c: string, d: any) => {
         d.createdAt = serverTimestamp();
         d.updatedAt = serverTimestamp();
+        d.createBy = d.createBy ? d.createBy : user.value.displayName;
+        d.updatedBy = user.value.displayName;
         return addDoc(collection(firestore.value, c), d)
             .then(response => {
                 console.log(`success add to firebase firestore => ${c}:${response.id}`);
@@ -195,6 +200,8 @@ export const useFirestore = () => {
     const addDocWithRefAsync = async (r: DocumentReference, d: any) => {
         d.createdAt = serverTimestamp();
         d.updatedAt = serverTimestamp();
+        d.createBy = d.createBy ? d.createBy : user.value.displayName;
+        d.updatedBy = user.value.displayName;
         return setDoc(r, d)
             .then(_ => {
                 console.log(`success add to firebase firestore => ${r.path}:${r.id}`);
@@ -212,6 +219,8 @@ export const useFirestore = () => {
             if (action.entity) {
                 action.entity.createdAt = serverTimestamp();
                 action.entity.updatedAt = serverTimestamp();
+                action.entity.createBy = action.entity.createBy ? action.entity.createBy : user.value.displayName;
+                action.entity.updatedBy = user.value.displayName;
                 batch.set(action.reference, action.entity);
             }
         }

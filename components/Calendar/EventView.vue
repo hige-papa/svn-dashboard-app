@@ -19,7 +19,13 @@
                 {{ getPriorityText(eventData.priority) }}
               </span>
             </div>
-          </div>
+            <div v-if="eventData.private" class="event-privacy">
+              <span class="privacy-badge">
+                <i class="mdi mdi-lock icon"></i>
+                プライベート予定
+              </span>
+            </div>
+            </div>
           <div class="event-actions">
             <button type="button" @click="handleEdit" class="btn btn-secondary">
               <i class="mdi mdi-pencil icon"></i>
@@ -33,7 +39,18 @@
         </div>
 
         <div class="event-details">
-          <!-- 日時情報 -->
+          <div v-if="eventData.eventType" class="detail-section">
+            <h3 class="section-title">
+              <i class="mdi mdi-tag-outline icon"></i>
+              予定種別
+            </h3>
+            <div class="detail-content">
+              <span class="event-type-badge" :style="{ '--event-type-color': eventTypeDetails[eventData.eventType]?.color }">
+                <span class="event-type-color-dot"></span>
+                {{ eventTypeDetails[eventData.eventType]?.name }}
+              </span>
+            </div>
+          </div>
           <div class="detail-section">
             <h3 class="section-title">
               <i class="mdi mdi-clock-outline icon"></i>
@@ -84,6 +101,10 @@
                       </span>
                     </div>
                   </div>
+                  <div v-if="eventData.recurringPattern === 'monthly'" class="datetime-item">
+                    <div class="datetime-label">詳細</div>
+                    <div class="datetime-value">{{ getMonthlyPatternText() }}</div>
+                  </div>
                   <div v-if="eventData.recurringEndType !== 'never'" class="datetime-item">
                     <div class="datetime-label">終了条件</div>
                     <div class="datetime-value">
@@ -96,7 +117,6 @@
             </div>
           </div>
 
-          <!-- 場所 -->
           <div v-if="eventData.location" class="detail-section">
             <h3 class="section-title">
               <i class="mdi mdi-map-marker icon"></i>
@@ -107,7 +127,6 @@
             </div>
           </div>
 
-          <!-- 参加者 -->
           <div v-if="eventData.participants && eventData.participants.length > 0" class="detail-section">
             <h3 class="section-title">
               <i class="mdi mdi-account-group icon"></i>
@@ -124,7 +143,6 @@
             </div>
           </div>
 
-          <!-- 施設 -->
           <div v-if="eventData.facilityIds && eventData.facilityIds.length > 0" class="detail-section">
             <h3 class="section-title">
               <i class="mdi mdi-office-building icon"></i>
@@ -144,7 +162,6 @@
             </div>
           </div>
 
-          <!-- 備品 -->
           <div v-if="eventData.equipmentIds && eventData.equipmentIds.length > 0" class="detail-section">
             <h3 class="section-title">
               <i class="mdi mdi-chair-rolling icon"></i>
@@ -164,7 +181,6 @@
             </div>
           </div>
 
-          <!-- メモ・説明 -->
           <div v-if="eventData.description" class="detail-section">
             <h3 class="section-title">
               <i class="mdi mdi-file-document-outline icon"></i>
@@ -175,7 +191,6 @@
             </div>
           </div>
 
-          <!-- 作成・更新情報 -->
           <div v-if="eventData.createdAt || eventData.updatedAt" class="detail-section">
             <h3 class="section-title">
               <i class="mdi mdi-information icon"></i>
@@ -200,7 +215,6 @@
           </div>
         </div>
 
-        <!-- アクションボタン -->
         <div class="view-actions">
           <button type="button" @click="handleBack" class="btn btn-secondary">
             <i class="mdi mdi-arrow-left icon"></i>
@@ -220,7 +234,6 @@
       </div>
     </div>
 
-    <!-- 削除確認モーダル -->
     <Teleport to="body">
       <Transition name="modal">
         <div v-if="showDeleteModal" class="modal-overlay" @click="closeDeleteModal">
@@ -252,7 +265,6 @@
       </Transition>
     </Teleport>
 
-    <!-- 通知 -->
     <Transition name="notification">
       <div v-if="notification.show" class="notification" :class="notification.type">
         <i :class="getNotificationIcon()" class="icon"></i>
@@ -265,6 +277,7 @@
 <script setup lang="ts">
 import { useFacility } from '~/composables/useFacility'
 import { useEquipment } from '~/composables/useEquipment'
+import { useConstants } from '~/composables/common/useConstants'
 
 const { back } = useRouter()
 
@@ -276,6 +289,7 @@ const props = defineProps<Props>()
 
 const { getListAsync: getFacilitiesAsync } = useFacility()
 const { getListAsync: getEquipmentsAsync } = useEquipment()
+const { eventTypeDetails } = useConstants()
 
 // 曜日定義
 const weekDays = ['日', '月', '火', '水', '木', '金', '土']
@@ -365,6 +379,26 @@ const getRecurringPatternText = (pattern: string) => {
 const getSelectedWeekdaysText = (selectedWeekdays: number[]) => {
   return selectedWeekdays.map(index => weekDays[index]).join('、')
 }
+
+// ▼▼▼ ここから追加 ▼▼▼
+const getMonthlyPatternText = () => {
+  if (props.eventData.monthlyType === 'date') {
+    return `毎月${props.eventData.monthlyDate}日`
+  }
+  if (props.eventData.monthlyType === 'weekday') {
+    const weekNum = {
+      '1': '第1',
+      '2': '第2',
+      '3': '第3',
+      '4': '第4',
+      '-1': '最終'
+    }[props.eventData.monthlyWeek ?? '1']
+    const day = weekDays[props.eventData.monthlyWeekday ?? 0]
+    return `毎月 ${weekNum}${day}曜日`
+  }
+  return ''
+}
+// ▲▲▲ ここまで追加 ▲▲▲
 
 const getFacilityName = (id: string) => {
   const facility = facilitiesMaster.value.find(f => f.id === id)
@@ -1009,4 +1043,42 @@ onMounted(() => {
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
   --transition: all 0.2s ease-in-out;
 }
+
+/* ▼▼▼ ここから追加 ▼▼▼ */
+.event-privacy {
+  margin-top: 12px;
+}
+
+.privacy-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  background-color: #6c757d;
+  color: white;
+}
+
+.event-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 600;
+  background-color: color-mix(in srgb, var(--event-type-color) 15%, transparent);
+  color: var(--event-type-color);
+  border: 1px solid var(--event-type-color);
+}
+
+.event-type-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--event-type-color);
+}
+/* ▲▲▲ ここまで追加 ▲▲▲ */
 </style>

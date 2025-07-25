@@ -33,7 +33,7 @@ export const useEventService = () => {
       participantIds: formData.participantIds,
       facilityIds: formData.facilityIds,
       equipmentIds: formData.equipmentIds,
-      createdBy: 'current-user',
+      private: formData.private,
     };
 
     // 2. dateTypeに応じてフィールドを追加
@@ -201,6 +201,7 @@ export const useEventService = () => {
       equipmentIds: eventData.equipmentIds || [], equipments: eventData.equipments,
       isRecurring: eventData.dateType === 'recurring',
       eventType: eventData.eventType, eventTypeName: eventData.eventTypeName, eventTypeColor: eventData.eventTypeColor,
+      private: eventData.private,
     };
   };
   
@@ -231,6 +232,7 @@ export const useEventService = () => {
       equipments: instance.equipments || masterEvent.equipments || [],
       isRecurring: true, masterId: instance.masterId, isException: !!instance.isException,
       eventType: masterEvent.eventType, eventTypeName: masterEvent.eventTypeName, eventTypeColor: masterEvent.eventTypeColor,
+      private: masterEvent.private,
     };
   };
 
