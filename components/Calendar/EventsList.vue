@@ -1,6 +1,6 @@
 <template>
   <div class="events-list">
-    <h3 class="list-title">{{ dateString }}の予定一覧</h3>
+    <h3 class="list-title"><span v-if="props.userName">{{ props.userName }}さんの</span>{{ dateString }}の予定一覧</h3>
     <div v-if="props.events.length === 0" class="no-events">
       予定はありません
     </div>
@@ -17,6 +17,7 @@
 
 <script setup lang="ts">
 interface Props {
+  userName?: string,
   date?: Date
   events?: EventDisplay[]
 }

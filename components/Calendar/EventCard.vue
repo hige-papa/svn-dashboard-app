@@ -1,11 +1,11 @@
 <template>
   <div class="event-card" @click="onEventClick">
     <div class="event-card-header">
-      <div class="event-card-title">{{ event.title }}</div>
+      <div class="event-card-title">{{ isViewable(event) ? event.title : '予定あり' }}</div>
       <div class="event-card-time">{{ event.startTime }} - {{ event.endTime }}</div>
     </div>
     
-    <div v-if="event.location" class="event-card-detail">
+    <div v-if="event.location && isViewable(event)" class="event-card-detail">
       <svg class="small-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
         <circle cx="12" cy="10" r="3"></circle>
@@ -13,7 +13,7 @@
       <span>{{ event.location }}</span>
     </div>
     
-    <div v-if="event.participants && event.participants.length > 0" class="event-card-detail">
+    <div v-if="event.participants && event.participants.length > 0 && isViewable(event)" class="event-card-detail">
       <svg class="small-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
         <circle cx="9" cy="7" r="4"></circle>
@@ -23,23 +23,30 @@
       <span>{{ event.participants.join(', ') }}</span>
     </div>
     
-    <div v-if="event.description" class="event-card-description">
+    <div v-if="event.description && isViewable(event)" class="event-card-description">
       {{ event.description }}
     </div>
   </div>
 </template>
 
-<script setup>
-const props = defineProps({
-  event: {
-    type: Object,
-    required: true
-  }
-});
+<script setup lang="ts">
+import type { User } from 'firebase/auth';
+
+const user = useState<User>('user');
+
+interface Props {
+  event: EventDisplay
+}
+
+const props = defineProps<Props>();
 
 const emit = defineEmits(['eventClick']);
 
-const onEventClick = (e) => {
+const isViewable = (event: EventDisplay) => {
+  return event.private ? (event.participantIds?.includes(user.value.uid)) ?? false : true
+}
+
+const onEventClick = (e: Event) => {
   emit('eventClick', { event: e, eventData: props.event });
 };
 </script>
