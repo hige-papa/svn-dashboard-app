@@ -97,6 +97,7 @@ declare global {
     createdBy?: string;
     createdAt?: any;
     updatedAt?: any;
+    updatedBy?: string;
     /**
      * イベント種別コード
      */
@@ -142,6 +143,10 @@ declare global {
     isMultiDay?: boolean;
     isFirstDay?: boolean;
     isLastDay?: boolean;
+    createdBy?: string;
+    createdAt?: any;
+    updatedAt?: any;
+    updatedBy?: string;
     /**
      * イベント種別コード
      */

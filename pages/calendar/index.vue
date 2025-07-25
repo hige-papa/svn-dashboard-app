@@ -54,8 +54,10 @@
       <h2 class="view-title">グループスケジュール</h2>
 
       <!-- WeeklyCalendarViewコンポーネントを使用 -->
+      <!-- <WeeklyCalendarView :users="users" :week-days="weekDays" :events="events"
+        :get-user-schedules-for-day="getUserSchedulesForDay" @event-click="handleShowEventDetails" @day-click="handleDayClickForWeekly" /> -->
       <WeeklyCalendarView :users="users" :week-days="weekDays" :events="events"
-        :get-user-schedules-for-day="getUserSchedulesForDay" @event-click="handleShowEventDetails" @select-day="handleDayClickForWeekly" />
+        :get-user-schedules-for-day="getUserSchedulesForDay" @day-click="handleDayClickForWeekly" />
     </div>
 
     <!-- 月間ビュー -->
@@ -64,18 +66,28 @@
 
       <!-- <WeekdayHeader /> -->
 
+      <!-- <CalendarGrid v-if="selectedDate && events" :calendar-days="calendarDays" :selected-date="selectedDate" :events="myEvents"
+        :get-schedules-for-day="getSchedulesForDay" :is-holiday="isHoliday" :get-holiday-name="getHolidayName"
+        @day-click="handleDayClickForMonthly" @event-click="handleShowEventDetails" /> -->
       <CalendarGrid v-if="selectedDate && events" :calendar-days="calendarDays" :selected-date="selectedDate" :events="myEvents"
         :get-schedules-for-day="getSchedulesForDay" :is-holiday="isHoliday" :get-holiday-name="getHolidayName"
-        @day-click="handleDayClickForMonthly" @event-click="handleShowEventDetails" />
+        @day-click="handleDayClickForMonthly" />
 
       <!-- <SelectedDayDetail v-if="selectedDate" :selected-date="selectedDate" :events="selectedDayEvents" @event-click="handleShowEventDetails" /> -->
     </div>
 
     <div>
-      <EventsList v-if="currentView === 'daily'" :date="currentDate ?? new Date()" :events="myCurrentDayEvents" @event-click="handleShowEventDetails" />
-      <EventsList v-else-if="currentView === 'weekly' && selectedDate" :date="selectedDate ?? new Date()" :events="selectedUserDayEvents" @event-click="handleShowEventDetails" :user-name="selectedUser?.displayName" />
-      <EventsList v-else-if="currentView === 'monthly' && selectedDate" :date="selectedDate ?? new Date()" :events="mySelectedDayEvents" @event-click="handleShowEventDetails" />
+      <EventsList v-if="currentView === 'daily'" class="events-list" :date="currentDate ?? new Date()" :events="myCurrentDayEvents" @event-click="handleShowEventDetails" />
     </div>
+
+    <v-dialog v-model="eventListDialog" :width="mobile ? '100%' : '50%'">
+      <v-card>
+        <v-card-text>
+          <EventsList v-if="currentView === 'weekly' && selectedDate" :date="selectedDate ?? new Date()" :events="selectedUserDayEvents" @event-click="handleShowEventDetails" :user-name="selectedUser?.displayName" />
+          <EventsList v-else-if="currentView === 'monthly' && selectedDate" :date="selectedDate ?? new Date()" :events="mySelectedDayEvents" @event-click="handleShowEventDetails" />
+        </v-card-text>
+      </v-card>
+    </v-dialog>
 
     <!-- フッター -->
     <div class="footer">
@@ -86,13 +98,13 @@
     <!-- <EventDetail v-if="showDetail" :event="selectedEvent" :visible="showDetail" :position="detailPosition"
       @close="hideEventDetails" /> -->
 
-    <v-dialog v-model="eventDetailDialog" :width="mobile ? '100%' : '50%'">
+    <!-- <v-dialog v-model="eventDetailDialog" :width="mobile ? '100%' : '50%'">
       <EventDetail v-if="selectedEvent" :event="selectedEvent" @close="handleCloseEventDetails" @view="handleViewEvent" @edit="handleEditEvent" />
-    </v-dialog>
+    </v-dialog> -->
 
     <v-dialog v-model="viewDialog" width="50%" :fullscreen="mobile">
       <v-card>
-        <EventView v-if="eventData" :event-data="eventData" @edit="handleEditEvent" @delete="handleDelete" @copy="handleCopy" @back="handleCloseView" />
+        <EventView v-if="eventDetail" :event-data="eventDetail" @edit="handleEditEvent" @delete="handleDelete" @copy="handleCopy" @back="handleCloseView" />
       </v-card>
     </v-dialog>
   </div>
@@ -335,6 +347,8 @@ const selectedUserDayEvents = computed(() => {
   return selectedDayEvents.value.filter(e => { return e.participantIds?.includes(selectedUser.value?.uid ?? '') })
 })
 
+const eventListDialog = ref<boolean>(false)
+
 // 日付選択ハンドラ（週間ビュー用）
 const handleDayClickForWeekly = async (data: any) => {
   const { user, date } = data;
@@ -342,12 +356,14 @@ const handleDayClickForWeekly = async (data: any) => {
   selectDay(date);
   await updateSelectedDayEvents();
   // alert(`${user.displayName}: ${events.length}件の予定`);
+  eventListDialog.value = true;
 };
 
 // 日付選択ハンドラ（月間ビュー用）
 const handleDayClickForMonthly = async (date: Date) => {
   selectDay(date);
   await updateSelectedDayEvents();
+  eventListDialog.value = true;
 };
 
 // ビューの切り替え
@@ -445,22 +461,28 @@ const handleSelectDay = async (date: Date) => {
   }
 }
 
-const eventDetailDialog = ref<boolean>(false)
+// const eventDetailDialog = ref<boolean>(false)
 
-const selectedEvent = ref<EventDisplay | null>(null)
+// const selectedEvent = ref<EventDisplay | null>(null)
 
 // イベント詳細を表示
 const handleShowEventDetails = (data: any) => {
   const { event, eventData } = data;
-  selectedEvent.value = eventData;
 
-  eventDetailDialog.value = true
+  getAsync(eventData.id).then(response  => {
+    eventDetail.value = response
+    viewDialog.value = true
+  })
+
+  // selectedEvent.value = eventData;
+
+  // eventDetailDialog.value = true
 }
 
 // イベント詳細を非表示
-const handleCloseEventDetails = () => {
-  eventDetailDialog.value = false
-};
+// const handleCloseEventDetails = () => {
+//   eventDetailDialog.value = false
+// };
 
 // イベント詳細を表示
 // const showEventDetails = (data: any) => {
@@ -506,15 +528,15 @@ const handleCloseEventDetails = () => {
 
 const viewDialog = ref<boolean>(false)
 
-const eventData = ref<EventData>()
+const eventDetail = ref<EventData>()
 
-const handleViewEvent = (event: EventDisplay) => {
-  // alert(`view => ${JSON.stringify(event)}`)
-  getAsync(event.id).then(response  => {
-    eventData.value = response
-    viewDialog.value = true
-  })
-};
+// const handleViewEvent = (event: EventDisplay) => {
+//   // alert(`view => ${JSON.stringify(event)}`)
+//   getAsync(event.id).then(response  => {
+//     eventData.value = response
+//     viewDialog.value = true
+//   })
+// };
 
 const handleEditEvent = (event: EventDisplay | EventData) => {
   // alert(`edit => ${JSON.stringify(event)}`)
@@ -557,6 +579,12 @@ body {
   padding: 20px;
   color: var(--text-primary);
   line-height: 1.5;
+}
+
+.events-list {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color);
 }
 
 @media (max-width: 768px) {
@@ -610,9 +638,9 @@ body {
 }
 
 .view-btn.active {
-  background-color: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
+  background-color: var(--primary-color) !important;
+  color: white !important;
+  border-color: var(--primary-color) !important;
 }
 
 .view-title {
@@ -717,6 +745,11 @@ body {
   .view-btn {
     flex: 1;
     text-align: center;
+    font-size: 12px;
+  }
+
+  .view-title {
+    font-size: 14px;
   }
 }
 </style>

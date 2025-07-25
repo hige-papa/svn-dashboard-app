@@ -42,19 +42,19 @@
             v-for="day in weekDays" 
             :key="`${user.uid}-${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`"
             :class="['day-cell', { 'today-cell': isToday(day) }]" @click="handleSelectDay(user, day)">
-              <div 
-                v-for="(event, index) in getVisibleEvents(getUserEventsForDay(user.uid, day))" 
-                :key="event.id"
-                :class="['event', 'event-type']"
-                :style="{ top: `${10 + (index * 28)}px`, '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey' }"
-                @click.stop="($event) => { if (isViewable(event)) { onEventClick($event, event) } }"
-              >
               <!-- <div 
                 v-for="(event, index) in getVisibleEvents(getUserEventsForDay(user.uid, day))" 
                 :key="event.id"
                 :class="['event', 'event-type']"
                 :style="{ top: `${10 + (index * 28)}px`, '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey' }"
+                @click.stop="($event) => { if (isViewable(event)) { onEventClick($event, event) } }"
               > -->
+              <div 
+                v-for="(event, index) in getVisibleEvents(getUserEventsForDay(user.uid, day))" 
+                :key="event.id"
+                :class="['event', 'event-type']"
+                :style="{ top: `${10 + (index * 28)}px`, '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey' }"
+              >
                 <template v-if="isViewable(event)">
                   <span class="event-time">{{ event.startTime }}</span>
                   <span class="event-title">{{ event.title }}</span>
@@ -101,7 +101,8 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['eventClick', 'selectDay']);
+// const emit = defineEmits(['eventClick', 'selectDay']);
+const emit = defineEmits(['dayClick']);
 
 const isViewable = (event: EventDisplay) => {
   return event.private ? (event.participantIds?.includes(user.value.uid)) ?? false : true
@@ -164,12 +165,12 @@ const getVisibleEvents = (events: EventDisplay[]) => {
 };
 
 // イベントクリック時のイベント
-const onEventClick = (event: Event, eventData: EventDisplay) => {
-  emit('eventClick', { event, eventData });
-};
+// const onEventClick = (event: Event, eventData: EventDisplay) => {
+//   emit('eventClick', { event, eventData });
+// };
 
 const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
-  emit('selectDay', { user: user, date: date })
+  emit('dayClick', { user: user, date: date })
 }
 </script>
 
@@ -393,7 +394,7 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
 .event-type {
   background-color: color-mix(in srgb, var(--event-color) 15%, #FFF);
   border-left: 4px solid var(--event-color);
-  color: var(--event-color);
+  /* color: var(--event-color); */
 }
 /* .event-type-1 {
   background-color: #e6f2ff;

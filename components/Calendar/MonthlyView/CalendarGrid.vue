@@ -44,8 +44,11 @@
             </div> -->
 
             <div v-if="getEventsForDay(day.date).length > 0" class="day-events">
-              <div v-for="(event, index) in getVisibleEvents(day.date)" :key="event.id" class="day-event" :style="{ '--event-color': `${eventTypeDetails[event.eventType]?.color}` }"
+              <!-- <div v-for="(event, index) in getVisibleEvents(day.date)" :key="event.id" class="day-event" :style="{ '--event-color': `${eventTypeDetails[event.eventType]?.color}` }"
                 @click.stop="onEventClick($event, event)">
+                {{ event.startTime }} {{ event.title }}
+              </div> -->
+              <div v-for="(event, index) in getVisibleEvents(day.date)" :key="event.id" class="day-event" :style="{ '--event-color': `${eventTypeDetails[event.eventType]?.color}` }">
                 {{ event.startTime }} {{ event.title }}
               </div>
 
@@ -130,7 +133,8 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['dayClick', 'eventClick']);
+// const emit = defineEmits(['dayClick', 'eventClick']);
+const emit = defineEmits(['dayClick']);
 
 const { eventTypeDetails } = useConstants()
 
@@ -204,9 +208,9 @@ const onDayClick = (date: Date) => {
 };
 
 // イベントクリック時のイベント
-const onEventClick = (event: Event, eventData: EventDisplay) => {
-  emit('eventClick', { event, eventData });
-};
+// const onEventClick = (event: Event, eventData: EventDisplay) => {
+//   emit('eventClick', { event, eventData });
+// };
 </script>
 
 <style scoped>
@@ -339,7 +343,7 @@ const onEventClick = (event: Event, eventData: EventDisplay) => {
   text-overflow: ellipsis;
   background-color: color-mix(in srgb, var(--event-color) 15%, #FFF);
   border-left: 3px solid var(--event-color);
-  color: var(--event-color);
+  /* color: var(--event-color); */
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
   border-radius: 4px;
   transition: var(--transition);

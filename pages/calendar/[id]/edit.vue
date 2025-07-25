@@ -9,15 +9,21 @@ const { getAsync, updateAsync } = useTransaction('events')
 
 const { params } = useRoute()
 
+const router = useRouter();
+
 const event = ref<any>()
 
 const update = async (data: any) => {
   try {
     // イベントデータを更新
-    await updateAsync(event.value.id, data)
+    await updateAsync(event.value.id, data);
+    
     // 更新後のイベントデータを取得
-    const updatedEvent = await getAsync(data.id)
-    Object.assign(event.value, updatedEvent)
+    // const updatedEvent = await getAsync(data.id)
+    // Object.assign(event.value, updatedEvent)
+
+    // 成功したらカレンダーページなどに戻る
+    router.back();
   } catch (error) {
     console.error('イベントの更新に失敗しました:', error)
   }

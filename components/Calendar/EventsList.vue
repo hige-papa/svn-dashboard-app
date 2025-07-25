@@ -1,6 +1,7 @@
 <template>
-  <div class="events-list">
-    <h3 class="list-title"><span v-if="props.userName">{{ props.userName }}さんの</span>{{ dateString }}の予定一覧</h3>
+  <div>
+    <h3 v-if="props.userName" class="list-title">{{ props.userName }}さんの{{ dateString }}の予定一覧</h3>
+    <h3 v-else class="list-title">{{ dateString }}の予定一覧</h3>
     <div v-if="props.events.length === 0" class="no-events">
       予定はありません
     </div>
@@ -43,12 +44,6 @@ const onEventClick = (data: EventDisplay) => {
 </script>
 
 <style scoped>
-.events-list {
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border-color);
-}
-
 .list-title {
   font-size: 18px;
   font-weight: 600;
@@ -76,5 +71,11 @@ const onEventClick = (data: EventDisplay) => {
   background-color: var(--background-light);
   border-radius: var(--radius-md);
   border: 1px dashed var(--border-color);
+}
+
+@media (max-width: 768px) {
+  .list-title {
+    font-size: 14px;
+  }
 }
 </style>

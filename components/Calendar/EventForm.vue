@@ -2,10 +2,10 @@
   <div class="page-container">
     <div class="container">
       <div class="header">
-        <h1 class="app-title">TASCAL</h1>
-        <p class="page-subtitle">新しい予定を登録</p>
+        <!-- <h1 class="app-title">TASCAL</h1> -->
+        <p class="page-subtitle">{{ initialData ? '予定を更新' : '新しい予定を登録' }}</p>
       </div>
-      
+
       <div class="form-content">
         <form @submit.prevent="handleSubmit" class="form-grid">
           <div class="form-group" :class="{ error: errors.eventTitle }">
@@ -14,18 +14,11 @@
               予定タイトル
               <span class="required">*</span>
             </label>
-            <input 
-              id="eventTitle"
-              v-model="formData.title"
-              type="text" 
-              class="form-input" 
-              placeholder="例：重要な会議、プロジェクト打ち合わせ"
-              @blur="validateField('eventTitle')"
-              @input="clearError('eventTitle')"
-            >
+            <input id="eventTitle" v-model="formData.title" type="text" class="form-input"
+              placeholder="例：重要な会議、プロジェクト打ち合わせ" @blur="validateField('eventTitle')" @input="clearError('eventTitle')">
             <div v-if="errors.eventTitle" class="form-error">{{ errors.eventTitle }}</div>
           </div>
-          
+
           <div class="form-group">
             <label class="form-label">
               <i class="mdi mdi-tag-outline icon"></i>
@@ -33,24 +26,10 @@
               <span class="required">*</span>
             </label>
             <div class="event-type-options">
-              <div 
-                v-for="(type, key) in eventTypeDetails" 
-                :key="key" 
-                class="event-type-option"
-              >
-                <input 
-                  :id="`eventType-${key}`" 
-                  v-model="formData.eventType"
-                  type="radio" 
-                  name="eventType" 
-                  :value="key" 
-                  class="event-type-radio"
-                >
-                <label 
-                  :for="`eventType-${key}`" 
-                  class="event-type-label"
-                  :style="{ '--event-type-color': type.color }"
-                >
+              <div v-for="(type, key) in eventTypeDetails" :key="key" class="event-type-option">
+                <input :id="`eventType-${key}`" v-model="formData.eventType" type="radio" name="eventType" :value="key"
+                  class="event-type-radio">
+                <label :for="`eventType-${key}`" class="event-type-label" :style="{ '--event-type-color': type.color }">
                   <span class="event-type-color-dot"></span>
                   {{ type.name }}
                 </label>
@@ -65,45 +44,24 @@
             </label>
             <div class="date-type-options">
               <div class="date-type-option">
-                <input 
-                  id="dateTypeSingle" 
-                  v-model="formData.dateType"
-                  type="radio" 
-                  name="dateType" 
-                  value="single" 
-                  class="date-type-radio"
-                  @change="clearConflicts"
-                >
+                <input id="dateTypeSingle" v-model="formData.dateType" type="radio" name="dateType" value="single"
+                  class="date-type-radio" @change="clearConflicts">
                 <label for="dateTypeSingle" class="date-type-label">
                   <i class="mdi mdi-calendar icon"></i>
                   単一日
                 </label>
               </div>
               <div class="date-type-option">
-                <input 
-                  id="dateTypeRange" 
-                  v-model="formData.dateType"
-                  type="radio" 
-                  name="dateType" 
-                  value="range" 
-                  class="date-type-radio"
-                  @change="clearConflicts"
-                >
+                <input id="dateTypeRange" v-model="formData.dateType" type="radio" name="dateType" value="range"
+                  class="date-type-radio" @change="clearConflicts">
                 <label for="dateTypeRange" class="date-type-label">
                   <i class="mdi mdi-calendar-range icon"></i>
                   期間
                 </label>
               </div>
               <div class="date-type-option">
-                <input 
-                  id="dateTypeRecurring" 
-                  v-model="formData.dateType"
-                  type="radio" 
-                  name="dateType" 
-                  value="recurring" 
-                  class="date-type-radio"
-                  @change="clearConflicts"
-                >
+                <input id="dateTypeRecurring" v-model="formData.dateType" type="radio" name="dateType" value="recurring"
+                  class="date-type-radio" @change="clearConflicts">
                 <label for="dateTypeRecurring" class="date-type-label">
                   <i class="mdi mdi-calendar-sync icon"></i>
                   繰り返し
@@ -111,7 +69,7 @@
               </div>
             </div>
           </div>
-          
+
           <div v-if="formData.dateType === 'single'" class="form-group row">
             <div class="form-group" :class="{ error: errors.eventDate }">
               <label class="form-label" for="eventDate">
@@ -119,18 +77,11 @@
                 日付
                 <span class="required">*</span>
               </label>
-              <input 
-                id="eventDate"
-                v-model="formData.date"
-                type="date" 
-                class="form-input"
-                @blur="validateField('eventDate')"
-                @input="clearError('eventDate')"
-                @change="checkConflicts"
-              >
+              <input id="eventDate" v-model="formData.date" type="date" class="form-input"
+                @blur="validateField('eventDate')" @input="clearError('eventDate')" @change="checkConflicts">
               <div v-if="errors.eventDate" class="form-error">{{ errors.eventDate }}</div>
             </div>
-            
+
             <div class="form-group" :class="{ error: errors.time }">
               <label class="form-label">
                 <i class="mdi mdi-clock-outline icon"></i>
@@ -138,25 +89,11 @@
                 <span class="required">*</span>
               </label>
               <div class="time-inputs">
-                <input 
-                  id="startTime"
-                  v-model="formData.startTime"
-                  type="time" 
-                  class="form-input"
-                  @blur="validateTimeFields"
-                  @input="clearError('time')"
-                  @change="checkConflicts"
-                >
+                <input id="startTime" v-model="formData.startTime" type="time" class="form-input"
+                  @blur="validateTimeFields" @input="clearError('time')" @change="checkConflicts">
                 <span class="time-separator">〜</span>
-                <input 
-                  id="endTime"
-                  v-model="formData.endTime"
-                  type="time" 
-                  class="form-input"
-                  @blur="validateTimeFields"
-                  @input="clearError('time')"
-                  @change="checkConflicts"
-                >
+                <input id="endTime" v-model="formData.endTime" type="time" class="form-input" @blur="validateTimeFields"
+                  @input="clearError('time')" @change="checkConflicts">
               </div>
               <div v-if="errors.time" class="form-error">{{ errors.time }}</div>
             </div>
@@ -170,38 +107,23 @@
                   開始日
                   <span class="required">*</span>
                 </label>
-                <input 
-                  id="startDate"
-                  v-model="formData.startDate"
-                  type="date" 
-                  class="form-input"
-                  @blur="validateField('startDate')"
-                  @input="clearError('startDate')"
-                  @change="checkConflicts"
-                >
+                <input id="startDate" v-model="formData.startDate" type="date" class="form-input"
+                  @blur="validateField('startDate')" @input="clearError('startDate')" @change="checkConflicts">
                 <div v-if="errors.startDate" class="form-error">{{ errors.startDate }}</div>
               </div>
-              
+
               <div class="form-group" :class="{ error: errors.endDate }">
                 <label class="form-label" for="endDate">
                   <i class="mdi mdi-calendar-end icon"></i>
                   終了日
                   <span class="required">*</span>
                 </label>
-                <input 
-                  id="endDate"
-                  v-model="formData.endDate"
-                  type="date" 
-                  class="form-input"
-                  :min="formData.startDate"
-                  @blur="validateField('endDate')"
-                  @input="clearError('endDate')"
-                  @change="checkConflicts"
-                >
+                <input id="endDate" v-model="formData.endDate" type="date" class="form-input" :min="formData.startDate"
+                  @blur="validateField('endDate')" @input="clearError('endDate')" @change="checkConflicts">
                 <div v-if="errors.endDate" class="form-error">{{ errors.endDate }}</div>
               </div>
             </div>
-            
+
             <div class="form-group" :class="{ error: errors.time }">
               <label class="form-label">
                 <i class="mdi mdi-clock-outline icon"></i>
@@ -209,23 +131,11 @@
                 <span class="required">*</span>
               </label>
               <div class="time-inputs">
-                <input 
-                  v-model="formData.startTime"
-                  type="time" 
-                  class="form-input"
-                  @blur="validateTimeFields"
-                  @input="clearError('time')"
-                  @change="checkConflicts"
-                >
+                <input v-model="formData.startTime" type="time" class="form-input" @blur="validateTimeFields"
+                  @input="clearError('time')" @change="checkConflicts">
                 <span class="time-separator">〜</span>
-                <input 
-                  v-model="formData.endTime"
-                  type="time" 
-                  class="form-input"
-                  @blur="validateTimeFields"
-                  @input="clearError('time')"
-                  @change="checkConflicts"
-                >
+                <input v-model="formData.endTime" type="time" class="form-input" @blur="validateTimeFields"
+                  @input="clearError('time')" @change="checkConflicts">
               </div>
               <div v-if="errors.time" class="form-error">{{ errors.time }}</div>
             </div>
@@ -239,18 +149,12 @@
                   開始日
                   <span class="required">*</span>
                 </label>
-                <input 
-                  id="recurringStartDate"
-                  v-model="formData.recurringStartDate"
-                  type="date" 
-                  class="form-input"
-                  @blur="validateField('recurringStartDate')"
-                  @input="clearError('recurringStartDate')"
-                  @change="checkConflicts"
-                >
+                <input id="recurringStartDate" v-model="formData.recurringStartDate" type="date" class="form-input"
+                  @blur="validateField('recurringStartDate')" @input="clearError('recurringStartDate')"
+                  @change="checkConflicts">
                 <div v-if="errors.recurringStartDate" class="form-error">{{ errors.recurringStartDate }}</div>
               </div>
-              
+
               <div class="form-group" :class="{ error: errors.time }">
                 <label class="form-label">
                   <i class="mdi mdi-clock-outline icon"></i>
@@ -258,23 +162,11 @@
                   <span class="required">*</span>
                 </label>
                 <div class="time-inputs">
-                  <input 
-                    v-model="formData.startTime"
-                    type="time" 
-                    class="form-input"
-                    @blur="validateTimeFields"
-                    @input="clearError('time')"
-                    @change="checkConflicts"
-                  >
+                  <input v-model="formData.startTime" type="time" class="form-input" @blur="validateTimeFields"
+                    @input="clearError('time')" @change="checkConflicts">
                   <span class="time-separator">〜</span>
-                  <input 
-                    v-model="formData.endTime"
-                    type="time" 
-                    class="form-input"
-                    @blur="validateTimeFields"
-                    @input="clearError('time')"
-                    @change="checkConflicts"
-                  >
+                  <input v-model="formData.endTime" type="time" class="form-input" @blur="validateTimeFields"
+                    @input="clearError('time')" @change="checkConflicts">
                 </div>
                 <div v-if="errors.time" class="form-error">{{ errors.time }}</div>
               </div>
@@ -296,21 +188,16 @@
               </select>
             </div>
 
-            <div v-if="formData.recurringPattern === 'weekly' || formData.recurringPattern === 'custom'" class="form-group">
+            <div v-if="formData.recurringPattern === 'weekly' || formData.recurringPattern === 'custom'"
+              class="form-group">
               <label class="form-label">
                 <i class="mdi mdi-calendar-week icon"></i>
                 曜日を選択
               </label>
               <div class="weekday-options">
                 <div v-for="(day, index) in weekDays" :key="index" class="weekday-option">
-                  <input 
-                    :id="`weekday-${index}`"
-                    v-model="formData.selectedWeekdays"
-                    type="checkbox" 
-                    :value="index"
-                    class="weekday-checkbox"
-                    @change="checkConflicts"
-                  >
+                  <input :id="`weekday-${index}`" v-model="formData.selectedWeekdays" type="checkbox" :value="index"
+                    class="weekday-checkbox" @change="checkConflicts">
                   <label :for="`weekday-${index}`" class="weekday-label">
                     {{ day }}
                   </label>
@@ -325,58 +212,30 @@
               </label>
               <div class="monthly-options">
                 <div class="monthly-option">
-                  <input 
-                    id="monthlyDate" 
-                    v-model="formData.monthlyType"
-                    type="radio" 
-                    name="monthlyType" 
-                    value="date" 
-                    class="monthly-radio"
-                    @change="checkConflicts"
-                  >
+                  <input id="monthlyDate" v-model="formData.monthlyType" type="radio" name="monthlyType" value="date"
+                    class="monthly-radio" @change="checkConflicts">
                   <label for="monthlyDate" class="monthly-label">
-                    <input 
-                      v-model.number="formData.monthlyDate"
-                      type="number" 
-                      min="1" 
-                      max="31" 
-                      class="form-input monthly-input"
-                      :disabled="formData.monthlyType !== 'date'"
-                      @change="checkConflicts"
-                    >
+                    <input v-model.number="formData.monthlyDate" type="number" min="1" max="31"
+                      class="form-input monthly-input" :disabled="formData.monthlyType !== 'date'"
+                      @change="checkConflicts">
                     日
                   </label>
                 </div>
                 <div class="monthly-option">
-                  <input 
-                    id="monthlyWeek" 
-                    v-model="formData.monthlyType"
-                    type="radio" 
-                    name="monthlyType" 
-                    value="weekday" 
-                    class="monthly-radio"
-                    @change="checkConflicts"
-                  >
+                  <input id="monthlyWeek" v-model="formData.monthlyType" type="radio" name="monthlyType" value="weekday"
+                    class="monthly-radio" @change="checkConflicts">
                   <label for="monthlyWeek" class="monthly-label">
                     第
-                    <select 
-                      v-model="formData.monthlyWeek"
-                      class="form-select monthly-select"
-                      :disabled="formData.monthlyType !== 'weekday'"
-                      @change="checkConflicts"
-                    >
+                    <select v-model="formData.monthlyWeek" class="form-select monthly-select"
+                      :disabled="formData.monthlyType !== 'weekday'" @change="checkConflicts">
                       <option value="1">1</option>
                       <option value="2">2</option>
                       <option value="3">3</option>
                       <option value="4">4</option>
                       <option value="-1">最終</option>
                     </select>
-                    <select 
-                      v-model.number="formData.monthlyWeekday"
-                      class="form-select monthly-select"
-                      :disabled="formData.monthlyType !== 'weekday'"
-                      @change="checkConflicts"
-                    >
+                    <select v-model.number="formData.monthlyWeekday" class="form-select monthly-select"
+                      :disabled="formData.monthlyType !== 'weekday'" @change="checkConflicts">
                       <option v-for="(day, index) in weekDays" :key="index" :value="index">
                         {{ day }}
                       </option>
@@ -393,83 +252,46 @@
               </label>
               <div class="end-condition-options">
                 <div class="end-condition-option">
-                  <input 
-                    id="endNever" 
-                    v-model="formData.recurringEndType"
-                    type="radio" 
-                    name="recurringEndType" 
-                    value="never" 
-                    class="end-condition-radio"
-                    @change="checkConflicts"
-                  >
+                  <input id="endNever" v-model="formData.recurringEndType" type="radio" name="recurringEndType"
+                    value="never" class="end-condition-radio" @change="checkConflicts">
                   <label for="endNever" class="end-condition-label">
                     終了日なし
                   </label>
                 </div>
                 <div class="end-condition-option">
-                  <input 
-                    id="endDateOption" 
-                    v-model="formData.recurringEndType"
-                    type="radio" 
-                    name="recurringEndType" 
-                    value="date" 
-                    class="end-condition-radio"
-                    @change="checkConflicts"
-                  >
+                  <input id="endDateOption" v-model="formData.recurringEndType" type="radio" name="recurringEndType"
+                    value="date" class="end-condition-radio" @change="checkConflicts">
                   <label for="endDateOption" class="end-condition-label">
                     終了日:
-                    <input 
-                      v-model="formData.recurringEndDate"
-                      type="date" 
-                      class="form-input end-date-input"
-                      :min="formData.recurringStartDate"
-                      :disabled="formData.recurringEndType !== 'date'"
-                      @change="checkConflicts"
-                    >
+                    <input v-model="formData.recurringEndDate" type="date" class="form-input end-date-input"
+                      :min="formData.recurringStartDate" :disabled="formData.recurringEndType !== 'date'"
+                      @change="checkConflicts">
                   </label>
                 </div>
                 <div class="end-condition-option">
-                  <input 
-                    id="endCount" 
-                    v-model="formData.recurringEndType"
-                    type="radio" 
-                    name="recurringEndType" 
-                    value="count" 
-                    class="end-condition-radio"
-                    @change="checkConflicts"
-                  >
+                  <input id="endCount" v-model="formData.recurringEndType" type="radio" name="recurringEndType"
+                    value="count" class="end-condition-radio" @change="checkConflicts">
                   <label for="endCount" class="end-condition-label">
                     回数:
-                    <input 
-                      v-model.number="formData.recurringCount"
-                      type="number" 
-                      min="1" 
-                      max="999" 
-                      class="form-input count-input"
-                      :disabled="formData.recurringEndType !== 'count'"
-                      @change="checkConflicts"
-                    >
+                    <input v-model.number="formData.recurringCount" type="number" min="1" max="999"
+                      class="form-input count-input" :disabled="formData.recurringEndType !== 'count'"
+                      @change="checkConflicts">
                     回
                   </label>
                 </div>
               </div>
             </div>
           </div>
-          
+
           <div class="form-group">
             <label class="form-label" for="eventLocation">
               <i class="mdi mdi-map-marker icon"></i>
               場所
             </label>
-            <input 
-              id="eventLocation"
-              v-model="formData.location"
-              type="text" 
-              class="form-input" 
-              placeholder="例：会議室A、オンライン、顧客先"
-            >
+            <input id="eventLocation" v-model="formData.location" type="text" class="form-input"
+              placeholder="例：会議室A、オンライン、顧客先">
           </div>
-          
+
           <div class="form-group">
             <label class="form-label">
               <i class="mdi mdi-account-group icon"></i>
@@ -481,23 +303,11 @@
               </p>
               <div class="master-select-wrapper">
                 <div class="selected-items">
-                  <div 
-                    v-for="participant in selectedParticipantsData" 
-                    :key="participant.id" 
-                    class="selected-tag"
-                  >
+                  <div v-for="participant in selectedParticipantsData" :key="participant.id" class="selected-tag">
                     <span>{{ participant.name }}</span>
-                    <button 
-                      type="button" 
-                      @click="removeParticipant(participant.id)" 
-                      class="tag-remove"
-                    >×</button>
+                    <button type="button" @click="removeParticipant(participant.id)" class="tag-remove">×</button>
                   </div>
-                  <button 
-                    type="button" 
-                    @click="openParticipantModal" 
-                    class="btn-select-master"
-                  >
+                  <button type="button" @click="openParticipantModal" class="btn-select-master">
                     <i class="mdi mdi-plus icon"></i>
                     参加者を追加
                   </button>
@@ -505,7 +315,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="form-group">
             <label class="form-label">
               <i class="mdi mdi-office-building icon"></i>
@@ -517,24 +327,12 @@
               </p>
               <div class="master-select-wrapper">
                 <div class="selected-items">
-                  <div 
-                    v-for="facility in selectedFacilitiesData" 
-                    :key="facility.id" 
-                    class="selected-tag"
-                  >
+                  <div v-for="facility in selectedFacilitiesData" :key="facility.id" class="selected-tag">
                     <span>{{ facility.name }}</span>
                     <span v-if="facility.capacity" class="tag-info">(定員: {{ facility.capacity }}名)</span>
-                    <button 
-                      type="button" 
-                      @click="removeFacility(facility.id)" 
-                      class="tag-remove"
-                    >×</button>
+                    <button type="button" @click="removeFacility(facility.id)" class="tag-remove">×</button>
                   </div>
-                  <button 
-                    type="button" 
-                    @click="openFacilityModal" 
-                    class="btn-select-master"
-                  >
+                  <button type="button" @click="openFacilityModal" class="btn-select-master">
                     <i class="mdi mdi-plus icon"></i>
                     施設を追加
                   </button>
@@ -542,7 +340,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="form-group">
             <label class="form-label">
               <i class="mdi mdi-chair-rolling icon"></i>
@@ -554,24 +352,12 @@
               </p>
               <div class="master-select-wrapper">
                 <div class="selected-items">
-                  <div 
-                    v-for="equipment in selectedEquipmentData" 
-                    :key="equipment.id" 
-                    class="selected-tag"
-                  >
+                  <div v-for="equipment in selectedEquipmentData" :key="equipment.id" class="selected-tag">
                     <span>{{ equipment.name }}</span>
                     <span v-if="equipment.quantity" class="tag-info">(在庫: {{ equipment.quantity }})</span>
-                    <button 
-                      type="button" 
-                      @click="removeEquipment(equipment.id)" 
-                      class="tag-remove"
-                    >×</button>
+                    <button type="button" @click="removeEquipment(equipment.id)" class="tag-remove">×</button>
                   </div>
-                  <button 
-                    type="button" 
-                    @click="openEquipmentModal" 
-                    class="btn-select-master"
-                  >
+                  <button type="button" @click="openEquipmentModal" class="btn-select-master">
                     <i class="mdi mdi-plus icon"></i>
                     備品を追加
                   </button>
@@ -602,7 +388,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="form-group">
             <label class="form-label">
               <i class="mdi mdi-flag icon"></i>
@@ -610,42 +396,24 @@
             </label>
             <div class="priority-options">
               <div class="priority-option">
-                <input 
-                  id="priorityLow" 
-                  v-model="formData.priority"
-                  type="radio" 
-                  name="priority" 
-                  value="low" 
-                  class="priority-radio"
-                >
+                <input id="priorityLow" v-model="formData.priority" type="radio" name="priority" value="low"
+                  class="priority-radio">
                 <label for="priorityLow" class="priority-label low">
                   <i class="mdi mdi-arrow-down icon"></i>
                   低
                 </label>
               </div>
               <div class="priority-option">
-                <input 
-                  id="priorityMedium" 
-                  v-model="formData.priority"
-                  type="radio" 
-                  name="priority" 
-                  value="medium" 
-                  class="priority-radio"
-                >
+                <input id="priorityMedium" v-model="formData.priority" type="radio" name="priority" value="medium"
+                  class="priority-radio">
                 <label for="priorityMedium" class="priority-label medium">
                   <i class="mdi mdi-minus icon"></i>
                   中
                 </label>
               </div>
               <div class="priority-option">
-                <input 
-                  id="priorityHigh" 
-                  v-model="formData.priority"
-                  type="radio" 
-                  name="priority" 
-                  value="high" 
-                  class="priority-radio"
-                >
+                <input id="priorityHigh" v-model="formData.priority" type="radio" name="priority" value="high"
+                  class="priority-radio">
                 <label for="priorityHigh" class="priority-label high">
                   <i class="mdi mdi-arrow-up icon"></i>
                   高
@@ -653,18 +421,14 @@
               </div>
             </div>
           </div>
-          
+
           <div class="form-group">
             <label class="form-label" for="eventDescription">
               <i class="mdi mdi-file-document-outline icon"></i>
               メモ・説明
             </label>
-            <textarea 
-              id="eventDescription"
-              v-model="formData.description"
-              class="form-textarea" 
-              placeholder="予定の詳細情報や議題などを記入してください..."
-            ></textarea>
+            <textarea id="eventDescription" v-model="formData.description" class="form-textarea"
+              placeholder="予定の詳細情報や議題などを記入してください..."></textarea>
           </div>
 
           <div class="form-group">
@@ -673,12 +437,7 @@
               プライバシー設定
             </label>
             <div class="privacy-option">
-              <input 
-                id="private-event-checkbox"
-                v-model="formData.private"
-                type="checkbox" 
-                class="privacy-checkbox"
-              >
+              <input id="private-event-checkbox" v-model="formData.private" type="checkbox" class="privacy-checkbox">
               <label for="private-event-checkbox" class="privacy-label">
                 <span class="privacy-text">プライベート予定にする</span>
                 <p class="form-helper-text">
@@ -695,13 +454,14 @@
             <button type="submit" :disabled="isLoading" class="btn btn-primary">
               <i v-if="isLoading" class="mdi mdi-loading icon loading-spin"></i>
               <i v-else class="mdi mdi-content-save icon"></i>
-              {{ isLoading ? '保存中...' : '予定を保存' }}
+              <span v-if="initialData">{{ isLoading ? '更新中...' : '予定を更新' }}</span>
+              <span v-else>{{ isLoading ? '保存中...' : '予定を保存' }}</span>
             </button>
           </div>
         </form>
       </div>
     </div>
-    
+
     <Teleport to="body">
       <Transition name="modal">
         <div v-if="showModal" class="modal-overlay" @click="closeModal">
@@ -718,31 +478,16 @@
             <div class="modal-body">
               <div class="search-box">
                 <i class="mdi mdi-magnify icon"></i>
-                <input 
-                  v-model="searchQuery"
-                  type="text" 
-                  class="search-input" 
-                  :placeholder="getSearchPlaceholder()"
-                >
+                <input v-model="searchQuery" type="text" class="search-input" :placeholder="getSearchPlaceholder()">
               </div>
               <div class="selection-list">
                 <div v-if="filteredItems.length === 0" class="no-results">
                   検索結果がありません
                 </div>
-                <label 
-                  v-for="item in filteredItems" 
-                  :key="item.id" 
-                  class="selection-item"
-                  :class="{ disabled: item.isConflict }"
-                >
-                  <input 
-                    type="checkbox" 
-                    :value="item.id"
-                    :checked="isItemSelected(item.id)"
-                    :disabled="item.isConflict"
-                    @change="toggleItem(item.id)"
-                    class="selection-checkbox"
-                  >
+                <label v-for="item in filteredItems" :key="item.id" class="selection-item"
+                  :class="{ disabled: item.isConflict }">
+                  <input type="checkbox" :value="item.id" :checked="isItemSelected(item.id)" :disabled="item.isConflict"
+                    @change="toggleItem(item.id)" class="selection-checkbox">
                   <div class="selection-info">
                     <div class="selection-name">{{ item.name }}</div>
                     <div v-if="item.department" class="selection-meta">{{ item.department }}</div>
@@ -778,20 +523,20 @@
       <v-card rounded="lg">
         <v-toolbar density="compact" class="position-fixed top-0" style="z-index: 5000;">
           <span class="ml-3">
-            <span>{{ `「${selected?.name}」`}}</span>
-            <span v-if="modalType==='participant'">さん</span>
-            <span>{{`の${formData.date}の予定` }}</span>
+            <span>{{ `「${selected?.name}」` }}</span>
+            <span v-if="modalType === 'participant'">さん</span>
+            <span>{{ `の${formData.date}の予定` }}</span>
           </span>
           <v-spacer></v-spacer>
-          <v-icon icon="mdi-close" class="mr-3" @click="dialog=false" size="small"></v-icon>
+          <v-icon icon="mdi-close" class="mr-3" @click="dialog = false" size="small"></v-icon>
         </v-toolbar>
         <v-card-text class="mt-10">
           <DailyTimeline v-if="date" :events="events" :time-slots="timeSlots" :date="date"
-              :time-to-pixels="timeToPixels" @event-click="() => {}" />
+            :time-to-pixels="timeToPixels" @event-click="() => { }" />
         </v-card-text>
       </v-card>
     </v-dialog>
-    
+
     <Transition name="notification">
       <div v-if="notification.show" class="notification" :class="notification.type">
         <i class="mdi mdi-check icon"></i>
@@ -872,37 +617,37 @@ useHead({
 })
 
 const formData = reactive<EventFormData>({
-    title: '',
-    eventType: 'normal', // ◀◀◀ 追加
-    dateType: 'single',
-    date: '',
-    startDate: '',
-    endDate: '',
-    recurringStartDate: '',
-    recurringPattern: 'weekly',
-    selectedWeekdays: [],
-    monthlyType: 'date',
-    monthlyDate: 1,
-    monthlyWeek: '1',
-    monthlyWeekday: 1,
-    recurringEndType: 'never',
-    recurringEndDate: '',
-    recurringCount: 10,
-    startTime: '',
-    endTime: '',
-    location: '',
-    participantIds: [],
-    participants: [],
-    facilityIds: [],
-    facilities: [],
-    equipmentIds: [],
-    equipments: [],
-    priority: 'medium',
-    description: '',
-    eventTypeColor: '',
-    eventTypeName: '',
-    private: false,
-  })
+  title: '',
+  eventType: 'normal', // ◀◀◀ 追加
+  dateType: 'single',
+  date: '',
+  startDate: '',
+  endDate: '',
+  recurringStartDate: '',
+  recurringPattern: 'weekly',
+  selectedWeekdays: [],
+  monthlyType: 'date',
+  monthlyDate: 1,
+  monthlyWeek: '1',
+  monthlyWeekday: 1,
+  recurringEndType: 'never',
+  recurringEndDate: '',
+  recurringCount: 10,
+  startTime: '',
+  endTime: '',
+  location: '',
+  participantIds: [],
+  participants: [],
+  facilityIds: [],
+  facilities: [],
+  equipmentIds: [],
+  equipments: [],
+  priority: 'medium',
+  description: '',
+  eventTypeColor: '',
+  eventTypeName: '',
+  private: false,
+})
 const errors = reactive<any>({})
 const isLoading = ref(false)
 const conflicts = ref<any[]>([])
@@ -950,17 +695,17 @@ const setDefaultValues = (form?: EventFormData) => {
 
     // ローカルタイムゾーンでYYYY-MM-DD形式の文字列を生成
     const toLocaleDateString = (date: Date) => {
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        return `${year}-${month}-${day}`;
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      return `${year}-${month}-${day}`;
     };
-    
+
     // ローカルタイムゾーンでHH:mm形式の文字列を生成
     const toLocaleTimeString = (date: Date) => {
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `${hours}:${minutes}`;
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
     };
 
     const today = toLocaleDateString(now);
@@ -1095,7 +840,7 @@ const emit = defineEmits<{ (e: 'submit', data: EventFormData): void }>()
 const handleSubmit = async () => {
   if (!validateForm()) return showNotification('入力内容を確認してください', 'error')
   if (conflicts.value.length > 0 && !confirm('重複があります。保存しますか？')) return
-  
+
   isLoading.value = true
   try {
     emit('submit', { ...formData })
@@ -1149,6 +894,10 @@ onMounted(() => {
       name: user.displayName || '未設定',
       department: user.department || ''
     }))
+    if (!props.initialData) {
+      formData.participantIds.push(user.value.uid)
+      formData.participants = participantsMaster.value.filter(p => formData.participantIds.includes(p.id)).map(p => p.name);
+    }
   })
   getEquipmentsAsync().then(equipments => {
     equipmentMaster.value = equipments.map(equipment => ({
@@ -1166,10 +915,6 @@ onMounted(() => {
   })
   setDefaultValues(props.initialData)
   // alert(JSON.stringify(props.initialData))
-  if (!props.initialData) {
-    formData.participantIds.push(user.value.uid)
-    formData.participants = participantsMaster.value.filter(p => formData.participantIds.includes(p.id)).map(p => p.name);
-  }
 })
 </script>
 
@@ -1181,6 +926,7 @@ onMounted(() => {
   min-height: 100vh;
   padding: 24px;
 }
+
 .container {
   max-width: 800px;
   margin: 0 auto;
@@ -1189,6 +935,7 @@ onMounted(() => {
   box-shadow: var(--shadow-md);
   overflow: hidden;
 }
+
 .header {
   background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
   color: white;
@@ -1196,6 +943,7 @@ onMounted(() => {
   text-align: center;
   position: relative;
 }
+
 .header::before {
   content: '';
   position: absolute;
@@ -1206,6 +954,7 @@ onMounted(() => {
   background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='m36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
   opacity: 0.1;
 }
+
 .app-title {
   font-size: 28px;
   font-weight: 700;
@@ -1213,6 +962,7 @@ onMounted(() => {
   position: relative;
   z-index: 1;
 }
+
 .page-subtitle {
   font-size: 16px;
   font-weight: 400;
@@ -1220,23 +970,28 @@ onMounted(() => {
   position: relative;
   z-index: 1;
 }
+
 .form-content {
   padding: 40px;
 }
+
 .form-grid {
   display: grid;
   gap: 24px;
 }
+
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
+
 .form-group.row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
+
 .form-label {
   font-weight: 600;
   font-size: 14px;
@@ -1245,10 +1000,12 @@ onMounted(() => {
   align-items: center;
   gap: 6px;
 }
+
 .form-label .required {
   color: var(--danger-color);
   font-size: 12px;
 }
+
 .form-input,
 .form-textarea,
 .form-select {
@@ -1261,6 +1018,7 @@ onMounted(() => {
   background-color: var(--background-white);
   transition: var(--transition);
 }
+
 .form-input:focus,
 .form-textarea:focus,
 .form-select:focus {
@@ -1268,12 +1026,14 @@ onMounted(() => {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
 }
+
 .form-input:disabled,
 .form-select:disabled {
   background-color: var(--background-light);
   color: var(--text-light);
   cursor: not-allowed;
 }
+
 .form-textarea {
   min-height: 100px;
   resize: vertical;
@@ -1285,14 +1045,17 @@ onMounted(() => {
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px;
 }
+
 .event-type-option {
   position: relative;
 }
+
 .event-type-radio {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
+
 .event-type-label {
   display: flex;
   align-items: center;
@@ -1305,40 +1068,48 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 500;
 }
+
 .event-type-color-dot {
   width: 12px;
   height: 12px;
   border-radius: 50%;
   background-color: var(--event-type-color);
 }
+
 .event-type-label:hover {
   border-color: var(--event-type-color);
   background-color: color-mix(in srgb, var(--event-type-color) 10%, white);
 }
-.event-type-radio:checked + .event-type-label {
+
+.event-type-radio:checked+.event-type-label {
   border-color: var(--event-type-color);
   background-color: var(--event-type-color);
   color: white;
   box-shadow: 0 2px 8px color-mix(in srgb, var(--event-type-color) 40%, transparent);
 }
-.event-type-radio:checked + .event-type-label .event-type-color-dot {
+
+.event-type-radio:checked+.event-type-label .event-type-color-dot {
   background-color: white;
 }
+
 /* ▲▲▲ ここまで追加 ▲▲▲ */
 
 .date-type-options {
   display: flex;
   gap: 12px;
 }
+
 .date-type-option {
   flex: 1;
   position: relative;
 }
+
 .date-type-radio {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
+
 .date-type-label {
   display: flex;
   align-items: center;
@@ -1352,26 +1123,31 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 500;
 }
+
 .date-type-label:hover {
   border-color: var(--primary-color);
   background-color: var(--primary-light);
 }
-.date-type-radio:checked + .date-type-label {
+
+.date-type-radio:checked+.date-type-label {
   border-color: var(--primary-color);
   background-color: var(--primary-color);
   color: white;
 }
+
 .time-inputs {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   gap: 12px;
   align-items: center;
 }
+
 .time-separator {
   font-weight: 600;
   color: var(--text-secondary);
   text-align: center;
 }
+
 .date-range-section,
 .recurring-section {
   display: grid;
@@ -1380,19 +1156,23 @@ onMounted(() => {
   background-color: var(--background-light);
   border-radius: var(--radius-md);
 }
+
 .weekday-options {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
+
 .weekday-option {
   position: relative;
 }
+
 .weekday-checkbox {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
+
 .weekday-label {
   display: flex;
   align-items: center;
@@ -1406,84 +1186,103 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 500;
 }
+
 .weekday-label:hover {
   border-color: var(--primary-color);
   background-color: var(--primary-light);
 }
-.weekday-checkbox:checked + .weekday-label {
+
+.weekday-checkbox:checked+.weekday-label {
   border-color: var(--primary-color);
   background-color: var(--primary-color);
   color: white;
 }
+
 .monthly-options {
   display: grid;
   gap: 16px;
 }
+
 .monthly-option {
   display: flex;
   align-items: center;
   gap: 8px;
 }
+
 .monthly-radio {
   margin: 0;
 }
+
 .monthly-label {
   display: flex;
   align-items: center;
   gap: 8px;
   flex: 1;
 }
+
 .monthly-input {
   width: 80px;
 }
+
 .monthly-select {
   width: auto;
   padding: 8px 12px;
 }
+
 .end-condition-options {
   display: grid;
   gap: 12px;
 }
+
 .end-condition-option {
   display: flex;
   align-items: center;
   gap: 8px;
 }
+
 .end-condition-radio {
   margin: 0;
 }
+
 .end-condition-label {
   display: flex;
   align-items: center;
   gap: 8px;
   flex: 1;
 }
+
 .end-date-input,
 .count-input {
   width: 150px;
 }
+
 .count-input {
   width: 80px;
 }
+
 .master-select-section {
   border: 2px dashed var(--border-color);
   border-radius: var(--radius-md);
   padding: 20px;
   transition: var(--transition);
 }
+
 .master-select-section:hover {
   border-color: var(--primary-color);
   background-color: var(--primary-light);
 }
+
 .master-select-wrapper {
   margin-top: 12px;
 }
+
 .selected-items {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
 }
+
 .selected-tag {
   display: flex;
   align-items: center;
@@ -1495,10 +1294,12 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 500;
 }
+
 .tag-info {
   font-size: 11px;
   opacity: 0.8;
 }
+
 .tag-remove {
   background: none;
   border: none;
@@ -1514,10 +1315,12 @@ onMounted(() => {
   justify-content: center;
   transition: var(--transition);
 }
+
 .tag-remove:hover {
   background-color: var(--primary-color);
   color: white;
 }
+
 .btn-select-master {
   background-color: transparent;
   color: var(--primary-color);
@@ -1532,10 +1335,12 @@ onMounted(() => {
   align-items: center;
   gap: 4px;
 }
+
 .btn-select-master:hover {
   background-color: var(--primary-color);
   color: white;
 }
+
 .conflicts-section {
   background-color: #fef3c7;
   border: 2px solid #f59e0b;
@@ -1543,6 +1348,7 @@ onMounted(() => {
   padding: 20px;
   margin: 16px 0;
 }
+
 .conflicts-header {
   display: flex;
   align-items: center;
@@ -1551,10 +1357,12 @@ onMounted(() => {
   color: #92400e;
   margin-bottom: 16px;
 }
+
 .conflicts-list {
   display: grid;
   gap: 12px;
 }
+
 .conflict-item {
   background-color: white;
   border: 1px solid #fcd34d;
@@ -1564,6 +1372,7 @@ onMounted(() => {
   grid-template-columns: auto 1fr;
   gap: 12px;
 }
+
 .conflict-type {
   display: flex;
   align-items: center;
@@ -1572,38 +1381,46 @@ onMounted(() => {
   color: #92400e;
   font-size: 13px;
 }
+
 .conflict-details {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
+
 .conflict-name {
   font-weight: 600;
   color: var(--text-primary);
 }
+
 .conflict-info {
   display: flex;
   gap: 12px;
   font-size: 13px;
   color: var(--text-secondary);
 }
+
 .conflict-event {
   font-size: 13px;
   color: var(--text-secondary);
 }
+
 .priority-options {
   display: flex;
   gap: 12px;
 }
+
 .priority-option {
   flex: 1;
   position: relative;
 }
+
 .priority-radio {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
+
 .priority-label {
   display: flex;
   align-items: center;
@@ -1617,27 +1434,33 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 500;
 }
+
 .priority-label:hover {
   border-color: var(--primary-color);
   background-color: var(--primary-light);
 }
-.priority-radio:checked + .priority-label {
+
+.priority-radio:checked+.priority-label {
   border-color: var(--primary-color);
   background-color: var(--primary-color);
   color: white;
 }
-.priority-radio:checked + .priority-label.low {
+
+.priority-radio:checked+.priority-label.low {
   background-color: var(--success-color);
   border-color: var(--success-color);
 }
-.priority-radio:checked + .priority-label.medium {
+
+.priority-radio:checked+.priority-label.medium {
   background-color: var(--warning-color);
   border-color: var(--warning-color);
 }
-.priority-radio:checked + .priority-label.high {
+
+.priority-radio:checked+.priority-label.high {
   background-color: var(--danger-color);
   border-color: var(--danger-color);
 }
+
 .form-actions {
   display: flex;
   gap: 16px;
@@ -1646,6 +1469,7 @@ onMounted(() => {
   padding-top: 24px;
   border-top: 1px solid var(--border-color);
 }
+
 .btn {
   padding: 14px 28px;
   border-radius: var(--radius-sm);
@@ -1658,40 +1482,48 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
 }
+
 .btn-secondary {
   background-color: var(--background-light);
   color: var(--text-secondary);
   border: 2px solid var(--border-color);
 }
+
 .btn-secondary:hover {
   background-color: var(--border-color);
   color: var(--text-primary);
 }
+
 .btn-primary {
   background-color: var(--primary-color);
   color: white;
   box-shadow: var(--shadow-sm);
 }
+
 .btn-primary:hover {
   background-color: var(--primary-hover);
   box-shadow: var(--shadow-md);
   transform: translateY(-1px);
 }
+
 .btn-primary:disabled {
   background-color: var(--text-light);
   cursor: not-allowed;
   transform: none;
 }
+
 .form-error {
   color: var(--danger-color);
   font-size: 13px;
   margin-top: 4px;
 }
+
 .form-group.error .form-input,
 .form-group.error .form-textarea,
 .form-group.error .form-select {
   border-color: var(--danger-color);
 }
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1705,6 +1537,7 @@ onMounted(() => {
   z-index: 1000;
   padding: 20px;
 }
+
 .modal-container {
   background-color: white;
   border-radius: var(--radius-lg);
@@ -1716,6 +1549,7 @@ onMounted(() => {
   flex-direction: column;
   margin-top: 5%;
 }
+
 .modal-header {
   display: flex;
   align-items: center;
@@ -1723,6 +1557,7 @@ onMounted(() => {
   padding: 24px;
   border-bottom: 1px solid var(--border-color);
 }
+
 .modal-title {
   font-size: 18px;
   font-weight: 600;
@@ -1730,6 +1565,7 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
 }
+
 .modal-close {
   background: none;
   border: none;
@@ -1738,18 +1574,22 @@ onMounted(() => {
   border-radius: var(--radius-sm);
   transition: var(--transition);
 }
+
 .modal-close:hover {
   background-color: var(--background-light);
 }
+
 .modal-body {
   padding: 24px;
   height: 380px;
   flex: 1;
 }
+
 .search-box {
   position: relative;
   margin-bottom: 20px;
 }
+
 .search-box .icon {
   position: absolute;
   left: 12px;
@@ -1757,6 +1597,7 @@ onMounted(() => {
   transform: translateY(-50%);
   color: var(--text-secondary);
 }
+
 .search-input {
   width: 100%;
   padding: 12px 16px 12px 40px;
@@ -1765,22 +1606,26 @@ onMounted(() => {
   font-size: 14px;
   transition: var(--transition);
 }
+
 .search-input:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
 }
+
 .selection-list {
   display: grid;
   gap: 8px;
   max-height: 280px;
   overflow-y: auto;
 }
+
 .no-results {
   text-align: center;
   color: var(--text-secondary);
   padding: 40px 0;
 }
+
 .selection-item {
   display: flex;
   align-items: flex-start;
@@ -1791,29 +1636,36 @@ onMounted(() => {
   cursor: pointer;
   transition: var(--transition);
 }
+
 .selection-item:hover {
   background-color: var(--background-light);
   border-color: var(--primary-color);
 }
+
 .selection-item.disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
 .selection-checkbox {
   margin-top: 4px;
 }
+
 .selection-info {
   flex: 1;
 }
+
 .selection-name {
   font-weight: 500;
   color: var(--text-primary);
 }
+
 .selection-meta {
   font-size: 13px;
   color: var(--text-secondary);
   margin-top: 2px;
 }
+
 .selection-conflict {
   display: flex;
   align-items: center;
@@ -1822,6 +1674,7 @@ onMounted(() => {
   color: var(--danger-color);
   margin-top: 4px;
 }
+
 .modal-footer {
   display: flex;
   gap: 12px;
@@ -1830,6 +1683,7 @@ onMounted(() => {
   padding: 24px;
   border-top: 1px solid var(--border-color);
 }
+
 .notification {
   position: fixed;
   top: 80px;
@@ -1844,65 +1698,128 @@ onMounted(() => {
   gap: 12px;
   z-index: 1000;
 }
+
 .notification.error {
   background-color: var(--danger-color);
 }
+
 .icon {
   font-size: 16px;
   line-height: 1;
 }
+
 .loading-spin {
   animation: spin 1s linear infinite;
 }
+
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
+
 .notification-enter-active,
 .notification-leave-active {
   transition: all 0.3s ease;
 }
+
 .notification-enter-from,
 .notification-leave-to {
   transform: translateX(100%);
   opacity: 0;
 }
+
 .modal-enter-active,
 .modal-leave-active {
   transition: all 0.3s ease;
 }
+
 .modal-enter-from,
 .modal-leave-to {
   opacity: 0;
 }
+
 .modal-enter-from .modal-container,
 .modal-leave-to .modal-container {
   transform: scale(0.9);
 }
+
 @media (max-width: 768px) {
-  .page-container { padding: 0; }
-  .container { border-radius: 0; }
-  .header { padding: 24px 20px; }
-  .form-content { padding: 24px 20px; }
-  .form-group.row { grid-template-columns: 1fr; gap: 24px; }
-  .event-type-options, /* ◀◀◀ 追加 */
-  .date-type-options { 
-    flex-direction: column; 
+  .page-container {
+    padding: 0;
   }
-  .time-inputs { grid-template-columns: 1fr; gap: 16px; }
-  .time-separator { display: none; }
-  .weekday-options { justify-content: space-between; }
-  .priority-options { flex-direction: column; }
+
+  .container {
+    border-radius: 0;
+  }
+
+  .header {
+    padding: 24px 20px;
+  }
+
+  .form-content {
+    padding: 24px 20px;
+  }
+
+  .form-group.row {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .event-type-options,
+  /* ◀◀◀ 追加 */
+  .date-type-options {
+    flex-direction: column;
+  }
+
+  .time-inputs {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .time-separator {
+    display: none;
+  }
+
+  .weekday-options {
+    justify-content: space-between;
+  }
+
+  .priority-options {
+    flex-direction: column;
+  }
+
   .end-date-input,
   .count-input {
     width: 100%;
   }
-  .conflicts-section { padding: 16px; }
-  .conflict-item { grid-template-columns: 1fr; gap: 8px; }
-  .form-actions { flex-direction: column-reverse; }
-  .btn { justify-content: center; }
-  .modal-container { max-height: 90vh; }
+
+  .conflicts-section {
+    padding: 16px;
+  }
+
+  .conflict-item {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .btn {
+    justify-content: center;
+  }
+
+  .modal-container {
+    max-height: 90vh;
+  }
 }
+
 /* ▼▼▼ ここから追加 ▼▼▼ */
 .privacy-option {
   display: flex;
@@ -1946,5 +1863,108 @@ onMounted(() => {
   color: var(--text-secondary);
   line-height: 1.5;
 }
+
 /* ▲▲▲ ここまで追加 ▲▲▲ */
+
+@media (max-width: 768px) {
+  .app-title {
+    font-size: 26px;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+  }
+
+  .form-label {
+    font-size: 12px;
+  }
+
+  .form-label .required {
+    font-size: 10px;
+  }
+
+  .form-select {
+    font-size: 12px;
+  }
+
+  .event-type-label {
+    font-size: 12px;
+  }
+
+  .date-type-label {
+    font-size: 12px;
+  }
+
+  .weekday-label {
+    font-size: 12px;
+  }
+
+  .selected-tag {
+    font-size: 11px;
+  }
+
+  .tag-info {
+    font-size: 9px;
+  }
+
+  .tag-remove {
+    font-size: 12px;
+  }
+
+  .btn-select-master {
+    font-size: 11px;
+  }
+
+  .conflict-type {
+    font-size: 11px;
+  }
+
+  .conflict-info {
+    font-size: 11px;
+  }
+
+  .conflict-event {
+    font-size: 11px;
+  }
+
+  .priority-label {
+    font-size: 12px;
+  }
+
+  .btn {
+    font-size: 12px;
+  }
+
+  .form-error {
+    font-size: 11px;
+  }
+
+  .modal-title {
+    font-size: 16px;
+  }
+
+  .search-input {
+    font-size: 12px;
+  }
+
+  .selection-meta {
+    font-size: 11px;
+  }
+
+  .selection-conflict {
+    font-size: 10px;
+  }
+
+  .icon {
+    font-size: 14px;
+  }
+
+  .form-helper-text {
+    font-size: 11px;
+  }
+
+  .privacy-text {
+    font-size: 11px;
+  }
+}
 </style>

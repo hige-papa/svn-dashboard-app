@@ -31,8 +31,11 @@ export const useEventService = () => {
       description: formData.description,
       priority: formData.priority,
       participantIds: formData.participantIds,
+      participants: formData.participants,
       facilityIds: formData.facilityIds,
+      facilities: formData.facilities,
       equipmentIds: formData.equipmentIds,
+      equipments: formData.equipments,
       private: formData.private,
     };
 
