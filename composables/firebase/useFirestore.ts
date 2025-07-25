@@ -168,7 +168,7 @@ export const useFirestore = () => {
     const setDocWithRefAsync = async (r: DocumentReference, d: any) => {
         d.createdAt = d.createdAt ? d.createdAt : serverTimestamp();
         d.updatedAt = serverTimestamp();
-        d.createBy = d.createBy ? d.createBy : user.value.displayName;
+        d.createdBy = d.createdBy ? d.createdBy : user.value.displayName;
         d.updatedBy = user.value.displayName;
         return setDoc(r, d)
             .then(_ => {
@@ -184,7 +184,7 @@ export const useFirestore = () => {
     const addDocAsync = async (c: string, d: any) => {
         d.createdAt = serverTimestamp();
         d.updatedAt = serverTimestamp();
-        d.createBy = d.createBy ? d.createBy : user.value.displayName;
+        d.createdBy = d.createdBy ? d.createdBy : user.value.displayName;
         d.updatedBy = user.value.displayName;
         return addDoc(collection(firestore.value, c), d)
             .then(response => {
@@ -200,7 +200,7 @@ export const useFirestore = () => {
     const addDocWithRefAsync = async (r: DocumentReference, d: any) => {
         d.createdAt = serverTimestamp();
         d.updatedAt = serverTimestamp();
-        d.createBy = d.createBy ? d.createBy : user.value.displayName;
+        d.createdBy = d.createdBy ? d.createdBy : user.value.displayName;
         d.updatedBy = user.value.displayName;
         return setDoc(r, d)
             .then(_ => {
@@ -219,7 +219,7 @@ export const useFirestore = () => {
             if (action.entity) {
                 action.entity.createdAt = serverTimestamp();
                 action.entity.updatedAt = serverTimestamp();
-                action.entity.createBy = action.entity.createBy ? action.entity.createBy : user.value.displayName;
+                action.entity.createdBy = action.entity.createdBy ? action.entity.createdBy : user.value.displayName;
                 action.entity.updatedBy = user.value.displayName;
                 batch.set(action.reference, action.entity);
             }
@@ -229,6 +229,7 @@ export const useFirestore = () => {
 
     const updateDocAsync = async (c: string, id: string, d: any) => {
         d.updatedAt = serverTimestamp();
+        d.updatedBy = user.value.displayName;
         return updateDoc(doc(firestore.value, c, id), d)
             .then(_ => {
                 console.log(`success update to firebase firestore => ${c}:${id}`);
@@ -240,7 +241,8 @@ export const useFirestore = () => {
     };
 
     const updateDocWithRefAsync = async (r: DocumentReference, d: any) => {
-        d.updatedAt = serverTimestamp()
+        d.updatedAt = serverTimestamp();
+        d.updatedBy = user.value.displayName;
         return updateDoc(r, d)
             .then(_ => {
                 console.log(`success update to firebase firestore => ${r.path}:${r.id}`);

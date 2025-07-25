@@ -2,10 +2,10 @@
   <div class="page-container">
     <div v-if="isViewable" class="container">
       <div class="header">
-        <h1 class="app-title">TASCAL</h1>
+        <!-- <h1 class="app-title">TASCAL</h1> -->
         <p class="page-subtitle">予定の詳細</p>
       </div>
-      
+
       <div class="view-content">
         <div class="event-header">
           <div class="event-title-section">
@@ -25,7 +25,7 @@
                 プライベート予定
               </span>
             </div>
-            </div>
+          </div>
           <div class="event-actions">
             <button type="button" @click="handleEdit" class="btn btn-secondary">
               <i class="mdi mdi-pencil icon"></i>
@@ -45,7 +45,8 @@
               予定種別
             </h3>
             <div class="detail-content">
-              <span class="event-type-badge" :style="{ '--event-type-color': eventTypeDetails[eventData.eventType]?.color }">
+              <span class="event-type-badge"
+                :style="{ '--event-type-color': eventTypeDetails[eventData.eventType]?.color }">
                 <span class="event-type-color-dot"></span>
                 {{ eventTypeDetails[eventData.eventType]?.name }}
               </span>
@@ -65,7 +66,7 @@
                     <span class="time-range">{{ eventData.startTime }} - {{ eventData.endTime }}</span>
                   </div>
                 </div>
-                
+
                 <div v-if="eventData.dateType === 'range'" class="datetime-range">
                   <div class="datetime-item">
                     <div class="datetime-label">期間</div>
@@ -80,7 +81,7 @@
                     </div>
                   </div>
                 </div>
-                
+
                 <div v-if="eventData.dateType === 'recurring'" class="datetime-recurring">
                   <div class="datetime-item">
                     <div class="datetime-label">開始日</div>
@@ -95,8 +96,11 @@
                   <div class="datetime-item">
                     <div class="datetime-label">繰り返しパターン</div>
                     <div class="datetime-value">
-                      <span class="recurring-pattern">{{ getRecurringPatternText(eventData.recurringPattern ?? '') }}</span>
-                      <span v-if="eventData.recurringPattern === 'weekly' && (eventData.selectedWeekdays ?? []).length > 0" class="weekdays">
+                      <span class="recurring-pattern">{{ getRecurringPatternText(eventData.recurringPattern ?? '')
+                        }}</span>
+                      <span
+                        v-if="eventData.recurringPattern === 'weekly' && (eventData.selectedWeekdays ?? []).length > 0"
+                        class="weekdays">
                         （{{ getSelectedWeekdaysText(eventData.selectedWeekdays ?? []) }}）
                       </span>
                     </div>
@@ -108,7 +112,8 @@
                   <div v-if="eventData.recurringEndType !== 'never'" class="datetime-item">
                     <div class="datetime-label">終了条件</div>
                     <div class="datetime-value">
-                      <span v-if="eventData.recurringEndType === 'date'">{{ formatDate(eventData.recurringEndDate ?? '') }}まで</span>
+                      <span v-if="eventData.recurringEndType === 'date'">{{ formatDate(eventData.recurringEndDate ?? '')
+                        }}まで</span>
                       <span v-if="eventData.recurringEndType === 'count'">{{ eventData.recurringCount }}回</span>
                     </div>
                   </div>
@@ -202,13 +207,17 @@
                   <span class="metadata-label">作成日時:</span>
                   <span class="metadata-value">{{ formatDateTime(eventData.createdAt.toDate()) }}</span>
                 </div>
+                <div v-if="eventData.createdBy" class="metadata-item">
+                  <span class="metadata-label">作成者:</span>
+                  <span class="metadata-value">{{ eventData.createdBy }}</span>
+                </div>
                 <div v-if="eventData.updatedAt" class="metadata-item">
                   <span class="metadata-label">最終更新:</span>
                   <span class="metadata-value">{{ formatDateTime(eventData.updatedAt.toDate()) }}</span>
                 </div>
-                <div v-if="eventData.createdBy" class="metadata-item">
-                  <span class="metadata-label">作成者:</span>
-                  <span class="metadata-value">{{ eventData.createdBy }}</span>
+                <div v-if="eventData.updatedBy" class="metadata-item">
+                  <span class="metadata-label">最終更新者:</span>
+                  <span class="metadata-value">{{ eventData.updatedBy }}</span>
                 </div>
               </div>
             </div>
@@ -441,7 +450,7 @@ const showNotification = (message: string, type: 'success' | 'error' = 'success'
   notification.message = message
   notification.type = type
   notification.show = true
-  
+
   setTimeout(() => {
     notification.show = false
   }, 3000)
@@ -966,67 +975,6 @@ onMounted(() => {
   transform: scale(0.9);
 }
 
-/* レスポンシブ対応 */
-@media (max-width: 768px) {
-  .page-container {
-    padding: 0;
-  }
-  
-  .container {
-    /* border-radius: var(--radius-md); */
-  }
-  
-  .header {
-    padding: 24px 20px;
-  }
-  
-  .view-content {
-    padding: 24px 20px;
-  }
-  
-  .event-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
-  
-  .event-actions {
-    justify-content: stretch;
-  }
-  
-  .event-actions .btn {
-    flex: 1;
-    justify-content: center;
-  }
-  
-  .datetime-item {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-  
-  .view-actions {
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .action-buttons {
-    width: 100%;
-  }
-  
-  .action-buttons .btn {
-    flex: 1;
-    justify-content: center;
-  }
-  
-  .detail-section {
-    padding: 20px;
-  }
-  
-  .modal-container {
-    margin: 20px;
-  }
-}
-
 /* CSS変数の定義 */
 :root {
   --primary-color: #4361ee;
@@ -1092,5 +1040,131 @@ onMounted(() => {
   border-radius: 50%;
   background-color: var(--event-type-color);
 }
+
 /* ▲▲▲ ここまで追加 ▲▲▲ */
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .app-title {
+    font-size: 26px;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+  }
+
+  .event-title {
+    font-size: 20px;
+  }
+
+  .priority-badge {
+    font-size: 11px;
+  }
+
+  .section-title {
+    font-size: 14px;
+  }
+
+  .count-badge {
+    font-size: 10px;
+  }
+
+  .datetime-value {
+    font-size: 14px;
+  }
+
+  .time-range {
+    font-size: 12px;
+  }
+
+  .recurring-pattern {
+    font-size: 12px;
+  }
+
+  .weekdays {
+    font-size: 12px;
+  }
+
+  .location-text {
+    font-size: 14px;
+  }
+
+  .facility-info,
+  .equipment-info {
+    font-size: 10px;
+  }
+
+  /* 説明 */
+  .description-text {
+    font-size: 13px;
+  }
+
+  .btn {
+    font-size: 12px;
+  }
+
+  .modal-title {
+    font-size: 16px;
+  }
+
+  .icon {
+    font-size: 14px;
+  }
+
+  .privacy-badge {
+    font-size: 11px;
+  }
+
+  .event-type-badge {
+    font-size: 12px;
+  }
+
+  .page-container {
+    padding: 0;
+  }
+
+  .container {
+    /* border-radius: var(--radius-md); */
+  }
+
+  .header {
+    padding: 24px 20px;
+  }
+
+  .view-content {
+    padding: 24px 20px;
+  }
+
+  .event-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .event-actions {
+    justify-content: stretch;
+  }
+
+  .event-actions .btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .datetime-item {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .view-actions {
+    gap: 16px;
+  }
+
+  .detail-section {
+    padding: 20px;
+  }
+
+  .modal-container {
+    margin: 20px;
+  }
+}
 </style>

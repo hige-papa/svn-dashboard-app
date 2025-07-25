@@ -1,5 +1,8 @@
 <template>
-  <div class="event-card" @click="onEventClick">
+  <div
+    class="event-card event-type" 
+    :style="{ '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey' }"
+    @click="onEventClick">
     <div class="event-card-header">
       <div class="event-card-title">{{ isViewable(event) ? event.title : '予定あり' }}</div>
       <div class="event-card-time">{{ event.startTime }} - {{ event.endTime }}</div>
@@ -31,6 +34,7 @@
 
 <script setup lang="ts">
 import type { User } from 'firebase/auth';
+import { useConstants } from '~/composables/common/useConstants';
 
 const user = useState<User>('user');
 
@@ -42,6 +46,8 @@ const props = defineProps<Props>();
 
 const emit = defineEmits(['eventClick']);
 
+const { eventTypeDetails } = useConstants()
+
 const isViewable = (event: EventDisplay) => {
   return event.private ? (event.participantIds?.includes(user.value.uid)) ?? false : true
 }
@@ -52,8 +58,15 @@ const onEventClick = (e: Event) => {
 </script>
 
 <style scoped>
+.event-type {
+  border-left: 4px solid var(--event-color);
+  border-top: 1px solid color-mix(in srgb, var(--event-color) 90%, #FFF 10%);
+  border-right: 1px solid color-mix(in srgb, var(--event-color) 90%, #FFF 10%);
+  border-bottom: 1px solid color-mix(in srgb, var(--event-color) 90%, #FFF 10%);
+  color: var(--event-color);
+}
+
 .event-card {
-  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 16px;
   margin-bottom: 12px;
@@ -65,7 +78,7 @@ const onEventClick = (e: Event) => {
 
 .event-card:hover {
   box-shadow: var(--shadow-md);
-  border-color: var(--primary-color);
+  border-color: color-mix(in srgb, var(--event-color) 90%, #000 10%);
   transform: translateY(-2px);
 }
 
@@ -113,5 +126,23 @@ const onEventClick = (e: Event) => {
   margin-right: 8px;
   flex-shrink: 0;
   opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+  .event-card-title {
+    font-size: 14px;
+  }
+
+  .event-card-time {
+    font-size: 12px;
+  }
+
+  .event-card-detail {
+    font-size: 12px;
+  }
+
+  .event-card-description {
+    font-size: 12px;
+  }
 }
 </style>

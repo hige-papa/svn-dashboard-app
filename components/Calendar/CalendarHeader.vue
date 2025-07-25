@@ -1,10 +1,8 @@
 <template>
   <div class="header">
-    <!-- <div class="app-title">TASCAL</div> -->
-    <!-- <div class="app-title"></div> -->
      <v-list-item class="ma-0 pa-0">
       <template v-slot:prepend>
-        <button class="today-btn" @click="navigateTo('/calendar/register')">
+        <button class="register-btn" @click="navigateTo('/calendar/register')">
           <i class="mdi mdi-pencil icon mr-2"></i>
           予定登録
         </button>
@@ -37,11 +35,25 @@ const goToToday = () => {
   border-bottom: 1px solid var(--border-color);
 }
 
-.app-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--primary-color);
-  letter-spacing: 0.5px;
+.register-btn {
+  display: flex;
+  align-items: center;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+
+.register-btn:hover {
+  background-color: var(--primary-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .today-btn {
@@ -76,6 +88,16 @@ const goToToday = () => {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .register-btn {
+    font-size: 12px;
+  }
+
+  .today-btn {
+    font-size: 12px;
   }
 }
 </style>
