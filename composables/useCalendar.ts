@@ -107,6 +107,7 @@ export const useCalendar = () => {
   const previousMonth = () => currentDate.value = new Date(currentDate.value.setMonth(currentDate.value.getMonth() - 1));
   const nextMonth = () => currentDate.value = new Date(currentDate.value.setMonth(currentDate.value.getMonth() + 1));
   const goToToday = () => { currentDate.value = new Date(); };
+  const goToSelectDate = (date: Date) => { currentDate.value = date; };
 
   // --- Computed Properties for Views ---
   const generateWeekDays = computed<Date[]>(() => {
@@ -179,6 +180,7 @@ export const useCalendar = () => {
     previousMonth,
     nextMonth,
     goToToday,
+    goToSelectDate,
     getSchedulesForDay,
     getUserSchedulesForDay,
     isHoliday,

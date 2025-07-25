@@ -39,17 +39,17 @@
       
       <!-- スケジュールイベント -->
       <div 
-        v-for="event in events" 
-        :key="event.id" 
-        class="event" 
+        v-for="event in events"
+        :key="event.id"
+        class="event"
         :style="{
           top: `${timeToPixels(event.startTime)}px`,
           height: `${timeToPixels(event.endTime) - timeToPixels(event.startTime)}px`,
-          '--event-color': `${eventTypeDetails[event.eventType]?.color}`
+          '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey',
         }"
         @click="onEventClick($event, event)"
       >
-        <div class="event-title">{{ event.title }}</div>
+        <div class="event-title">{{ isViewable(event) ? event.title : '予定あり' }}</div>
         <div class="event-time">
           <svg class="small-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
@@ -80,16 +80,19 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useConstants } from '~/composables/common/useConstants'
+import type { User } from 'firebase/auth';
+
+const user = useState<User>('user');
 
 const props = defineProps({
   events: {
-    type: Array,
+    type: Array<EventDisplay>,
     required: true
   },
   timeSlots: {
-    type: Array,
+    type: Array<string>,
     required: true
   },
   date: {
@@ -104,7 +107,11 @@ const props = defineProps({
 
 const emit = defineEmits(['eventClick']);
 
-const { eventTypeDetails } = useConstants()
+const { eventTypeDetails } = useConstants();
+
+const isViewable = (event: EventDisplay) => {
+  return event.private ? (event.participantIds?.includes(user.value.uid)) ?? false : true
+}
 
 // 今日の日付かどうか
 const isToday = computed(() => {
@@ -116,7 +123,7 @@ const isToday = computed(() => {
 
 // 現在時刻の位置を計算
 const currentTimePosition = ref(0);
-let timerInterval = null;
+let timerInterval: NodeJS.Timeout | string | number | undefined = undefined;
 
 const updateCurrentTimeIndicator = () => {
   const now = new Date();
@@ -130,7 +137,7 @@ const updateCurrentTimeIndicator = () => {
 };
 
 // イベントのクリックハンドラ
-const onEventClick = (event, eventData) => {
+const onEventClick = (event: Event, eventData: EventDisplay) => {
   emit('eventClick', { event, eventData });
 };
 

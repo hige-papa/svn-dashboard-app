@@ -41,13 +41,13 @@
           <td
             v-for="day in weekDays" 
             :key="`${user.uid}-${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`"
-            :class="['day-cell', { 'today-cell': isToday(day) }]">
+            :class="['day-cell', { 'today-cell': isToday(day) }]" @click="handleSelectDay(user, day)">
               <div 
                 v-for="(event, index) in getVisibleEvents(getUserEventsForDay(user.uid, day))" 
                 :key="event.id"
                 :class="['event', 'event-type']"
                 :style="{ top: `${10 + (index * 28)}px`, '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey' }"
-                @click.stop="onEventClick($event, event)"
+                @click.stop="($event) => { if (isViewable(event)) { onEventClick($event, event) } }"
               >
               <!-- <div 
                 v-for="(event, index) in getVisibleEvents(getUserEventsForDay(user.uid, day))" 
@@ -60,7 +60,8 @@
                   <span class="event-title">{{ event.title }}</span>
                 </template>
                 <template v-else>
-                  <span>予定あり</span>
+                  <span class="event-time">{{ event.startTime }}</span>
+                  <span class="event-title">予定あり</span>
                 </template>
               </div>
         
@@ -80,10 +81,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useCalendar } from '~/composables/useCalendar';
-import { useConstants } from '~/composables/common/useConstants'
+import { useConstants } from '~/composables/common/useConstants';
 import type { User } from 'firebase/auth';
 
-const user = useState<User>('user')
+const user = useState<User>('user');
 
 const props = defineProps({
   users: {
@@ -167,8 +168,8 @@ const onEventClick = (event: Event, eventData: EventDisplay) => {
   emit('eventClick', { event, eventData });
 };
 
-const handleSelectDay = (events: EventDisplay[]) => {
-  emit('selectDay', events)
+const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
+  emit('selectDay', { user: user, date: date })
 }
 </script>
 

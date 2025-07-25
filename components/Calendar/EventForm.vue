@@ -777,12 +777,16 @@
     <v-dialog v-model="dialog" :width="mobile ? '100%' : '50%'">
       <v-card rounded="lg">
         <v-toolbar density="compact" class="position-fixed top-0" style="z-index: 5000;">
-          <span class="ml-3">{{ `「${selected?.name}」の${formData.date}の予定` }}</span>
+          <span class="ml-3">
+            <span>{{ `「${selected?.name}」`}}</span>
+            <span v-if="modalType==='participant'">さん</span>
+            <span>{{`の${formData.date}の予定` }}</span>
+          </span>
           <v-spacer></v-spacer>
           <v-icon icon="mdi-close" class="mr-3" @click="dialog=false" size="small"></v-icon>
         </v-toolbar>
         <v-card-text class="mt-10">
-          <DailyTimeline :events="events" :time-slots="timeSlots" :date="date"
+          <DailyTimeline v-if="date" :events="events" :time-slots="timeSlots" :date="date"
               :time-to-pixels="timeToPixels" @event-click="() => {}" />
         </v-card-text>
       </v-card>
