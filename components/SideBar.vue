@@ -6,7 +6,7 @@
         <template v-slot:prepend>
           <v-avatar>
             <v-img v-if="user?.avatar" :src="user?.avatar" cover></v-img>
-            <v-icon v-else>mdi-account</v-icon>
+            <v-icon v-else size="small">mdi-account</v-icon>
           </v-avatar>
         </template>
       </v-list-item>
