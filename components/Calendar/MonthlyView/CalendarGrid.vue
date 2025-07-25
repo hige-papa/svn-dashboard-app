@@ -296,18 +296,6 @@ const onDayClick = (date: Date) => {
   color: var(--text-light);
 }
 
-.today-number {
-  /* display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background-color: var(--primary-color);
-  color: white;
-  border-radius: 50%;
-  font-weight: 600; */
-}
-
 .sunday-number {
   color: var(--accent-color);
 }

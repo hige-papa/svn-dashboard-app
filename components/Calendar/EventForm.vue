@@ -498,11 +498,11 @@
                       {{ item.conflictInfo }}
                     </div>
                   </div>
-                  <span>
-                    <v-btn variant="text" color="primary" @click="viewUsageStatus(item)" :disabled="!formData.date">
+                  <div class="h-100 d-flex align-center justify-center">
+                      <v-btn variant="text" color="primary" @click="viewUsageStatus(item)" :disabled="!formData.date" :size="mobile ? 'small' : 'auto'">
                       {{ modalType === 'participant' ? '予定を確認' : '使用状況を確認' }}
                     </v-btn>
-                  </span>
+                  </div>
                 </label>
               </div>
             </div>

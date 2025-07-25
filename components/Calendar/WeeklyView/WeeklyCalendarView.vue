@@ -427,10 +427,6 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
 } */
 
 @media (max-width: 768px) {
-  .calendar-container {
-    /* height: 500px; */
-  }
-  
   .user-column {
     width: 80px;
     min-width: 80px;

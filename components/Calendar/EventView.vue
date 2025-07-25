@@ -1123,10 +1123,6 @@ onMounted(() => {
     padding: 0;
   }
 
-  .container {
-    /* border-radius: var(--radius-md); */
-  }
-
   .header {
     padding: 24px 20px;
   }
