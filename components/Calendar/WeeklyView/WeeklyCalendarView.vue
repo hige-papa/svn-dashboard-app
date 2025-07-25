@@ -47,8 +47,14 @@
                 :key="event.id"
                 :class="['event', 'event-type']"
                 :style="{ top: `${10 + (index * 28)}px`, '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey' }"
-                @click="($event) => { if (isViewable(event)) { onEventClick($event, event) } }"
+                @click.stop="onEventClick($event, event)"
               >
+              <!-- <div 
+                v-for="(event, index) in getVisibleEvents(getUserEventsForDay(user.uid, day))" 
+                :key="event.id"
+                :class="['event', 'event-type']"
+                :style="{ top: `${10 + (index * 28)}px`, '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey' }"
+              > -->
                 <template v-if="isViewable(event)">
                   <span class="event-time">{{ event.startTime }}</span>
                   <span class="event-title">{{ event.title }}</span>

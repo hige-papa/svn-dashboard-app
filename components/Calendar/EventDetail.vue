@@ -4,18 +4,18 @@
     <v-container>
       <div class="detail-header">
         <div>
-          <div class="detail-title">{{ event.title }}</div>
+          <div class="detail-title">{{ isViewable ? event.title : '予定あり' }}</div>
           <div class="detail-time">{{ formattedDateTime }}</div>
         </div>
         <div class="detail-actions">
-          <button class="detail-view" @click="viewEvent" title="表示">
+          <button v-if="isViewable" class="detail-view" @click="viewEvent" title="表示">
             <svg class="view-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
               <circle cx="12" cy="12" r="3"></circle>
             </svg>
           </button>
-          <button class="detail-edit" @click="editEvent" title="編集">
+          <button v-if="isViewable" class="detail-edit" @click="editEvent" title="編集">
             <svg class="edit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -26,7 +26,7 @@
         </div>
       </div>
 
-      <div class="detail-item">
+      <div v-if="isViewable" class="detail-item">
         <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
@@ -35,7 +35,7 @@
         <div class="detail-content">{{ event.location || 'なし' }}</div>
       </div>
 
-      <div class="detail-item">
+      <div v-if="isViewable" class="detail-item">
         <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -46,7 +46,7 @@
         <div class="detail-content">{{ formattedParticipants }}</div>
       </div>
 
-      <div class="detail-item" v-if="event.description">
+      <div class="detail-item" v-if="isViewable && event.description">
         <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -61,6 +61,9 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useCalendar } from '~/composables/useCalendar';
+import type { User } from 'firebase/auth';
+
+const user = useState<User>('user');
 
 const props = defineProps<{
   event: EventDisplay;
@@ -69,6 +72,10 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['view', 'edit', 'close']);
+
+const isViewable = computed(() => {
+  return props.event.private ? (props.event.participantIds?.includes(user.value.uid)) ?? false : true
+})
 
 const { formatDate, users } = useCalendar();
 const router = useRouter();
