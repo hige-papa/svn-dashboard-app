@@ -8,8 +8,8 @@ export default defineNuxtPlugin(async () => {
 
     const { getListAsync } = useTransaction('schedule');
 
-    const events = ref(await getListAsync());
+    // const events = ref(await getListAsync());
 
     useState('appState', () => appState);
-    useState('events', () => events);
+    // useState('events', () => events);
 })

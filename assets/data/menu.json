@@ -16,47 +16,6 @@
         "icon": "mdi-calendar",
         "isActive": false,
         "path": "/calendar"
-      },
-      {
-        "id": "tasks",
-        "label": "タスク管理",
-        "icon": "mdi-checkbox-marked-outline",
-        "isActive": false,
-        "path": "/task"
-      },
-      {
-        "id": "team",
-        "label": "チーム",
-        "icon": "mdi-account-group",
-        "isActive": false,
-        "path": "/team"
-      }
-    ]
-  },
-  {
-    "id": "application",
-    "title": "アプリケーション",
-    "menu": [
-      {
-        "id": "sales",
-        "label": "売上管理",
-        "icon": "mdi-chart-line",
-        "isActive": false,
-        "path": "/sales"
-      },
-      {
-        "id": "expenses",
-        "label": "経費申請",
-        "icon": "mdi-receipt",
-        "isActive": false,
-        "path": "/expense"
-      },
-      {
-        "id": "attendance",
-        "label": "勤怠管理",
-        "icon": "mdi-clock-outline",
-        "isActive": false,
-        "path": "/attendance"
       }
     ]
   },
@@ -71,19 +30,6 @@
         "icon": "mdi-cog",
         "isActive": false,
         "path": "/maintenance"
-      }
-    ]
-  },
-  {
-    "id": "manual",
-    "title": "マニュアル",
-    "menu": [
-      {
-        "id": "開発者マニュアル",
-        "label": "開発者ガイド",
-        "icon": "mdi-book-open-variant-outline",
-        "isActive": false,
-        "path": "/manuals/developer-guide"
       }
     ]
   }
