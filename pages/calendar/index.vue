@@ -23,7 +23,7 @@
       <!-- ナビゲーションコントロール -->
       <div class="nav-wrapper">
         <NavControls :display-label="navDisplayLabel" :previous-label="navPreviousLabel" :next-label="navNextLabel"
-          :loading="isLoading" @previous="handlePrevious" @next="handleNext" />
+          :loading="isLoading" @previous="handlePrevious" @next="handleNext" @change-date="handleSelectDay" />
 
         <!-- 週間ビュー用のユーザーフィルター -->
         <!-- <UserFilter 
@@ -55,7 +55,7 @@
 
       <!-- WeeklyCalendarViewコンポーネントを使用 -->
       <WeeklyCalendarView :users="users" :week-days="weekDays" :events="events"
-        :get-user-schedules-for-day="getUserSchedulesForDay" @event-click="handleShowEventDetails" />
+        :get-user-schedules-for-day="getUserSchedulesForDay" @event-click="handleShowEventDetails" @select-day="handleDayClickForWeekly" />
     </div>
 
     <!-- 月間ビュー -->
@@ -66,13 +66,14 @@
 
       <CalendarGrid v-if="selectedDate && events" :calendar-days="calendarDays" :selected-date="selectedDate" :events="myEvents"
         :get-schedules-for-day="getSchedulesForDay" :is-holiday="isHoliday" :get-holiday-name="getHolidayName"
-        @day-click="handleDayClick" @event-click="handleShowEventDetails" />
+        @day-click="handleDayClickForMonthly" @event-click="handleShowEventDetails" />
 
       <!-- <SelectedDayDetail v-if="selectedDate" :selected-date="selectedDate" :events="selectedDayEvents" @event-click="handleShowEventDetails" /> -->
     </div>
 
     <div>
       <EventsList v-if="currentView === 'daily'" :date="currentDate ?? new Date()" :events="myCurrentDayEvents" @event-click="handleShowEventDetails" />
+      <EventsList v-else-if="currentView === 'weekly' && selectedDate" :date="selectedDate ?? new Date()" :events="selectedUserDayEvents" @event-click="handleShowEventDetails" :user-name="selectedUser?.displayName" />
       <EventsList v-else-if="currentView === 'monthly' && selectedDate" :date="selectedDate ?? new Date()" :events="mySelectedDayEvents" @event-click="handleShowEventDetails" />
     </div>
 
@@ -152,6 +153,7 @@ const {
   previousMonth,
   nextMonth,
   goToToday,
+  goToSelectDate,
   selectDay,
   generateCalendarDays,
   generateWeekDays,
@@ -327,8 +329,23 @@ const calendarDays = computed(() => {
   return generateCalendarDays.value;
 });
 
+const selectedUser = ref<ExtendedUserProfile>()
+
+const selectedUserDayEvents = computed(() => {
+  return selectedDayEvents.value.filter(e => { return e.participantIds?.includes(selectedUser.value?.uid ?? '') })
+})
+
+// 日付選択ハンドラ（週間ビュー用）
+const handleDayClickForWeekly = async (data: any) => {
+  const { user, date } = data;
+  selectedUser.value = user;
+  selectDay(date);
+  await updateSelectedDayEvents();
+  // alert(`${user.displayName}: ${events.length}件の予定`);
+};
+
 // 日付選択ハンドラ（月間ビュー用）
-const handleDayClick = async (date: Date) => {
+const handleDayClickForMonthly = async (date: Date) => {
   selectDay(date);
   await updateSelectedDayEvents();
 };
@@ -412,6 +429,21 @@ const handleGoToToday = async () => {
     await updateSelectedDayEvents();
   }
 };
+
+const handleSelectDay = async (date: Date) => {
+  // alert(date);
+
+  goToSelectDate(date);
+
+  // イベントデータを更新/
+  await updateCurrentDayEvents();
+
+  // 月間ビューの場合は今日を選択
+  if (currentView.value === 'monthly') {
+    selectDay(date);
+    await updateSelectedDayEvents();
+  }
+}
 
 const eventDetailDialog = ref<boolean>(false)
 

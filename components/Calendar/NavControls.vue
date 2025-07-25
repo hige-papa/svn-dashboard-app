@@ -6,17 +6,34 @@
       </svg>
       {{ previousLabel }}
     </button>
-    <span class="current-date">{{ displayLabel }}</span>
+    <span class="current-date" @click="dialog=true" style="cursor: pointer;">{{ displayLabel }}</span>
     <button class="nav-btn" @click="onNext">
       {{ nextLabel }}
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="9 18 15 12 9 6"></polyline>
       </svg>
     </button>
+    <v-dialog v-model="dialog" :width="mobile ? '100%' : '30%'">
+      <v-card>
+        <v-card-text>
+          <v-label class="mb-3">日付選択</v-label>
+          <v-text-field v-model="date" type="date" variant="outlined" hide-details @keydown.enter="handleSelect"></v-text-field>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" variant="text" @click="handleSelect">確定</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { useDisplay } from 'vuetify';
+import { padStart } from 'vuetify/lib/util/helpers.mjs';
+
+const { mobile } = useDisplay();
+
 const props = defineProps({
   displayLabel: {
     type: String,
@@ -32,7 +49,27 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['previous', 'next']);
+const emit = defineEmits(['previous', 'next', 'changeDate']);
+
+const dialog = ref<boolean>(false);
+
+const now = () => {
+  const date = new Date()
+  const year = date.getFullYear()
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  return `${year}-${padStart(month.toString(), 2, '0')}-${day}`
+}
+
+const date = ref<string>(now())
+
+const handleSelect = () => {
+  if (date.value) {
+    // alert(date.value);
+    emit('changeDate', new Date(`${date.value}T00:00:00`));
+    dialog.value = false;
+  }
+}
 
 const onPrevious = () => {
   emit('previous');
