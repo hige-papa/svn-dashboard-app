@@ -669,50 +669,52 @@ onMounted(() => {
 }
 
 .datetime-item {
-  display: grid;
+  width: 100%;
+  display: flex;
   grid-template-columns: 120px 1fr;
   gap: 16px;
   align-items: center;
 }
 
 .datetime-label {
-  font-weight: 500;
+  width: 120px;
+  /* font-weight: 500; */
   color: var(--text-primary);
 }
 
 .datetime-value {
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 15px;
+  /* font-weight: 500; */
   color: var(--text-primary);
 }
 
 .time-range {
-  background-color: var(--primary-light);
-  color: var(--primary-color);
-  padding: 4px 8px;
-  border-radius: 8px;
-  font-size: 14px;
-  margin-left: 8px;
+  /* background-color: var(--primary-light); */
+  /* color: var(--primary-color); */
+  /* padding: 4px 8px; */
+  /* border-radius: 8px; */
+  font-size: 15px;
+  /* margin-left: 8px; */
 }
 
 .recurring-pattern {
-  background-color: var(--accent-light);
-  color: var(--accent-color);
-  padding: 4px 8px;
+  /* background-color: var(--accent-light); */
+  color: var(--text-primary);
+  /* padding: 4px 8px; */
   border-radius: 8px;
   font-size: 14px;
 }
 
 .weekdays {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin-left: 8px;
+  font-size: 15px;
+  color: var(--text-primary);
+  /* margin-left: 8px; */
 }
 
 /* 場所 */
 .location-text {
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 15px;
+  /* font-weight: 500; */
   color: var(--text-primary);
 }
 
@@ -769,7 +771,7 @@ onMounted(() => {
 }
 
 .metadata-value {
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 /* アクションボタン */
@@ -1025,9 +1027,9 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 6px 14px;
   border-radius: var(--radius-sm);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   background-color: color-mix(in srgb, var(--event-type-color) 15%, transparent);
   color: var(--event-type-color);

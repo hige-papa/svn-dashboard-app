@@ -396,11 +396,11 @@
             </label>
             <div class="priority-options">
               <div class="priority-option">
-                <input id="priorityLow" v-model="formData.priority" type="radio" name="priority" value="low"
+                <input id="priorityHigh" v-model="formData.priority" type="radio" name="priority" value="high"
                   class="priority-radio">
-                <label for="priorityLow" class="priority-label low">
-                  <i class="mdi mdi-arrow-down icon"></i>
-                  低
+                <label for="priorityHigh" class="priority-label high">
+                  <i class="mdi mdi-arrow-up icon"></i>
+                  高
                 </label>
               </div>
               <div class="priority-option">
@@ -412,11 +412,11 @@
                 </label>
               </div>
               <div class="priority-option">
-                <input id="priorityHigh" v-model="formData.priority" type="radio" name="priority" value="high"
+                <input id="priorityLow" v-model="formData.priority" type="radio" name="priority" value="low"
                   class="priority-radio">
-                <label for="priorityHigh" class="priority-label high">
-                  <i class="mdi mdi-arrow-up icon"></i>
-                  高
+                <label for="priorityLow" class="priority-label low">
+                  <i class="mdi mdi-arrow-down icon"></i>
+                  低
                 </label>
               </div>
             </div>
@@ -1876,7 +1876,7 @@ onMounted(() => {
   }
 
   .form-label {
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .form-label .required {
