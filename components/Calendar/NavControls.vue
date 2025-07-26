@@ -55,10 +55,10 @@ const dialog = ref<boolean>(false);
 
 const now = () => {
   const date = new Date()
-  const year = date.getFullYear()
-  const month = date.getMonth() + 1
-  const day = date.getDate()
-  return `${year}-${padStart(month.toString(), 2, '0')}-${day}`
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 const date = ref<string>(now())

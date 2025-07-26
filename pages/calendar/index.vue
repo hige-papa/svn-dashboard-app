@@ -56,7 +56,7 @@
       <!-- WeeklyCalendarViewコンポーネントを使用 -->
       <!-- <WeeklyCalendarView :users="users" :week-days="weekDays" :events="events"
         :get-user-schedules-for-day="getUserSchedulesForDay" @event-click="handleShowEventDetails" @day-click="handleDayClickForWeekly" /> -->
-      <WeeklyCalendarView :users="users" :week-days="weekDays" :events="events"
+      <WeeklyCalendarView :users="users" :week-days="weekDays" :events="events" :daily-options="dailyOptions"
         :get-user-schedules-for-day="getUserSchedulesForDay" @day-click="handleDayClickForWeekly" />
     </div>
 
@@ -70,7 +70,7 @@
         :get-schedules-for-day="getSchedulesForDay" :is-holiday="isHoliday" :get-holiday-name="getHolidayName"
         @day-click="handleDayClickForMonthly" @event-click="handleShowEventDetails" /> -->
       <CalendarGrid v-if="selectedDate && events" :calendar-days="calendarDays" :selected-date="selectedDate" :events="myEvents"
-        :get-schedules-for-day="getSchedulesForDay" :is-holiday="isHoliday" :get-holiday-name="getHolidayName"
+        :get-schedules-for-day="getSchedulesForDay" :is-holiday="isHoliday" :get-holiday-name="getHolidayName" :daily-options="myDailyOptions"
         @day-click="handleDayClickForMonthly" />
 
       <!-- <SelectedDayDetail v-if="selectedDate" :selected-date="selectedDate" :events="selectedDayEvents" @event-click="handleShowEventDetails" /> -->
@@ -83,12 +83,19 @@
     <v-dialog v-model="eventListDialog" :width="mobile ? '100%' : '50%'">
       <v-card>
         <v-card-text>
-          <EventsList v-if="currentView === 'weekly' && selectedDate" :date="selectedDate ?? new Date()" :events="selectedUserDayEvents" @event-click="handleShowEventDetails" :user-name="selectedUser?.displayName" />
+          <EventsList v-if="currentView === 'weekly' && selectedDate" :date="selectedDate ?? new Date()" :events="selectedUserDayEvents" @event-click="handleShowEventDetails" :user="selectedUser" />
           <EventsList v-else-if="currentView === 'monthly' && selectedDate" :date="selectedDate ?? new Date()" :events="mySelectedDayEvents" @event-click="handleShowEventDetails" />
         </v-card-text>
         <v-card-actions>
+          <v-btn color="primary" variant="text" :size="mobile ? 'small' : 'auto'" @click="openDailyOptionDialog">日別オプションを編集する</v-btn>
           <v-btn color="primary" variant="text" :size="mobile ? 'small' : 'auto'" @click="goToRegister()">予定を登録する</v-btn>
         </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="dailyOptionDialog" width="50%" :fullscreen="mobile">
+      <v-card>
+        <DailyOptionForm v-if="selectedDate" :user="selectedUser" :date="getDateString(selectedDate)" @cancel="handleCancelDailyOption" @submit="handleSubmitDailyOption"></DailyOptionForm>
       </v-card>
     </v-dialog>
 
@@ -120,6 +127,7 @@ import { useDisplay } from 'vuetify'
 import { useTransaction } from '~/composables/transaction/useTransaction'
 import type { User } from 'firebase/auth';
 import { padStart } from 'vuetify/lib/util/helpers.mjs';
+import { useDailyOptions } from '~/composables/useDailyOptions'
 
 const user = useState<User>('user')
 
@@ -181,6 +189,17 @@ const {
   refreshEvents,
   setView,
 } = useCalendar();
+
+const {
+  dailyOptions,
+  getUserOptionForDay,
+  loadDailyOptions,
+  setDailyOption,
+} = useDailyOptions(currentDate, currentView);
+
+const myDailyOptions = computed(() => {
+  return dailyOptions.value.filter(e => { return e.uid === user.value.uid });
+})
 
 // イベント詳細表示用の状態
 // const showDetail = ref<boolean>(false);
@@ -554,16 +573,38 @@ const handleCloseView = () => {
 const handleDelete = (id: string) => {
   deleteAsync(id).then(_ => {
     loadData()
+    viewDialog.value = false
   })
 }
 
 // 登録画面へ
 const getDateString = (date: Date) => {
-  const year = date.getFullYear()
-  const month = date.getMonth() + 1
-  const day = date.getDate()
-  return `${year}-${padStart(month.toString(), 2, '0')}-${day}`
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
+
+const dailyOptionDialog = ref<boolean>(false);
+
+const openDailyOptionDialog = () => {
+  dailyOptionDialog.value = true;
+}
+
+const handleSubmitDailyOption = (data: DailyUserOption) => {
+  // alert(JSON.stringify(data));
+  setDailyOption(data).then(() => {
+    dailyOptionDialog.value = false;
+  })
+}
+
+const handleCancelDailyOption = () => {
+  dailyOptionDialog.value = false;
+}
+
+// const goToRegisterOption = () => {
+//   navigateTo(`/calendar/register/option?date=${getDateString(selectedDate.value ?? new Date())}&uid=${selectedUser.value?.uid}`)
+// }
 
 const goToRegister = () => {
   navigateTo(`/calendar/register?date=${getDateString(selectedDate.value ?? new Date())}&participantId=${selectedUser.value?.uid}`)
