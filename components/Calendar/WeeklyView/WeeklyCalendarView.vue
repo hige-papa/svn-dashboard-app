@@ -2,11 +2,11 @@
   <!-- {{ props.weekDays }} -->
   <!-- {{ props.visibleUsers }} -->
   <!-- {{ props.events }} -->
-  <div class="calendar-container w-100">
+  <div class="calendar-container w-100 table_box">
     <v-table>
       <thead>
         <tr>
-          <td class="day-header">メンバー</td>
+          <td class="day-header sticky">メンバー</td>
           <td
             v-for="day in weekDays" 
             :key="`${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`"
@@ -35,7 +35,7 @@
           :key="user.uid"
           class="schedule-row"
         >
-          <td class="user-cell">
+          <td class="user-cell sticky">
             <div class="user-name">{{ user.displayName }}</div>
           </td>
           <td
@@ -265,6 +265,8 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
   border-bottom: 1px solid var(--border-color);
   max-width: 176.5px;
   overflow: hidden;
+  background-color: #FFF;
+  z-index: 1000;
 }
 
 .user-header {
@@ -304,11 +306,11 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
   flex-shrink: 0;
 }
 
-.user-color-1 { background-color: var(--event-1-bg); color: var(--event-1); }
+/* .user-color-1 { background-color: var(--event-1-bg); color: var(--event-1); }
 .user-color-2 { background-color: var(--event-2-bg); color: var(--event-2); }
 .user-color-3 { background-color: var(--event-3-bg); color: var(--event-3); }
 .user-color-4 { background-color: var(--event-4-bg); color: var(--event-4); }
-.user-color-5 { background-color: var(--event-5-bg); color: var(--event-5); }
+.user-color-5 { background-color: var(--event-5-bg); color: var(--event-5); } */
 
 .user-name {
   font-size: 14px;
@@ -493,6 +495,16 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
   border-left: 4px solid var(--event-5);
   color: var(--text-primary);
 } */
+
+.table_box {
+  overflow-x: auto;
+}
+
+.sticky {
+  position: sticky;
+  top: 0;
+  left: 0;
+}
 
 @media (max-width: 768px) {
   .user-column {

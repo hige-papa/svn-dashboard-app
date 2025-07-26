@@ -95,7 +95,7 @@
 
     <v-dialog v-model="dailyOptionDialog" width="50%" :fullscreen="mobile">
       <v-card>
-        <DailyOptionForm v-if="selectedDate" :user="selectedUser" :date="getDateString(selectedDate)" @cancel="handleCancelDailyOption" @submit="handleSubmitDailyOption"></DailyOptionForm>
+        <DailyOptionForm v-if="selectedDate" :user="selectedUser" :date="getDateString(selectedDate)" @cancel="handleCancelDailyOption" @submit="handleSubmitDailyOption" :initial-data="dailyOption"></DailyOptionForm>
       </v-card>
     </v-dialog>
 
@@ -587,7 +587,10 @@ const getDateString = (date: Date) => {
 
 const dailyOptionDialog = ref<boolean>(false);
 
-const openDailyOptionDialog = () => {
+const dailyOption = ref<DailyUserOption>();
+
+const openDailyOptionDialog = (uid?: string) => {
+  dailyOption.value = getUserOptionForDay(uid ?? user.value.uid, selectedDate.value);
   dailyOptionDialog.value = true;
 }
 
