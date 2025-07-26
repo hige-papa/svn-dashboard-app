@@ -75,6 +75,7 @@ declare global {
     startTime: string;
     endTime: string;
     allDay?: boolean;
+    recurringStartDate?: string;
     recurringPattern?: RecurringPattern;
     selectedWeekdays?: number[];
     monthlyType?: MonthlyType;

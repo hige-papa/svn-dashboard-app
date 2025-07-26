@@ -59,11 +59,18 @@
             </h3>
             <div class="detail-content">
               <div class="datetime-info">
-                <div v-if="eventData.dateType === 'single'" class="datetime-item">
-                  <div class="datetime-label">日付・時間</div>
-                  <div class="datetime-value">
-                    {{ formatDate(eventData.date ?? '') }}
-                    <span class="time-range">{{ eventData.startTime }} - {{ eventData.endTime }}</span>
+                <div v-if="eventData.dateType === 'single'">
+                  <div class="datetime-item">
+                    <div class="datetime-label">日付</div>
+                    <div class="datetime-value">
+                      {{ formatDate(eventData.date ?? '') }}
+                    </div>
+                  </div>
+                  <div class="datetime-item">
+                    <div class="datetime-label">時間</div>
+                    <div class="datetime-value">
+                      <span class="time-range">{{ eventData.startTime }} - {{ eventData.endTime }}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -85,7 +92,7 @@
                 <div v-if="eventData.dateType === 'recurring'" class="datetime-recurring">
                   <div class="datetime-item">
                     <div class="datetime-label">開始日</div>
-                    <div class="datetime-value">{{ formatDate(eventData.startDate ?? '') }}</div>
+                    <div class="datetime-value">{{ formatDate(eventData.recurringStartDate ?? '') }}</div>
                   </div>
                   <div class="datetime-item">
                     <div class="datetime-label">時間</div>
@@ -756,7 +763,7 @@ onMounted(() => {
 /* メタデータ */
 .metadata-info {
   display: grid;
-  gap: 8px;
+  gap: 4px;
 }
 
 .metadata-item {
@@ -1076,7 +1083,7 @@ onMounted(() => {
   }
 
   .time-range {
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .recurring-pattern {
