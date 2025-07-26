@@ -86,6 +86,9 @@
           <EventsList v-if="currentView === 'weekly' && selectedDate" :date="selectedDate ?? new Date()" :events="selectedUserDayEvents" @event-click="handleShowEventDetails" :user-name="selectedUser?.displayName" />
           <EventsList v-else-if="currentView === 'monthly' && selectedDate" :date="selectedDate ?? new Date()" :events="mySelectedDayEvents" @event-click="handleShowEventDetails" />
         </v-card-text>
+        <v-card-actions>
+          <v-btn color="primary" variant="text" :size="mobile ? 'small' : 'auto'" @click="goToRegister()">予定を登録する</v-btn>
+        </v-card-actions>
       </v-card>
     </v-dialog>
 
@@ -116,6 +119,7 @@ import { useCalendar } from '~/composables/useCalendar';
 import { useDisplay } from 'vuetify'
 import { useTransaction } from '~/composables/transaction/useTransaction'
 import type { User } from 'firebase/auth';
+import { padStart } from 'vuetify/lib/util/helpers.mjs';
 
 const user = useState<User>('user')
 
@@ -551,6 +555,18 @@ const handleDelete = (id: string) => {
   deleteAsync(id).then(_ => {
     loadData()
   })
+}
+
+// 登録画面へ
+const getDateString = (date: Date) => {
+  const year = date.getFullYear()
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  return `${year}-${padStart(month.toString(), 2, '0')}-${day}`
+}
+
+const goToRegister = () => {
+  navigateTo(`/calendar/register?date=${getDateString(selectedDate.value ?? new Date())}&participantId=${selectedUser.value?.uid}`)
 }
 
 const handleCopy = () => {

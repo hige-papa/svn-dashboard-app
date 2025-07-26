@@ -1,5 +1,5 @@
 <template>
-    <EventForm @submit="register"></EventForm>
+    <EventForm :date="date" :partcipant-ids="[participantId]" @submit="register"></EventForm>
 </template>
 
 <script setup lang="ts">
@@ -9,6 +9,16 @@ import { useEventService } from '~/services/eventService';
 const { createEvent } = useEventService();
 
 const router = useRouter();
+
+const { query } = useRoute();
+
+const date = computed(() => {
+  return query.date as string ?? undefined
+})
+
+const participantId = computed(() => {
+  return query.participantId as string ?? undefined
+})
 
 const register = async (formData: EventFormData) => {
   try {

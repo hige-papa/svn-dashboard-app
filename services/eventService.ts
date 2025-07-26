@@ -6,8 +6,6 @@ export const useEventService = () => {
   const eventsService = useFirestoreGeneral('events')
   const rulesService = useFirestoreGeneral('recurrence_rules')
   const instancesService = useFirestoreGeneral('event_instances')
-  const equipments = useFirestoreGeneral('equipment')
-  const facilities = useFirestoreGeneral('facility')
 
   // --- Date Utility Functions (Timezone Safe) ---
   const formatDateForDb = (date: Date): string => {

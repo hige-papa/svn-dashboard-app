@@ -522,11 +522,7 @@
     <v-dialog v-model="dialog" :width="mobile ? '100%' : '50%'">
       <v-card rounded="lg">
         <v-toolbar density="compact" class="position-fixed top-0" style="z-index: 5000;">
-          <span class="ml-3">
-            <span>{{ `「${selected?.name}」` }}</span>
-            <span v-if="modalType === 'participant'">さん</span>
-            <span>{{ `の${formData.date}の予定` }}</span>
-          </span>
+          <h3 v-if="selected" class="list-title">{{ selected?.name }}さんの{{ formData.date }}の予定一覧</h3>
           <v-spacer></v-spacer>
           <v-icon icon="mdi-close" class="mr-3" @click="dialog = false" size="small"></v-icon>
         </v-toolbar>
@@ -570,6 +566,8 @@ const { timeToPixels, timeSlots } = useCalendar();
 const { getEventsByParticipantInRange, getEventsByEquipmentInRange, getEventsByFacilityInRange } = useEventService();
 
 interface Props {
+  date?: string,
+  partcipantIds?: string[],
   initialData?: EventFormData
 }
 
@@ -708,7 +706,7 @@ const setDefaultValues = (form?: EventFormData) => {
       return `${hours}:${minutes}`;
     };
 
-    const today = toLocaleDateString(now);
+    const today = props.date ? props.date : toLocaleDateString(now);
     formData.date = today;
     formData.startDate = today;
     formData.endDate = today;
@@ -888,6 +886,7 @@ const viewUsageStatus = async (item: MasterItem) => {
 }
 
 onMounted(() => {
+  setDefaultValues(props.initialData)
   getUsersAsync().then(users => {
     participantsMaster.value = (users as ExtendedUserProfile[]).map(user => ({
       id: user.uid,
@@ -895,8 +894,12 @@ onMounted(() => {
       department: user.department || ''
     }))
     if (!props.initialData) {
-      formData.participantIds.push(user.value.uid)
-      formData.participants = participantsMaster.value.filter(p => formData.participantIds.includes(p.id)).map(p => p.name);
+      if (props.partcipantIds) {
+        formData.participantIds = [ ...formData.participantIds, ...props.partcipantIds ];
+      } else {
+        formData.participantIds.push(user.value.uid);
+      }
+        formData.participants = participantsMaster.value.filter(p => formData.participantIds.includes(p.id)).map(p => p.name);
     }
   })
   getEquipmentsAsync().then(equipments => {
@@ -913,7 +916,6 @@ onMounted(() => {
       capacity: facility.capacity,
     }))
   })
-  setDefaultValues(props.initialData)
   // alert(JSON.stringify(props.initialData))
 })
 </script>
@@ -1864,6 +1866,25 @@ onMounted(() => {
   line-height: 1.5;
 }
 
+.list-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-left: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.list-title::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 20px;
+  background-color: var(--primary-color);
+  margin-right: 10px;
+  border-radius: 2px;
+}
+
 /* ▲▲▲ ここまで追加 ▲▲▲ */
 
 @media (max-width: 768px) {
@@ -1965,6 +1986,11 @@ onMounted(() => {
 
   .privacy-text {
     font-size: 11px;
+  }
+
+  .list-title {
+    font-size: 14px;
+    font-weight: 500;
   }
 }
 </style>
