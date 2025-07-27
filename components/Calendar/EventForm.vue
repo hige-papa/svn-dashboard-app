@@ -567,7 +567,7 @@ const { getEventsByParticipantInRange, getEventsByEquipmentInRange, getEventsByF
 
 interface Props {
   date?: string,
-  partcipantIds?: string[],
+  participantIds?: string[],
   initialData?: EventFormData
 }
 
@@ -894,12 +894,12 @@ onMounted(() => {
       department: user.department || ''
     }))
     if (!props.initialData) {
-      if (props.partcipantIds) {
-        formData.participantIds = [ ...formData.participantIds, ...props.partcipantIds ];
+      if (props.participantIds) {
+        formData.participantIds = [ ...formData.participantIds, ...props.participantIds ];
       } else {
         formData.participantIds.push(user.value.uid);
       }
-        formData.participants = participantsMaster.value.filter(p => formData.participantIds.includes(p.id)).map(p => p.name);
+      formData.participants = participantsMaster.value.filter(p => formData.participantIds.includes(p.id)).map(p => p.name);
     }
   })
   getEquipmentsAsync().then(equipments => {

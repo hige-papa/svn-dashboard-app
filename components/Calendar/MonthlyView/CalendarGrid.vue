@@ -37,6 +37,46 @@
               <span v-if="getHolidayName(day.date)" class="ml-2 holiday-name">
                 {{ getHolidayName(day.date) }}
               </span>
+              <span class="position-absolute right-0 mr-2">
+                <v-tooltip text="勤務形態" location="top">
+                  <template v-slot:activator="{ props }">
+                    <v-icon
+                      v-if="getDailyOptions(day.date)?.workStyle"
+                      v-bind="props"
+                      :icon="workstyleDetails[getDailyOptions(day.date).workStyle].icon"
+                      :color="workstyleDetails[getDailyOptions(day.date).workStyle].color"
+                      :size="workstyleDetails[getDailyOptions(day.date).workStyle].size"
+                      >
+                    </v-icon>
+                  </template>
+                </v-tooltip>
+                <v-tooltip text="ランチ" location="top">
+                  <template v-slot:activator="{ props }">
+                    <v-icon
+                      v-if="getDailyOptions(day.date)?.lunchParticipation"
+                      v-bind="props"
+                      :icon="participationStatusDetails[getDailyOptions(day.date).lunchParticipation].icon"
+                      :color="participationStatusDetails[getDailyOptions(day.date).lunchParticipation].color"
+                      :size="participationStatusDetails[getDailyOptions(day.date).lunchParticipation].size"
+                      class="ml-2"
+                      >
+                    </v-icon>
+                  </template>
+                </v-tooltip>
+                <v-tooltip text="ディナー" location="top">
+                  <template v-slot:activator="{ props }">
+                    <v-icon
+                      v-if="getDailyOptions(day.date)?.dinnerParticipation"
+                      v-bind="props"
+                      :icon="participationStatusDetails[getDailyOptions(day.date).dinnerParticipation].icon"
+                      :color="participationStatusDetails[getDailyOptions(day.date).dinnerParticipation].color"
+                      :size="participationStatusDetails[getDailyOptions(day.date).dinnerParticipation].size"
+                      class="ml-2"
+                      >
+                    </v-icon>
+                  </template>
+                </v-tooltip>
+              </span>
             </div>
 
             <!-- <div v-if="getHolidayName(day.date)" class="holiday-name">
@@ -130,18 +170,46 @@ const props = defineProps({
   events: {
     type: Array < EventDisplay >,
     required: true
+  },
+  dailyOptions: {
+    type: Array < DailyUserOption >,
+    required: true
   }
 });
 
 // const emit = defineEmits(['dayClick', 'eventClick']);
 const emit = defineEmits(['dayClick']);
 
-const { eventTypeDetails } = useConstants()
+const {
+  eventTypeDetails,
+  workstyleDetails,
+  participationStatusDetails,
+} = useConstants();
 
 const {
   formatDate,
   getHolidayName
 } = useCalendar();
+
+const dateString = (date: Date) => {
+  if (date.toLocaleDateString() === new Date().toLocaleDateString()) return '本日'
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const dailyOptionView = computed(() => {
+  const result: Record<string, DailyUserOption> = {};
+  props.dailyOptions.forEach(e => {
+    result[e.date] = e
+  });
+  return result;
+});
+
+const getDailyOptions = (date: Date) => {
+  return dailyOptionView.value[dateString(date)]
+}
 
 const chunk = <T extends any[]>(arr: T, size: number) => {
   return arr.reduce((preArr: T[][], current, index) => {

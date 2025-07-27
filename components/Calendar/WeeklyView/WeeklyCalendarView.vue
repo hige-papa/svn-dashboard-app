@@ -2,11 +2,11 @@
   <!-- {{ props.weekDays }} -->
   <!-- {{ props.visibleUsers }} -->
   <!-- {{ props.events }} -->
-  <div class="calendar-container w-100">
+  <div class="calendar-container w-100 table_box">
     <v-table>
       <thead>
         <tr>
-          <td class="day-header">メンバー</td>
+          <td class="day-header sticky">メンバー</td>
           <td
             v-for="day in weekDays" 
             :key="`${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`"
@@ -35,7 +35,7 @@
           :key="user.uid"
           class="schedule-row"
         >
-          <td class="user-cell">
+          <td class="user-cell sticky">
             <div class="user-name">{{ user.displayName }}</div>
           </td>
           <td
@@ -49,6 +49,46 @@
                 :style="{ top: `${10 + (index * 28)}px`, '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey' }"
                 @click.stop="($event) => { if (isViewable(event)) { onEventClick($event, event) } }"
               > -->
+              <div class="mt-1">
+                <v-tooltip text="勤務形態" location="top">
+                  <template v-slot:activator="{ props }">
+                    <v-icon
+                      v-if="getDailyOptions(user.uid, day)?.workStyle"
+                      v-bind="props"
+                      :icon="workstyleDetails[getDailyOptions(user.uid, day).workStyle].icon"
+                      :color="workstyleDetails[getDailyOptions(user.uid, day).workStyle].color"
+                      :size="workstyleDetails[getDailyOptions(user.uid, day).workStyle].size"
+                      >
+                    </v-icon>
+                  </template>
+                </v-tooltip>
+                <v-tooltip text="ランチ" location="top">
+                  <template v-slot:activator="{ props }">
+                    <v-icon
+                      v-if="getDailyOptions(user.uid, day)?.lunchParticipation"
+                      v-bind="props"
+                      :icon="participationStatusDetails[getDailyOptions(user.uid, day).lunchParticipation].icon"
+                      :color="participationStatusDetails[getDailyOptions(user.uid, day).lunchParticipation].color"
+                      :size="participationStatusDetails[getDailyOptions(user.uid, day).lunchParticipation].size"
+                      class="ml-2"
+                      >
+                    </v-icon>
+                  </template>
+                </v-tooltip>
+                <v-tooltip text="ディナー" location="top">
+                  <template v-slot:activator="{ props }">
+                    <v-icon
+                      v-if="getDailyOptions(user.uid, day)?.dinnerParticipation"
+                      v-bind="props"
+                      :icon="participationStatusDetails[getDailyOptions(user.uid, day).dinnerParticipation].icon"
+                      :color="participationStatusDetails[getDailyOptions(user.uid, day).dinnerParticipation].color"
+                      :size="participationStatusDetails[getDailyOptions(user.uid, day).dinnerParticipation].size"
+                      class="ml-2"
+                      >
+                    </v-icon>
+                  </template>
+                </v-tooltip>
+              </div>
               <div 
                 v-for="(event, index) in getVisibleEvents(getUserEventsForDay(user.uid, day))" 
                 :key="event.id"
@@ -98,7 +138,11 @@ const props = defineProps({
   events: {
     type: Array<EventDisplay>,
     required: true
-  }
+  },
+  dailyOptions: {
+    type: Array < DailyUserOption >,
+    required: true
+  },
 });
 
 // const emit = defineEmits(['eventClick', 'selectDay']);
@@ -108,12 +152,36 @@ const isViewable = (event: EventDisplay) => {
   return event.private ? (event.participantIds?.includes(user.value.uid)) ?? false : true
 }
 
-const { eventTypeDetails } = useConstants()
+const {
+  eventTypeDetails,
+  workstyleDetails,
+  participationStatusDetails,
+} = useConstants()
 
 const { 
   getDayOfWeek, 
   formatShortDate
 } = useCalendar();
+
+const dateString = (date: Date) => {
+  if (date.toLocaleDateString() === new Date().toLocaleDateString()) return '本日'
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getDailyOptionView = (uid: string) => {
+  const result: Record<string, DailyUserOption> = {};
+  props.dailyOptions.filter(e => { return e.uid === uid }).forEach(e => {
+    result[e.date] = e;
+  });
+  return result;
+};
+
+const getDailyOptions = (uid: string, date: Date) => {
+  return getDailyOptionView(uid)[dateString(date)];
+}
 
 // 表示するユーザー（visible=trueのもののみ）
 const visibleUsers = computed(() => {
@@ -197,6 +265,8 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
   border-bottom: 1px solid var(--border-color);
   max-width: 176.5px;
   overflow: hidden;
+  background-color: #FFF;
+  z-index: 1000;
 }
 
 .user-header {
@@ -236,11 +306,11 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
   flex-shrink: 0;
 }
 
-.user-color-1 { background-color: var(--event-1-bg); color: var(--event-1); }
+/* .user-color-1 { background-color: var(--event-1-bg); color: var(--event-1); }
 .user-color-2 { background-color: var(--event-2-bg); color: var(--event-2); }
 .user-color-3 { background-color: var(--event-3-bg); color: var(--event-3); }
 .user-color-4 { background-color: var(--event-4-bg); color: var(--event-4); }
-.user-color-5 { background-color: var(--event-5-bg); color: var(--event-5); }
+.user-color-5 { background-color: var(--event-5-bg); color: var(--event-5); } */
 
 .user-name {
   font-size: 14px;
@@ -324,7 +394,7 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
 
 .schedule-row {
   /* display: flex; */
-  height: 80px;
+  height: 105px;
   min-height: 80px;
   width: 100%;
   vertical-align: top;
@@ -425,6 +495,16 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
   border-left: 4px solid var(--event-5);
   color: var(--text-primary);
 } */
+
+.table_box {
+  overflow-x: auto;
+}
+
+.sticky {
+  position: sticky;
+  top: 0;
+  left: 0;
+}
 
 @media (max-width: 768px) {
   .user-column {

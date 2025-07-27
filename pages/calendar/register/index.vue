@@ -1,5 +1,5 @@
 <template>
-    <EventForm :date="date" :partcipant-ids="[participantId]" @submit="register"></EventForm>
+    <EventForm :date="date" :partcipant-ids="participantIds" @submit="handleSubmit"></EventForm>
 </template>
 
 <script setup lang="ts">
@@ -16,11 +16,11 @@ const date = computed(() => {
   return query.date as string ?? undefined
 })
 
-const participantId = computed(() => {
-  return query.participantId as string ?? undefined
+const participantIds = computed(() => {
+  return query.participantId ? [query.participantId as string] : undefined
 })
 
-const register = async (formData: EventFormData) => {
+const handleSubmit = async (formData: EventFormData) => {
   try {
     // フォームデータを eventService の createEvent 関数に渡す
     await createEvent(formData);
