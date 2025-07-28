@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import textFile from '~/content/project-manual.txt'
+import textFile from '~/public/content/project-manual.txt'
+
+const { back } = useRouter();
 
 const content = ref<string>()
 
@@ -17,7 +19,13 @@ onMounted(async () => {
 </script>
 
 <template>
-    <v-container>
-        <MarkdownRenderer v-if="content" :content="content"></MarkdownRenderer>
-    </v-container>
+  <v-container>
+    <v-btn variant="text" @click="back" prepend-icon="mdi-chevron-left" color="primary">戻る</v-btn>
+    <MarkdownRenderer v-if="content" :content="content" variant="flat" elevation="0"></MarkdownRenderer>
+    <v-list-item>
+      <template v-slot:append>
+        <v-btn variant="text" @click="back" prepend-icon="mdi-chevron-left" color="primary">戻る</v-btn>
+      </template>
+    </v-list-item>
+  </v-container>
 </template>
