@@ -2,7 +2,7 @@
     <div>
         <div class="container">
             <div class="header">
-                <p class="page-subtitle">日別オプションの詳細</p>
+                <p class="page-subtitle">日別ステータスの詳細</p>
             </div>
 
             <div v-if="optionData" class="view-content">

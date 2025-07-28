@@ -51,7 +51,7 @@ export const useDailyOptions = (currentDate: Ref<Date | null>, currentView: Ref<
     isLoading.value = true;
     try {
       const dateRange = getCurrentDateRange();
-      // サービスを呼び出し、表示範囲内の全ユーザーの日別オプションを取得
+      // サービスを呼び出し、表示範囲内の全ユーザーの日別ステータスを取得
       const optionsData = await dailyOptionService.getDailyOptionsInRange(
         dateRange.startDate,
         dateRange.endDate
@@ -81,7 +81,7 @@ export const useDailyOptions = (currentDate: Ref<Date | null>, currentView: Ref<
 
   // --- Actions ---
   /**
-   * ユーザーの日別オプションを設定（作成/更新）し、データを再読み込みします。
+   * ユーザーの日別ステータスを設定（作成/更新）し、データを再読み込みします。
    * @param optionData 保存するデータ
    */
   const setDailyOption = async (optionData: Omit<DailyUserOption, 'id'>) => {

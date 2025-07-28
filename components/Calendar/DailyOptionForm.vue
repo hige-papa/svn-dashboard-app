@@ -165,9 +165,9 @@ const isEditing = computed(() => !!props.initialData);
 
 const subtitle = computed(() => {
     if (props.user) {
-        return `${props.user.displayName}さんの${ isEditing ? '日別オプションを更新' : '日別オプションを登録' }`;
+        return `${props.user.displayName}さんの${ isEditing ? '日別ステータスを更新' : '日別ステータスを登録' }`;
     } else {
-        return isEditing ? '日別オプションを更新' : '日別オプションを登録';
+        return isEditing ? '日別ステータスを更新' : '日別ステータスを登録';
     }
 });
 

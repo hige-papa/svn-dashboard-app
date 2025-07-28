@@ -18,26 +18,40 @@
 <script setup lang="ts">
 const menu = [
     {
-        id: 'users',
-        label: 'ユーザー',
-        icon: 'mdi-account-multiple',
+        id: 'user-help',
+        label: 'ユーザーヘルプ',
+        icon: 'mdi-help-circle-outline',
         isActive: false,
-        path: '/users'
+        path: '/manuals/user-help'
     },
     {
-        id: 'facilities',
-        label: '施設',
-        icon: 'mdi-sofa',
+        id: 'project-manual',
+        label: 'プロジェクトマニュアル',
+        icon: 'mdi-apps',
         isActive: false,
-        path: '/facility'
+        path: '/manuals/project-manual'
     },
     {
-        id: 'equipments',
-        label: '備品',
-        icon: 'mdi-tools',
+        id: 'developer-guide',
+        label: '開発者マニュアル',
+        icon: 'mdi-application-braces-outline',
         isActive: false,
-        path: '/equipment'
+        path: '/manuals/developer-guide'
     },
+    {
+        id: 'nuxt3-guide-intro',
+        label: 'Nuxt3開発マニュアル~導入編~',
+        icon: 'mdi-application-braces-outline',
+        isActive: false,
+        path: '/manuals/nuxt3-guide-intro'
+    },
+    {
+        id: 'nuxt3-guide-folder',
+        label: 'Nuxt3開発マニュアル~フォルダ構造編~',
+        icon: 'mdi-application-braces-outline',
+        isActive: false,
+        path: '/manuals/nuxt3-guide-folder'
+    }
 ]
 
 const goTo = (path: string) => {

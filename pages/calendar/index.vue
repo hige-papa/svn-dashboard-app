@@ -87,7 +87,7 @@
           <EventsList v-else-if="currentView === 'monthly' && selectedDate" :date="selectedDate ?? new Date()" :events="mySelectedDayEvents" @event-click="handleShowEventDetails" />
         </v-card-text>
         <v-card-actions>
-          <v-btn color="primary" variant="text" :size="mobile ? 'small' : 'auto'" @click="openDailyOptionDialog">日別オプションを編集する</v-btn>
+          <v-btn color="primary" variant="text" :size="mobile ? 'small' : 'auto'" @click="openDailyOptionDialog">日別ステータスを編集する</v-btn>
           <v-btn color="primary" variant="text" :size="mobile ? 'small' : 'auto'" @click="goToRegister()">予定を登録する</v-btn>
         </v-card-actions>
       </v-card>

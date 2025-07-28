@@ -13,7 +13,7 @@ export const useDailyOptionService = () => {
   const dailyOptionService = useFirestoreGeneral('daily_user_options')
 
   /**
-   * 特定のユーザーの日別オプションを取得します。
+   * 特定のユーザーの日別ステータスを取得します。
    * @param uid ユーザーID
    * @param date 日付 (YYYY-MM-DD)
    * @returns 取得したDailyUserOption、または存在しない場合はnull
@@ -33,7 +33,7 @@ export const useDailyOptionService = () => {
   }
 
   /**
-   * 指定期間内における日別オプションのリストを取得します。
+   * 指定期間内における日別ステータスのリストを取得します。
    * @param uid ユーザーID
    * @param startDate 開始日 (YYYY-MM-DD)
    * @param endDate 終了日 (YYYY-MM-DD)
@@ -53,7 +53,7 @@ export const useDailyOptionService = () => {
   }
 
   /**
-   * 特定のユーザーの指定期間内における日別オプションのリストを取得します。
+   * 特定のユーザーの指定期間内における日別ステータスのリストを取得します。
    * @param uid ユーザーID
    * @param startDate 開始日 (YYYY-MM-DD)
    * @param endDate 終了日 (YYYY-MM-DD)
@@ -74,7 +74,7 @@ export const useDailyOptionService = () => {
   }
 
   /**
-   * ユーザーの日別オプションを作成または更新します (Upsert)。
+   * ユーザーの日別ステータスを作成または更新します (Upsert)。
    * 指定されたユーザーと日付のデータが既に存在する場合は更新し、存在しない場合は新規作成します。
    * これにより、「ユーザーごとに同日には1つのデータしか持たない」という制約を担保します。
    *
@@ -104,7 +104,7 @@ export const useDailyOptionService = () => {
   }
 
   /**
-   * 特定のユーザーの日別オプションを削除します。
+   * 特定のユーザーの日別ステータスを削除します。
    * @param uid ユーザーID
    * @param date 日付 (YYYY-MM-DD)
    * @returns 削除が成功したかどうか

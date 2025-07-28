@@ -20,6 +20,20 @@
     ]
   },
   {
+    "id": "manuals",
+    "title": "マニュアル",
+    "roles": [ "admin" ],
+    "menu": [
+      {
+        "id": "manual",
+        "label": "マニュアル",
+        "icon": "mdi-book",
+        "isActive": false,
+        "path": "/manual"
+      }
+    ]
+  },
+  {
     "id": "settings",
     "title": "設定",
     "roles": [ "admin" ],

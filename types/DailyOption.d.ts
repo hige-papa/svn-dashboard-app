@@ -15,7 +15,7 @@ type WorkStyle = 'office' | 'remote' | 'out' | 'vacation' | 'pending';
 type ParticipationStatus = 'possible' | 'impossible' | 'pending';
 
 /**
- * ユーザーの日別オプション情報を管理するインターフェース
+ * ユーザーの日別ステータス情報を管理するインターフェース
  */
 interface DailyUserOption {
     id?: string;
