@@ -5,14 +5,14 @@
  * - 'out': 外出
  * - 'vacation': 休暇
  */
-type WorkStyle = 'office' | 'remote' | 'out' | 'vacation';
+type WorkStyle = 'office' | 'remote' | 'out' | 'vacation' | 'pending';
 
 /**
  * 参加可否の型定義
  * - 'possible': 可能
  * - 'impossible': 不可能
  */
-type ParticipationStatus = 'possible' | 'impossible';
+type ParticipationStatus = 'possible' | 'impossible' | 'pending';
 
 /**
  * ユーザーの日別オプション情報を管理するインターフェース

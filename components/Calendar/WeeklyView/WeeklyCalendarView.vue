@@ -36,6 +36,12 @@
           class="schedule-row"
         >
           <td class="user-cell sticky">
+            <div class="d-flex align-center justify-center mb-2">
+              <v-avatar color="grey">
+                <v-img v-if="user.avatar" :src="user.avatar"></v-img>
+                <v-icon v-else icon="mdi-account" size="x-large"></v-icon>
+              </v-avatar>
+            </div>
             <div class="user-name">{{ user.displayName }}</div>
           </td>
           <td
@@ -53,11 +59,10 @@
                 <v-tooltip text="勤務形態" location="top">
                   <template v-slot:activator="{ props }">
                     <v-icon
-                      v-if="getDailyOptions(user.uid, day)?.workStyle"
                       v-bind="props"
-                      :icon="workstyleDetails[getDailyOptions(user.uid, day).workStyle].icon"
-                      :color="workstyleDetails[getDailyOptions(user.uid, day).workStyle].color"
-                      :size="workstyleDetails[getDailyOptions(user.uid, day).workStyle].size"
+                      :icon="getWorkStyle(user.uid, day).icon"
+                      :color="getWorkStyle(user.uid, day).color"
+                      :size="getWorkStyle(user.uid, day).size"
                       >
                     </v-icon>
                   </template>
@@ -65,11 +70,10 @@
                 <v-tooltip text="ランチ" location="top">
                   <template v-slot:activator="{ props }">
                     <v-icon
-                      v-if="getDailyOptions(user.uid, day)?.lunchParticipation"
                       v-bind="props"
-                      :icon="participationStatusDetails[getDailyOptions(user.uid, day).lunchParticipation].icon"
-                      :color="participationStatusDetails[getDailyOptions(user.uid, day).lunchParticipation].color"
-                      :size="participationStatusDetails[getDailyOptions(user.uid, day).lunchParticipation].size"
+                      :icon="getLunchParticipation(user.uid, day).icon"
+                      :color="getLunchParticipation(user.uid, day).color"
+                      :size="getLunchParticipation(user.uid, day).size"
                       class="ml-2"
                       >
                     </v-icon>
@@ -78,11 +82,10 @@
                 <v-tooltip text="ディナー" location="top">
                   <template v-slot:activator="{ props }">
                     <v-icon
-                      v-if="getDailyOptions(user.uid, day)?.dinnerParticipation"
                       v-bind="props"
-                      :icon="participationStatusDetails[getDailyOptions(user.uid, day).dinnerParticipation].icon"
-                      :color="participationStatusDetails[getDailyOptions(user.uid, day).dinnerParticipation].color"
-                      :size="participationStatusDetails[getDailyOptions(user.uid, day).dinnerParticipation].size"
+                      :icon="getDinnerParticipation(user.uid, day).icon"
+                      :color="getDinnerParticipation(user.uid, day).color"
+                      :size="getDinnerParticipation(user.uid, day).size"
                       class="ml-2"
                       >
                     </v-icon>
@@ -155,7 +158,8 @@ const isViewable = (event: EventDisplay) => {
 const {
   eventTypeDetails,
   workstyleDetails,
-  participationStatusDetails,
+  participationLunchStatusDetails,
+  participationDinnerStatusDetails,
 } = useConstants()
 
 const { 
@@ -164,7 +168,6 @@ const {
 } = useCalendar();
 
 const dateString = (date: Date) => {
-  if (date.toLocaleDateString() === new Date().toLocaleDateString()) return '本日'
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const day = date.getDate().toString().padStart(2, '0');
@@ -181,6 +184,21 @@ const getDailyOptionView = (uid: string) => {
 
 const getDailyOptions = (uid: string, date: Date) => {
   return getDailyOptionView(uid)[dateString(date)];
+}
+
+const getWorkStyle = (uid: string, date: Date) => {
+  const workStyle = getDailyOptions(uid, date)?.workStyle;
+  return workstyleDetails[workStyle ?? 'pending'];
+}
+
+const getLunchParticipation = (uid: string, date: Date) => {
+  const lunchParticipation = getDailyOptions(uid, date)?.lunchParticipation;
+  return participationLunchStatusDetails[lunchParticipation ?? 'pending'];
+}
+
+const getDinnerParticipation = (uid: string, date: Date) => {
+  const dinnerParticipation = getDailyOptions(uid, date)?.dinnerParticipation;
+  return participationDinnerStatusDetails[dinnerParticipation ?? 'pending'];
 }
 
 // 表示するユーザー（visible=trueのもののみ）
@@ -260,13 +278,14 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
 
 .user-cell {
   flex: 1;
+  text-align: center;
   vertical-align: middle;
   border-right: 1px solid var(--border-color);
   border-bottom: 1px solid var(--border-color);
   max-width: 176.5px;
   overflow: hidden;
   background-color: #FFF;
-  z-index: 1000;
+  z-index: 30;
 }
 
 .user-header {
@@ -291,19 +310,6 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
 
 .user-row:last-child {
   border-bottom: none;
-}
-
-.user-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 8px; /* 余白を少し縮小 */
-  font-size: 14px;
-  font-weight: 600;
-  flex-shrink: 0;
 }
 
 /* .user-color-1 { background-color: var(--event-1-bg); color: var(--event-1); }
@@ -510,6 +516,10 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
   .user-column {
     width: 80px;
     min-width: 80px;
+  }
+
+  .user-cell {
+    max-width: 120px;
   }
   
   .user-name {

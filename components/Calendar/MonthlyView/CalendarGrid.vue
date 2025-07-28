@@ -41,11 +41,10 @@
                 <v-tooltip text="勤務形態" location="top">
                   <template v-slot:activator="{ props }">
                     <v-icon
-                      v-if="getDailyOptions(day.date)?.workStyle"
                       v-bind="props"
-                      :icon="workstyleDetails[getDailyOptions(day.date).workStyle].icon"
-                      :color="workstyleDetails[getDailyOptions(day.date).workStyle].color"
-                      :size="workstyleDetails[getDailyOptions(day.date).workStyle].size"
+                      :icon="getWorkStyle(day.date).icon"
+                      :color="getWorkStyle(day.date).color"
+                      :size="getWorkStyle(day.date).size"
                       >
                     </v-icon>
                   </template>
@@ -53,11 +52,10 @@
                 <v-tooltip text="ランチ" location="top">
                   <template v-slot:activator="{ props }">
                     <v-icon
-                      v-if="getDailyOptions(day.date)?.lunchParticipation"
                       v-bind="props"
-                      :icon="participationStatusDetails[getDailyOptions(day.date).lunchParticipation].icon"
-                      :color="participationStatusDetails[getDailyOptions(day.date).lunchParticipation].color"
-                      :size="participationStatusDetails[getDailyOptions(day.date).lunchParticipation].size"
+                      :icon="getLunchParticipation(day.date).icon"
+                      :color="getLunchParticipation(day.date).color"
+                      :size="getLunchParticipation(day.date).size"
                       class="ml-2"
                       >
                     </v-icon>
@@ -66,11 +64,10 @@
                 <v-tooltip text="ディナー" location="top">
                   <template v-slot:activator="{ props }">
                     <v-icon
-                      v-if="getDailyOptions(day.date)?.dinnerParticipation"
                       v-bind="props"
-                      :icon="participationStatusDetails[getDailyOptions(day.date).dinnerParticipation].icon"
-                      :color="participationStatusDetails[getDailyOptions(day.date).dinnerParticipation].color"
-                      :size="participationStatusDetails[getDailyOptions(day.date).dinnerParticipation].size"
+                      :icon="getDinnerParticipation(day.date).icon"
+                      :color="getDinnerParticipation(day.date).color"
+                      :size="getDinnerParticipation(day.date).size"
                       class="ml-2"
                       >
                     </v-icon>
@@ -183,7 +180,8 @@ const emit = defineEmits(['dayClick']);
 const {
   eventTypeDetails,
   workstyleDetails,
-  participationStatusDetails,
+  participationLunchStatusDetails,
+  participationDinnerStatusDetails,
 } = useConstants();
 
 const {
@@ -192,7 +190,6 @@ const {
 } = useCalendar();
 
 const dateString = (date: Date) => {
-  if (date.toLocaleDateString() === new Date().toLocaleDateString()) return '本日'
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const day = date.getDate().toString().padStart(2, '0');
@@ -209,6 +206,21 @@ const dailyOptionView = computed(() => {
 
 const getDailyOptions = (date: Date) => {
   return dailyOptionView.value[dateString(date)]
+}
+
+const getWorkStyle = (date: Date) => {
+  const workStyle = getDailyOptions(date)?.workStyle;
+  return workstyleDetails[workStyle ?? 'pending'];
+}
+
+const getLunchParticipation = (date: Date) => {
+  const lunchParticipation = getDailyOptions(date)?.lunchParticipation;
+  return participationLunchStatusDetails[lunchParticipation ?? 'pending'];
+}
+
+const getDinnerParticipation = (date: Date) => {
+  const dinnerParticipation = getDailyOptions(date)?.dinnerParticipation;
+  return participationDinnerStatusDetails[dinnerParticipation ?? 'pending'];
 }
 
 const chunk = <T extends any[]>(arr: T, size: number) => {

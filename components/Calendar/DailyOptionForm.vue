@@ -57,7 +57,7 @@
               <span class="required">*</span>
             </label>
             <div class="option-group two-columns">
-              <div v-for="(status, key) in participationStatusDetails" :key="key" class="option-item">
+              <div v-for="(status, key) in participationLunchStatusDetails" :key="key" class="option-item">
                 <input
                   :id="`lunch-${key}`"
                   v-model="formData.lunchParticipation"
@@ -85,7 +85,7 @@
               <span class="required">*</span>
             </label>
             <div class="option-group two-columns">
-              <div v-for="(status, key) in participationStatusDetails" :key="key" class="option-item">
+              <div v-for="(status, key) in participationDinnerStatusDetails" :key="key" class="option-item">
                 <input
                   :id="`dinner-${key}`"
                   v-model="formData.dinnerParticipation"
@@ -132,7 +132,11 @@ import { useConstants } from '~/composables/common/useConstants';
 
 const currentUser = useState<User>('user')
 
-const { workstyleDetails, participationStatusDetails, } = useConstants();
+const {
+  workstyleDetails,
+  participationLunchStatusDetails,
+  participationDinnerStatusDetails,
+} = useConstants();
 
 // --- PropsとEmits ---
 interface Props {
@@ -160,10 +164,10 @@ const isLoading = ref(false);
 const isEditing = computed(() => !!props.initialData);
 
 const subtitle = computed(() => {
-    if (props.user?.uid === currentUser.value.uid) {
-        return isEditing ? '日別オプションを更新' : '日別オプションを登録';
+    if (props.user) {
+        return `${props.user.displayName}さんの${ isEditing ? '日別オプションを更新' : '日別オプションを登録' }`;
     } else {
-        return `${props.user?.displayName}さんの${ isEditing ? '日別オプションを更新' : '日別オプションを登録' }`;
+        return isEditing ? '日別オプションを更新' : '日別オプションを登録';
     }
 });
 

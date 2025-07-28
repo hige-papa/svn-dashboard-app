@@ -298,11 +298,15 @@ watch(currentDate, async () => {
 
 // selectedDateの変更を監視
 watch(selectedDate, async () => {
+  selectedDayEvents.value = [];
+  selectedUser.value = undefined;
   await updateSelectedDayEvents();
 });
 
 // currentViewの変更を監視（ストレージへの保存を追加）
 watch(currentView, async (newView) => {
+  selectedDayEvents.value = [];
+  selectedUser.value = undefined;
   await updateCurrentDayEvents();
   // ビューが変更された時にlocalStorageに保存
   saveViewToStorage(newView);
@@ -375,10 +379,10 @@ const eventListDialog = ref<boolean>(false)
 // 日付選択ハンドラ（週間ビュー用）
 const handleDayClickForWeekly = async (data: any) => {
   const { user, date } = data;
-  selectedUser.value = user;
   selectDay(date);
   await updateSelectedDayEvents();
   // alert(`${user.displayName}: ${events.length}件の予定`);
+  selectedUser.value = user;
   eventListDialog.value = true;
 };
 
@@ -589,8 +593,8 @@ const dailyOptionDialog = ref<boolean>(false);
 
 const dailyOption = ref<DailyUserOption>();
 
-const openDailyOptionDialog = (uid?: string) => {
-  dailyOption.value = getUserOptionForDay(uid ?? user.value.uid, selectedDate.value);
+const openDailyOptionDialog = () => {
+  dailyOption.value = getUserOptionForDay(selectedUser.value?.uid ?? user.value.uid, selectedDate.value);
   dailyOptionDialog.value = true;
 }
 
