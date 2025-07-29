@@ -25,11 +25,25 @@
     "roles": [ "admin" ],
     "menu": [
       {
-        "id": "manual",
+        "id": "manual-menu",
         "label": "マニュアル",
         "icon": "mdi-book",
         "isActive": false,
-        "path": "/manual"
+        "path": "/manuals"
+      }
+    ]
+  },
+  {
+    "id": "techstacks",
+    "title": "技術共有",
+    "roles": [ "admin" ],
+    "menu": [
+      {
+        "id": "techstack-menu",
+        "label": "技術共有",
+        "icon": "mdi-application-braces-outline",
+        "isActive": false,
+        "path": "/techstacks"
       }
     ]
   },

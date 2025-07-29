@@ -46,9 +46,9 @@ export const useConstants = () => {
     };
 
     const participationDinnerStatusDetails: { [key in ParticipationStatus]: { name: string; color: string; icon: string; size: string; } } = {
-        possible: { name: '可能', color: '#43A047', icon: 'mdi-silverware-fork-knife', size: 'small' },
-        impossible: { name: '不可能', color: '#F95A5A', icon: 'mdi-silverware-fork-knife', size: 'small' },
-        pending: { name: '未定', color: '#a3a3a3ff', icon: 'mdi-silverware-fork-knife', size: 'small' },
+        possible: { name: '可能', color: '#43A047', icon: 'mdi-glass-mug-variant', size: 'small' },
+        impossible: { name: '不可能', color: '#F95A5A', icon: 'mdi-glass-mug-variant', size: 'small' },
+        pending: { name: '未定', color: '#a3a3a3ff', icon: 'mdi-glass-mug-variant', size: 'small' },
     };
 
     return {
