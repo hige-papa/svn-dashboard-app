@@ -116,7 +116,7 @@
               <div class="user-avatar">
                 <img v-if="user.avatar" :src="user.avatar" :alt="user.name" class="avatar-image">
                 <div v-else class="avatar-placeholder">
-                  {{ user.name.charAt(0).toUpperCase() }}
+                  {{ user.name?.charAt(0).toUpperCase() }}
                 </div>
                 <div :class="['status-indicator', user.status]"></div>
               </div>
@@ -192,7 +192,7 @@
                     <div class="user-avatar-small">
                       <img v-if="user.avatar" :src="user.avatar" :alt="user.name" class="avatar-image">
                       <div v-else class="avatar-placeholder">
-                        {{ user.name.charAt(0).toUpperCase() }}
+                        {{ user.name?.charAt(0).toUpperCase() }}
                       </div>
                       <div :class="['status-indicator', user.status]"></div>
                     </div>

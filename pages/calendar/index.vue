@@ -43,8 +43,10 @@
     <div v-if="currentView === 'daily'" class="daily-view">
       <h2 class="view-title">デイリースケジュール</h2>
 
-      <DailyTimeline :events="myCurrentDayEvents" :time-slots="timeSlots" :date="currentDate"
-        :time-to-pixels="timeToPixels" @event-click="handleShowEventDetails" />
+      <div>
+        <DailyTimeline :events="myCurrentDayEvents" :time-slots="timeSlots" :date="currentDate"
+          :time-to-pixels="timeToPixels" @event-click="handleShowEventDetails" />
+      </div>
 
       <!-- <EventsList :events="currentDayEvents" @event-click="handleShowEventDetails" /> -->
     </div>
@@ -53,25 +55,29 @@
     <div v-else-if="currentView === 'weekly'" class="weekly-view">
       <h2 class="view-title">グループスケジュール</h2>
 
+      <div>
+        <WeeklyCalendarView :users="users" :week-days="weekDays" :events="events" :daily-options="dailyOptions"
+          :get-user-schedules-for-day="getUserSchedulesForDay" @day-click="handleDayClickForWeekly" />
+      </div>
       <!-- WeeklyCalendarViewコンポーネントを使用 -->
       <!-- <WeeklyCalendarView :users="users" :week-days="weekDays" :events="events"
         :get-user-schedules-for-day="getUserSchedulesForDay" @event-click="handleShowEventDetails" @day-click="handleDayClickForWeekly" /> -->
-      <WeeklyCalendarView :users="users" :week-days="weekDays" :events="events" :daily-options="dailyOptions"
-        :get-user-schedules-for-day="getUserSchedulesForDay" @day-click="handleDayClickForWeekly" />
     </div>
 
     <!-- 月間ビュー -->
     <div v-else-if="currentView === 'monthly'" class="monthly-view pa-1">
       <h2 class="view-title">月間カレンダー</h2>
 
+      <div>
+        <CalendarGrid v-if="selectedDate && events" :calendar-days="calendarDays" :selected-date="selectedDate" :events="myEvents"
+          :get-schedules-for-day="getSchedulesForDay" :is-holiday="isHoliday" :get-holiday-name="getHolidayName" :daily-options="myDailyOptions"
+          @day-click="handleDayClickForMonthly" />
+      </div>
       <!-- <WeekdayHeader /> -->
 
       <!-- <CalendarGrid v-if="selectedDate && events" :calendar-days="calendarDays" :selected-date="selectedDate" :events="myEvents"
         :get-schedules-for-day="getSchedulesForDay" :is-holiday="isHoliday" :get-holiday-name="getHolidayName"
         @day-click="handleDayClickForMonthly" @event-click="handleShowEventDetails" /> -->
-      <CalendarGrid v-if="selectedDate && events" :calendar-days="calendarDays" :selected-date="selectedDate" :events="myEvents"
-        :get-schedules-for-day="getSchedulesForDay" :is-holiday="isHoliday" :get-holiday-name="getHolidayName" :daily-options="myDailyOptions"
-        @day-click="handleDayClickForMonthly" />
 
       <!-- <SelectedDayDetail v-if="selectedDate" :selected-date="selectedDate" :events="selectedDayEvents" @event-click="handleShowEventDetails" /> -->
     </div>
@@ -167,6 +173,7 @@ const {
   isLoading,
   getDayOfWeek,
   formatDate,
+  formatDatetime,
   timeToPixels,
   getSchedulesForDay,
   getUserSchedulesForDay,
@@ -355,7 +362,7 @@ const navNextLabel = computed(() => {
 // 現在の日時（フッター用）
 const currentDateTimeText = computed(() => {
   const now = new Date();
-  return `${formatDate(now)} 現在の表示`;
+  return `${formatDatetime(now)} 現在の表示`;
 });
 
 // 週間ビュー用の日付配列
@@ -630,36 +637,9 @@ watch(isLoading, (newValue, oldValue) => {
 });
 </script>
 
-<style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: var(--font-family);
-}
-
-body {
-  background-color: var(--background-light);
-  padding: 20px;
-  color: var(--text-primary);
-  line-height: 1.5;
-}
-
-.events-list {
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border-color);
-}
-
-@media (max-width: 768px) {
-  body {
-    padding: 0;
-  }
-}
-</style>
-
 <style scoped>
 .container {
+  height: 100%;
   max-width: 100%;
   margin: 0 auto;
   background-color: var(--background-white);
@@ -769,18 +749,25 @@ body {
 }
 
 .footer {
+  width: 100%;
+  position: fixed;
+  left: 0;
+  bottom: 0;
   margin-top: 24px;
-  padding-top: 16px;
+  padding: 4px 0;
+  background-color: var(--background-light);
   border-top: 1px solid var(--border-color);
   font-size: 13px;
   color: var(--text-light);
   text-align: center;
+  z-index: 100;
 }
 
 .daily-view,
 .weekly-view,
 .monthly-view {
   min-height: 400px;
+  overflow-y: auto;
   transition: opacity 0.2s ease-in-out;
 }
 

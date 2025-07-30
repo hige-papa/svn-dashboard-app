@@ -1,9 +1,20 @@
 <template>
   <div class="page-container">
-    <h1>Draggable & Resizable Modal Demo</h1>
-    <button class="action-button" @click="isModalOpen = true">
-      モーダルを開く
-    </button>
+    <v-card>
+      <v-card-title>
+        <h1>移動・リサイズ可能なモーダル</h1>
+      </v-card-title>
+      <v-card-text>
+        <v-checkbox v-model="draggable" label="ドラッグ" size="small" hide-details></v-checkbox>
+        <v-checkbox v-model="resize" label="リサイズ" size="small" hide-details></v-checkbox>
+        <v-checkbox v-model="overlay" label="オーバーレイ" size="small" hide-details></v-checkbox>
+      </v-card-text>
+      <v-card-actions>
+        <button class="action-button" @click="isModalOpen = true">
+          モーダルを開く
+        </button>
+      </v-card-actions>
+    </v-card>
 
     <DraggableModal 
       v-model="isModalOpen"
@@ -11,6 +22,9 @@
       :initial-height="450"
       :min-width="400"
       :min-height="300"
+      :draggable="draggable"
+      :resize="resize"
+      :overlay="overlay"
     >
       <template #header>
         <!-- 📄 ドキュメント編集 -->
@@ -31,6 +45,12 @@
 
 <script setup lang="ts">
 const isModalOpen = ref(false);
+
+const draggable = ref<boolean>(false);
+
+const resize = ref<boolean>(false);
+
+const overlay = ref<boolean>(false);
 </script>
 
 <style>

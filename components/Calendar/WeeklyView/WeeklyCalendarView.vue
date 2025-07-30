@@ -3,14 +3,15 @@
   <!-- {{ props.visibleUsers }} -->
   <!-- {{ props.events }} -->
   <div class="calendar-container w-100 table_box">
-    <v-table>
+    <v-table class="table-field">
       <thead>
         <tr>
-          <td class="day-header sticky">メンバー</td>
+          <td class="day-header sticky corner">メンバー</td>
           <td
             v-for="day in weekDays" 
             :key="`${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`"
             :class="[
+              'sticky',
               'day-header', 
               { 'today-header': isToday(day) }
             ]">
@@ -281,7 +282,7 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
   text-align: center;
   vertical-align: middle;
   border-right: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
+  /* border-bottom: 1px solid var(--border-color); */
   max-width: 176.5px;
   overflow: hidden;
   background-color: #FFF;
@@ -502,6 +503,11 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
   color: var(--text-primary);
 } */
 
+.table-field {
+  width: 100%;
+  table-layout: fixed;
+}
+
 .table_box {
   overflow-x: auto;
 }
@@ -510,6 +516,11 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
   position: sticky;
   top: 0;
   left: 0;
+  z-index: 1;
+}
+
+.sticky.corner {
+  z-index: 2;
 }
 
 @media (max-width: 768px) {

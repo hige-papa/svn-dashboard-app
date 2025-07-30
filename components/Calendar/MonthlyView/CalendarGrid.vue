@@ -1,15 +1,15 @@
 <template>
   <div class="calendar-grid w-100">
     <table class="calendar-table">
-      <thead>
-        <tr class="weekday-header">
-          <td class="weekday sunday">日</td>
-          <td class="weekday">月</td>
-          <td class="weekday">火</td>
-          <td class="weekday">水</td>
-          <td class="weekday">木</td>
-          <td class="weekday">金</td>
-          <td class="weekday saturday">土</td>
+      <thead class="">
+        <tr class="weekday-header sticky">
+          <td class="weekday sunday sticky">日</td>
+          <td class="weekday sticky">月</td>
+          <td class="weekday sticky">火</td>
+          <td class="weekday sticky">水</td>
+          <td class="weekday sticky">木</td>
+          <td class="weekday sticky">金</td>
+          <td class="weekday saturday sticky">土</td>
         </tr>
       </thead>
       <tbody>
@@ -298,10 +298,12 @@ const onDayClick = (date: Date) => {
   /* display: grid;
   grid-template-columns: repeat(7, 1fr); */
   /* gap: 10px; */
+  height: 100%;
   overflow-x: auto;
 }
 
 .calendar-table {
+  height: 60%;
   width: 100%;
   border-spacing: 2px 2px;
   /* table-layout: fixed; */
@@ -430,6 +432,13 @@ const onDayClick = (date: Date) => {
   cursor: pointer;
   font-weight: 500;
   text-align: center;
+}
+
+.sticky {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 2;
 }
 
 @media (max-width: 768px) {

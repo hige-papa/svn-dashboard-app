@@ -76,7 +76,8 @@ export const useUserProfile = () => {
         uid: savedProfile.uid,
         displayName: savedProfile.displayName,
         displayNameEng: savedProfile.displayNameEng,
-        color: savedProfile.color
+        color: savedProfile.color,
+        visible: true,
       };
 
     } catch (error) {
