@@ -233,7 +233,7 @@ watch(() => props.modelValue, (newValue) => {
             const height = size.value.height;
             position.value = {
                 x: (window.innerWidth - width) / 2,
-                y: (window.innerHeight - height) / 2,
+                y: ((window.innerHeight - height) / 2) - 30,
             };
         });
     }
@@ -245,8 +245,8 @@ watch(() => props.modelValue, (newValue) => {
     position: fixed;
     top: 11%;
     left: 0;
-    width: 100%;
-    height: 100%;
+    /* width: 100%;
+    height: 100%; */
 }
 
 /* オーバーレイ: 画面全体を覆う */
@@ -279,7 +279,8 @@ watch(() => props.modelValue, (newValue) => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 1.5rem;
+    justify-items: center;
+    padding: 0.5rem 1rem;
     border-bottom: 1px solid #e9ecef;
     user-select: none;
 }

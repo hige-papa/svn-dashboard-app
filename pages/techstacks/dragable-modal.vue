@@ -5,9 +5,9 @@
         <h1>移動・リサイズ可能なモーダル</h1>
       </v-card-title>
       <v-card-text>
-        <v-checkbox v-model="draggable" label="ドラッグ" size="small" hide-details></v-checkbox>
-        <v-checkbox v-model="resize" label="リサイズ" size="small" hide-details></v-checkbox>
-        <v-checkbox v-model="overlay" label="オーバーレイ" size="small" hide-details></v-checkbox>
+        <v-checkbox v-model="draggable" label="ドラッグ" density="compact" hide-details></v-checkbox>
+        <v-checkbox v-model="resize" label="リサイズ" density="compact" hide-details></v-checkbox>
+        <v-checkbox v-model="overlay" label="オーバーレイ" density="compact" hide-details></v-checkbox>
       </v-card-text>
       <v-card-actions>
         <button class="action-button" @click="isModalOpen = true">

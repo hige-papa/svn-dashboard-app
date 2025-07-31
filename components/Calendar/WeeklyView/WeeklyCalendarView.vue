@@ -11,7 +11,6 @@
             v-for="day in weekDays" 
             :key="`${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`"
             :class="[
-              'sticky',
               'day-header', 
               { 'today-header': isToday(day) }
             ]">

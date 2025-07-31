@@ -2,14 +2,14 @@
   <div class="calendar-grid w-100">
     <table class="calendar-table">
       <thead class="">
-        <tr class="weekday-header sticky">
-          <td class="weekday sunday sticky">日</td>
-          <td class="weekday sticky">月</td>
-          <td class="weekday sticky">火</td>
-          <td class="weekday sticky">水</td>
-          <td class="weekday sticky">木</td>
-          <td class="weekday sticky">金</td>
-          <td class="weekday saturday sticky">土</td>
+        <tr class="weekday-header">
+          <td class="weekday sunday">日</td>
+          <td class="weekday">月</td>
+          <td class="weekday">火</td>
+          <td class="weekday">水</td>
+          <td class="weekday">木</td>
+          <td class="weekday">金</td>
+          <td class="weekday saturday">土</td>
         </tr>
       </thead>
       <tbody>
