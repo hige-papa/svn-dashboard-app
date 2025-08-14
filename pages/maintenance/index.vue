@@ -52,6 +52,13 @@ const menu = [
         isActive: false,
         path: '/equipment'
     },
+    {
+        id: 'holidays',
+        label: '祝祭日',
+        icon: 'mdi-bed-outline',
+        isActive: false,
+        path: '/holiday'
+    },
 ]
 
 const goTo = (path: string) => {
