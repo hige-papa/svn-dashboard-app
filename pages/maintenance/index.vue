@@ -25,6 +25,20 @@ const menu = [
         path: '/users'
     },
     {
+        id: 'sections',
+        label: '部課',
+        icon: 'mdi-domain',
+        isActive: false,
+        path: '/section'
+    },
+    {
+        id: 'teams',
+        label: 'チーム',
+        icon: 'mdi-account-group',
+        isActive: false,
+        path: '/team'
+    },
+    {
         id: 'facilities',
         label: '施設',
         icon: 'mdi-sofa',

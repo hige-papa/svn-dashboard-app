@@ -2,7 +2,7 @@
   <div class="page-container">
     <div class="container">
       <div class="header">
-        <h1 class="app-title">TASCAL</h1>
+        <!-- <h1 class="app-title">TASCAL</h1> -->
         <p class="page-subtitle">{{ isEditMode ? '施設編集' : '新規施設登録' }}</p>
       </div>
       

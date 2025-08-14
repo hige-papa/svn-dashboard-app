@@ -37,11 +37,33 @@ export const useDocumentRoot = () => {
       return `equipment/${id}`;
     },
   };
+  
+  
+  const sectionDocRoot = {
+    collection: () => {
+      return `section`;
+    },
+    document: (id: string) => {
+      return `section/${id}`;
+    },
+  };
+  
+  
+  const teamDocRoot = {
+    collection: () => {
+      return `team`;
+    },
+    document: (id: string) => {
+      return `team/${id}`;
+    },
+  };
 
   return {
     userProfileRoot,
     generalDocRoot,
     facilityDocRoot,
     equipmentDocRoot,
+    sectionDocRoot,
+    teamDocRoot,
   };
 };

@@ -38,6 +38,7 @@
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 12px 30px rgba(0, 0, 0, 0.2);
   --transition: all 0.3s ease;
 }
 

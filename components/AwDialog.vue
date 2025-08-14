@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick, type CSSProperties } from 'vue';
+import { type CSSProperties } from 'vue';
 
 // ----- Props & Emits --------------------------------------------------------
 
@@ -37,7 +37,7 @@ const props = defineProps({
     minHeight: { type: Number, default: 250 },
     draggable: { type: Boolean, default: true, },
     resize: { type: Boolean, default: true, },
-    overlay: { type: Boolean, default: true, },
+    overlay: { type: Boolean, default: false, },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -243,10 +243,11 @@ watch(() => props.modelValue, (newValue) => {
 <style scoped>
 .modal-area {
     position: fixed;
-    top: 11%;
+    top: 0;
     left: 0;
     /* width: 100%;
     height: 100%; */
+    z-index: 3000;
 }
 
 /* オーバーレイ: 画面全体を覆う */
@@ -257,21 +258,21 @@ watch(() => props.modelValue, (newValue) => {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 10000;
+    z-index: 4000;
 }
 
 /* モーダル本体: ドラッグのために absolute 配置 */
 .modal-content {
     position: relative;
     /* ハンドルの配置基準 */
-    background: #fff;
-    color: #333;
+    background: var(--background-light);
+    color: var(--text-primary);
     border-radius: 5px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-xl);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    z-index: 10001;
+    z-index: 5000;
 }
 
 /* ヘッダー: ドラッグハンドルの役割 */
@@ -281,7 +282,7 @@ watch(() => props.modelValue, (newValue) => {
     align-items: center;
     justify-items: center;
     padding: 0.5rem 1rem;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid var(--border-color);
     user-select: none;
 }
 
@@ -291,8 +292,8 @@ watch(() => props.modelValue, (newValue) => {
 
 .modal-title {
     margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: 1rem;
+    font-weight: 400;
     line-height: 1.5;
 }
 
@@ -301,7 +302,7 @@ watch(() => props.modelValue, (newValue) => {
     background: transparent;
     font-size: 1.75rem;
     font-weight: 300;
-    color: #666;
+    color: var(--gray-color);
     cursor: pointer;
     padding: 0;
     line-height: 1;
@@ -309,14 +310,13 @@ watch(() => props.modelValue, (newValue) => {
 }
 
 .close-button:hover {
-    color: #000;
+    color: var(--dark-color);
 }
 
 /* ボディ: コンテンツエリア */
 .modal-body {
-    padding: 1.5rem;
     overflow-y: auto;
-    flex-grow: 1;
+    /* flex-grow: 1; */
     /* コンテンツが少なくても高さを埋める */
 }
 

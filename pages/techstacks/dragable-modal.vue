@@ -16,7 +16,7 @@
       </v-card-actions>
     </v-card>
 
-    <DraggableModal 
+    <aw-dialog 
       v-model="isModalOpen"
       :initial-width="600"
       :initial-height="450"
@@ -39,7 +39,7 @@
         </v-card-text>
       </v-card>
       
-    </DraggableModal>
+    </aw-dialog>
   </div>
 </template>
 

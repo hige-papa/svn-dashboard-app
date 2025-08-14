@@ -2,7 +2,7 @@
   <div class="page-container">
     <div class="container">
       <div class="header">
-        <h1 class="app-title">TASCAL</h1>
+        <!-- <h1 class="app-title">TASCAL</h1> -->
         <p class="page-subtitle">{{ isEditMode ? '備品編集' : '新規備品登録' }}</p>
       </div>
       

@@ -2,7 +2,7 @@
   <div class="page-container">
     <div class="container">
       <div class="header">
-        <h1 class="app-title">TASCAL</h1>
+        <!-- <h1 class="app-title">TASCAL</h1> -->
         <p class="page-subtitle">備品管理</p>
       </div>
       

@@ -3,7 +3,7 @@
     <div class="container">
       <div class="header">
         <!-- <h1 class="app-title">TASCAL</h1> -->
-        <p class="page-subtitle">{{ isEditMode ? '施設編集' : '新規施設登録' }}</p>
+        <p class="page-subtitle">{{ isEditMode ? '部課編集' : '新規部課登録' }}</p>
       </div>
       
       <div class="form-content">
@@ -26,7 +26,7 @@
                   v-model="formData.name"
                   type="text" 
                   class="form-input" 
-                  placeholder="例：大会議室"
+                  placeholder="例：システム部"
                   @blur="validateField('name')"
                   @input="clearError('name')"
                 >
@@ -44,7 +44,7 @@
                   v-model="formData.code"
                   type="text" 
                   class="form-input" 
-                  placeholder="例：MON-005"
+                  placeholder="例：SYS-001"
                   :disabled="isEditMode"
                   @blur="validateField('code')"
                   @input="clearError('code')"
@@ -75,24 +75,6 @@
                 <div v-if="errors.category" class="form-error">{{ errors.category }}</div>
               </div>
 
-              <div class="form-group" :class="{ error: errors.capacity }">
-                <label class="form-label" for="itemCapacity">
-                  <i class="mdi mdi-package-variant-closed icon"></i>
-                  総数
-                  <span class="required">*</span>
-                </label>
-                <input 
-                  id="itemCapacity"
-                  v-model.number="formData.capacity"
-                  type="number" 
-                  class="form-input" 
-                  placeholder="例：25"
-                   min="0"
-                  @blur="validateField('capacity')"
-                  @input="clearError('capacity')"
-                >
-                <div v-if="errors.capacity" class="form-error">{{ errors.capacity }}</div>
-              </div>
             </div>
             
             <div class="form-group">
@@ -104,7 +86,7 @@
                 id="itemDescription"
                 v-model="formData.description"
                 class="form-textarea" 
-                placeholder="施設の詳細な説明や注意事項などを入力..."
+                placeholder="部課の詳細な説明や注意事項などを入力..."
                 rows="4"
               ></textarea>
             </div>
@@ -113,7 +95,7 @@
           <div class="form-section">
             <h3 class="section-title">
               <i class="mdi mdi-camera icon"></i>
-              施設画像
+              部課画像
             </h3>
             
             <div class="avatar-upload-section">
@@ -167,7 +149,7 @@
             <button type="submit" :disabled="isLoading" class="btn btn-primary">
               <i v-if="isLoading" class="mdi mdi-loading icon loading-spin"></i>
               <i v-else class="mdi mdi-content-save icon"></i>
-              {{ isLoading ? '保存中...' : (isEditMode ? '施設を更新' : '施設を作成') }}
+              {{ isLoading ? '保存中...' : (isEditMode ? '部課を更新' : '部課を作成') }}
             </button>
           </div>
         </form>
@@ -185,19 +167,19 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
-import { useFacility } from '~/composables/useFacility'
+import { useSection } from '~/composables/useSection'
 
 // Nuxt3を想定
 const { back, push } = useRouter()
 const route = useRoute()
 
-const { getAsync, addAsync, updateAsync } = useFacility()
+const { getAsync, addAsync, updateAsync } = useSection()
 
 // SEOメタタグ設定
 useHead({
-  title: 'TASCAL - 施設登録・編集',
+  title: 'TASCAL - 部課登録・編集',
   meta: [
-    { name: 'description', content: 'TASCALシステムで施設を登録・編集できます' }
+    { name: 'description', content: 'TASCALシステムで部課を登録・編集できます' }
   ],
   link: [
     { rel: 'stylesheet', href: 'https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/7.2.96/css/materialdesignicons.min.css' }
@@ -206,24 +188,23 @@ useHead({
 
 const getCategories = async () => {
   console.log('Fetching categories...');
-  return new Promise<string[]>(resolve => setTimeout(() => resolve(['会議室', '応接室']), 200));
+  return new Promise<string[]>(resolve => setTimeout(() => resolve(['会社', '部署', '課', '係']), 200));
 }
 
 // リアクティブデータ
 const isEditMode = computed(() => !!route.params.id)
 const itemId = computed(() => route.params.id as string)
 
-const formData = reactive<EquipmentFormData>({
+const formData = reactive<SectionFormData>({
   name: '',
   code: '',
   description: '',
-  capacity: null,
   category: '',
   imageUrl: '',
-  status: 'available',
+  status: 'available'
 })
 
-const errors = reactive<EquipmentFormErrors>({})
+const errors = reactive<SectionFormErrors>({})
 const isLoading = ref(false)
 const previewImage = ref('')
 const fileInput = ref<HTMLInputElement>()
@@ -236,8 +217,8 @@ const notification = reactive({
 })
 
 
-// 施設データの読み込み（編集時）
-const loadEquipment = async () => {
+// 部課データの読み込み（編集時）
+const loadSection = async () => {
   if (!isEditMode.value) return
   
   try {
@@ -248,13 +229,12 @@ const loadEquipment = async () => {
       formData.name = item.name
       formData.code = item.code
       formData.description = item.description
-      formData.capacity = item.capacity
       formData.category = item.category
       formData.imageUrl = item.imageUrl || ''
     }
   } catch (error) {
-    console.error('施設データの読み込みに失敗しました:', error)
-    showNotification('施設データの読み込みに失敗しました', 'error')
+    console.error('部課データの読み込みに失敗しました:', error)
+    showNotification('部課データの読み込みに失敗しました', 'error')
   } finally {
     isLoading.value = false;
   }
@@ -271,7 +251,7 @@ const loadCategories = async () => {
 }
 
 // バリデーション
-const validateField = (fieldName: keyof EquipmentFormErrors) => {
+const validateField = (fieldName: keyof SectionFormErrors) => {
   switch (fieldName) {
     case 'name':
       if (!formData.name.trim()) errors.name = '名称を入力してください'
@@ -282,24 +262,18 @@ const validateField = (fieldName: keyof EquipmentFormErrors) => {
     case 'category':
       if (!formData.category) errors.category = 'カテゴリを選択してください'
       break
-    case 'capacity':
-      if (formData.capacity === null || formData.capacity < 0) {
-        errors.capacity = '0以上の数値を入力してください'
-      }
-      break
   }
 }
 
 const validateForm = (): boolean => {
-  Object.keys(errors).forEach(key => delete errors[key as keyof EquipmentFormErrors])
+  Object.keys(errors).forEach(key => delete errors[key as keyof SectionFormErrors])
   validateField('name')
   validateField('code')
   validateField('category')
-  validateField('capacity')
   return Object.keys(errors).length === 0
 }
 
-const clearError = (fieldName: keyof EquipmentFormErrors) => {
+const clearError = (fieldName: keyof SectionFormErrors) => {
   if (errors[fieldName]) delete errors[fieldName]
 }
 
@@ -347,13 +321,13 @@ const handleSubmit = async () => {
   try {
     if (isEditMode.value) {
       await updateAsync(itemId.value, dataToSave)
-      showNotification('施設情報を更新しました！', 'success')
+      showNotification('部課情報を更新しました！', 'success')
     } else {
       await addAsync(dataToSave)
-      showNotification('施設を作成しました！', 'success')
+      showNotification('部課を作成しました！', 'success')
     }
     
-    setTimeout(() => push('/facility'), 1500)
+    setTimeout(() => push('/section'), 1500)
     
   } catch (error) {
     console.error('保存エラー:', error)
@@ -381,7 +355,7 @@ const showNotification = (message: string, type: 'success' | 'error' = 'success'
 onMounted(async () => {
   await loadCategories()
   if (isEditMode.value) {
-    await loadEquipment()
+    await loadSection()
   }
 })
 </script>

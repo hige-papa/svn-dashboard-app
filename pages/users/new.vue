@@ -2,7 +2,7 @@
   <div class="page-container">
     <div class="container">
       <div class="header">
-        <h1 class="app-title">TASCAL</h1>
+        <!-- <h1 class="app-title">TASCAL</h1> -->
         <p class="page-subtitle">{{ isEditMode ? 'ユーザー編集' : '新規ユーザー登録' }}</p>
       </div>
       
@@ -376,6 +376,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useUserProfile } from '~/composables/useUserProfile'
+import { useSection } from '~/composables/useSection'
 
 const { back, push } = useRouter()
 const route = useRoute()
@@ -422,8 +423,11 @@ const {
   createUserProfile,
   getUserProfile,
   updateUserProfile,
-  getDepartmentStats
+  // getDepartmentStats
 } = useUserProfile()
+
+// useSectionを使用
+const { getListAsync: getSections } = useSection()
 
 // リアクティブデータ
 const isEditMode = computed(() => !!route.params.id)
@@ -495,17 +499,21 @@ const loadUser = async () => {
 // 部署データの読み込み
 const loadDepartments = async () => {
   try {
-    const deptStats = await getDepartmentStats()
-    departments.value = deptStats.map(stat => stat.department)
+    // const deptStats = await getDepartmentStats()
+    // departments.value = deptStats.map(stat => stat.department)
     
     // 基本の部署も含める
-    const defaultDepartments = ['営業部', '総務部', '開発部', '人事部', '経理部', 'マーケティング部']
-    const allDepartments = [...new Set([...departments.value, ...defaultDepartments])]
-    departments.value = allDepartments.sort()
+    // const defaultDepartments = ['営業部', '総務部', '開発部', '人事部', '経理部', 'マーケティング部']
+    // const allDepartments = [...new Set([...departments.value, ...defaultDepartments])]
+    // departments.value = allDepartments.sort()
+
+    await getSections().then(response => {
+      if (response) departments.value = (response as Section[]).map(e => { return e.name }).sort()
+    })
   } catch (error) {
     console.error('部署データの読み込みに失敗しました:', error)
     // デフォルトの部署を使用
-    departments.value = ['営業部', '総務部', '開発部', '人事部', '経理部', 'マーケティング部']
+    // departments.value = ['営業部', '総務部', '開発部', '人事部', '経理部', 'マーケティング部']
   }
 }
 
