@@ -13,8 +13,20 @@
         <polyline points="9 18 15 12 9 6"></polyline>
       </svg>
     </button>
-    <aw-dialog v-model="dialog" :draggable="true" :resize="true" :overlay="false" :width="mobile ? '100%' : '30%'">
+    <v-dialog v-if="mobile" v-model="dialog">
       <v-card>
+        <v-card-text>
+          <v-label class="mb-3">日付選択</v-label>
+          <v-text-field v-model="date" type="date" variant="outlined" hide-details @keydown.enter="handleSelect"></v-text-field>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" variant="text" @click="handleSelect">確定</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <aw-dialog v-else v-model="dialog" :draggable="true" :resize="true" :overlay="false" :initial-height="230" :width="mobile ? '100%' : '30%'">
+      <v-card flat tile color="transparent">
         <v-card-text>
           <v-label class="mb-3">日付選択</v-label>
           <v-text-field v-model="date" type="date" variant="outlined" hide-details @keydown.enter="handleSelect"></v-text-field>
