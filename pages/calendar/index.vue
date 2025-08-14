@@ -82,27 +82,54 @@
       <!-- <SelectedDayDetail v-if="selectedDate" :selected-date="selectedDate" :events="selectedDayEvents" @event-click="handleShowEventDetails" /> -->
     </div>
 
-    <div>
-      <EventsList v-if="currentView === 'daily'" class="events-list" :date="currentDate ?? new Date()" :events="myCurrentDayEvents" @event-click="handleShowEventDetails" />
+    <div v-if="currentView === 'daily'">
+      <h3 class="list-title">{{ eventListSubtitle }}</h3>
+      <EventsList class="events-list" :date="currentDate ?? new Date()" :events="myCurrentDayEvents" @event-click="handleShowEventDetails" />
     </div>
 
-    <aw-dialog v-model="eventListDialog" :draggable="true" :resize="true" :overlay="false" :width="mobile ? '100%' : '50%'">
+    <v-dialog v-if="mobile" v-model="viewDialog" fullscreen>
       <v-card>
+        <v-card-title>
+          <h3 class="list-title">{{ eventListSubtitle }}</h3>
+        </v-card-title>
         <v-card-text>
           <EventsList v-if="currentView === 'weekly' && selectedDate" :date="selectedDate ?? new Date()" :events="selectedUserDayEvents" @event-click="handleShowEventDetails" :user="selectedUser" />
           <EventsList v-else-if="currentView === 'monthly' && selectedDate" :date="selectedDate ?? new Date()" :events="mySelectedDayEvents" @event-click="handleShowEventDetails" />
         </v-card-text>
         <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" variant="text" :size="mobile ? 'small' : 'auto'" @click="openDailyOptionDialog">日別ステータスを編集する</v-btn>
+          <v-btn color="primary" variant="text" :size="mobile ? 'small' : 'auto'" @click="goToRegister()">予定を登録する</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <aw-dialog v-else v-model="eventListDialog" :draggable="true" :resize="true" :overlay="false" :width="mobile ? '100%' : '50%'">
+      <template #header>
+        <h3 class="list-title">{{ eventListSubtitle }}</h3>
+      </template>
+      <v-card flat tile color="transparent">
+        <v-card-text>
+          <EventsList v-if="currentView === 'weekly' && selectedDate" :date="selectedDate ?? new Date()" :events="selectedUserDayEvents" @event-click="handleShowEventDetails" :user="selectedUser" />
+          <EventsList v-else-if="currentView === 'monthly' && selectedDate" :date="selectedDate ?? new Date()" :events="mySelectedDayEvents" @event-click="handleShowEventDetails" />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
           <v-btn color="primary" variant="text" :size="mobile ? 'small' : 'auto'" @click="openDailyOptionDialog">日別ステータスを編集する</v-btn>
           <v-btn color="primary" variant="text" :size="mobile ? 'small' : 'auto'" @click="goToRegister()">予定を登録する</v-btn>
         </v-card-actions>
       </v-card>
     </aw-dialog>
 
-    <aw-dialog v-model="dailyOptionDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :fullscreen="mobile">
-      <v-card>
-        <DailyOptionForm v-if="selectedDate" :user="selectedUser" :date="getDateString(selectedDate)" @cancel="handleCancelDailyOption" @submit="handleSubmitDailyOption" :initial-data="dailyOption"></DailyOptionForm>
-      </v-card>
+    <v-dialog v-if="mobile" v-model="viewDialog" fullscreen>
+      <DailyOptionForm v-if="selectedDate" :user="selectedUser" :date="getDateString(selectedDate)" @cancel="handleCancelDailyOption" @submit="handleSubmitDailyOption" :initial-data="dailyOption"></DailyOptionForm>
+    </v-dialog>
+    <aw-dialog v-else v-model="dailyOptionDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :fullscreen="mobile">
+      <template #header>
+        <h3>
+          <p class="list-title">{{ dailyOptionSubtitle }}</p>
+        </h3>
+      </template>
+      <DailyOptionForm v-if="selectedDate" :user="selectedUser" :date="getDateString(selectedDate)" @cancel="handleCancelDailyOption" @submit="handleSubmitDailyOption" :initial-data="dailyOption"></DailyOptionForm>
     </aw-dialog>
 
     <!-- フッター -->
@@ -118,11 +145,16 @@
       <EventDetail v-if="selectedEvent" :event="selectedEvent" @close="handleCloseEventDetails" @view="handleViewEvent" @edit="handleEditEvent" />
     </v-dialog> -->
 
-    <aw-dialog v-model="viewDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :fullscreen="mobile">
-      <v-card>
-        <EventView v-if="eventDetail" :event-data="eventDetail" @edit="handleEditEvent" @delete="handleDelete" @copy="handleCopy" @back="handleCloseView" />
-      </v-card>
+    <v-dialog v-if="mobile" v-model="viewDialog" fullscreen>
+      <EventView v-if="eventDetail" :event-data="eventDetail" @edit="handleEditEvent" @delete="handleDelete" @copy="handleCopy" @back="handleCloseView" />
+    </v-dialog>
+    <aw-dialog v-else v-model="viewDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :fullscreen="mobile">
+      <template #header>
+        <p class="list-title">予定の詳細</p>
+      </template>
+      <EventView v-if="eventDetail" :event-data="eventDetail" @edit="handleEditEvent" @delete="handleDelete" @copy="handleCopy" @back="handleCloseView" />
     </aw-dialog>
+    
   </div>
 </template>
 
@@ -212,6 +244,42 @@ const myDailyOptions = computed(() => {
 // const showDetail = ref<boolean>(false);
 // const selectedEvent = ref<EventDisplay | null>(null);
 // const detailPosition = ref<{ top: number, left: number }>({ top: 0, left: 0 });
+
+const dateString = computed(() => {
+  let d: Date = new Date()
+  switch (currentView.value) {
+    case 'daily':
+      d = currentDate.value
+      break;
+    case 'weekly':
+      d = selectedDate.value || new Date()
+      break;
+    case 'monthly':
+      d = selectedDate.value || new Date()
+      break;
+  }
+  if (d.toLocaleDateString() === new Date().toLocaleDateString()) return '本日'
+  const year = d.getFullYear()
+  const month = d.getMonth() + 1
+  const date = d.getDate()
+  return `${year}年${month}月${date}日`
+});
+
+const eventListSubtitle = computed(() => {
+    if (user.value && user.value.uid != selectedUser.value?.uid) {
+        return `${user.value?.displayName}さんの${dateString.value}の予定一覧`;
+    } else {
+        return `${dateString.value}の予定一覧`;
+    }
+});
+
+const dailyOptionSubtitle = computed(() => {
+    if (selectedUser.value) {
+        return `${selectedUser.value.displayName}さんの${ dailyOption.value ? '日別ステータスを更新' : '日別ステータスを登録' }`;
+    } else {
+        return dailyOption.value ? '日別ステータスを更新' : '日別ステータスを登録';
+    }
+});
 
 // 各ビュー用のローカルイベントデータ
 const currentDayEvents = ref<EventDisplay[]>([]);
@@ -769,6 +837,24 @@ watch(isLoading, (newValue, oldValue) => {
   min-height: 400px;
   overflow-y: auto;
   transition: opacity 0.2s ease-in-out;
+}
+
+.list-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+}
+
+.list-title::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 20px;
+  background-color: var(--primary-color);
+  margin-right: 10px;
+  border-radius: 2px;
 }
 
 @media (max-width: 768px) {

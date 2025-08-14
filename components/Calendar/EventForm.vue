@@ -464,7 +464,7 @@
 
     <!-- <Teleport to="body">
       <Transition name="modal"> -->
-        <aw-dialog v-model="showModal" :draggable="true" :resize="true" :overlay="false">
+        <v-dialog v-if="mobile" v-model="showModal" fullscreen>
           <div>
             <div class="modal-header">
               <h3 class="modal-title">
@@ -515,11 +515,79 @@
               </button>
             </div>
           </div>
+        </v-dialog>
+        <aw-dialog v-else v-model="showModal" :draggable="true" :resize="true" :overlay="false">
+          <div>
+            <!-- <div class="modal-header">
+              <h3 class="modal-title">
+                <i :class="getModalIcon()" class="icon"></i>
+                {{ getModalTitle() }}
+              </h3>
+              <button type="button" @click="closeModal" class="modal-close">
+                <i class="mdi mdi-close icon"></i>
+              </button>
+            </div> -->
+            <div class="modal-body">
+              <div class="search-box">
+                <i class="mdi mdi-magnify icon"></i>
+                <input v-model="searchQuery" type="text" class="search-input" :placeholder="getSearchPlaceholder()">
+              </div>
+              <div class="selection-list">
+                <div v-if="filteredItems.length === 0" class="no-results">
+                  検索結果がありません
+                </div>
+                <label v-for="item in filteredItems" :key="item.id" class="selection-item"
+                  :class="{ disabled: item.isConflict }">
+                  <input type="checkbox" :value="item.id" :checked="isItemSelected(item.id)" :disabled="item.isConflict"
+                    @change="toggleItem(item.id)" class="selection-checkbox">
+                  <div class="selection-info">
+                    <div class="selection-name">{{ item.name }}</div>
+                    <div v-if="item.department" class="selection-meta">{{ item.department }}</div>
+                    <div v-if="item.capacity" class="selection-meta">定員: {{ item.capacity }}名</div>
+                    <div v-if="item.quantity" class="selection-meta">在庫: {{ item.quantity }}</div>
+                    <div v-if="item.isConflict" class="selection-conflict">
+                      <i class="mdi mdi-alert icon"></i>
+                      {{ item.conflictInfo }}
+                    </div>
+                  </div>
+                  <div class="h-100 d-flex align-center justify-center">
+                      <v-btn variant="text" color="primary" @click="viewUsageStatus(item)" :disabled="!formData.date" :size="mobile ? 'small' : 'auto'">
+                      {{ modalType === 'participant' ? '予定を確認' : '使用状況を確認' }}
+                    </v-btn>
+                  </div>
+                </label>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" @click="closeModal" class="btn btn-secondary">
+                キャンセル
+              </button>
+              <button type="button" @click="confirmSelection" class="btn btn-primary">
+                選択を確定
+              </button>
+            </div>
+          </div>
         </aw-dialog>
       <!-- </Transition>
     </Teleport> -->
 
-    <aw-dialog v-model="dialog" :draggable="true" :resize="true" :overlay="false" :width="mobile ? '100%' : '50%'">
+    <v-dialog v-if="mobile" v-model="showModal" fullscreen>
+      <v-card rounded="lg">
+        <!-- <v-toolbar density="compact" class="position-fixed top-0" style="z-index: 5000;">
+          <h3 v-if="selected" class="list-title">{{ selected?.name }}さんの{{ formData.date }}の予定一覧</h3>
+          <v-spacer></v-spacer>
+          <v-icon icon="mdi-close" class="mr-3" @click="dialog = false" size="small"></v-icon>
+        </v-toolbar> -->
+        <v-card-title>
+          <span v-if="selected" class="list-title text-body-1">{{ selected?.name }}さんの{{ formData.date }}の予定一覧</span>
+        </v-card-title>
+        <v-card-text class="mt-10">
+          <DailyTimeline v-if="date" :events="events" :time-slots="timeSlots" :date="date"
+            :time-to-pixels="timeToPixels" @event-click="() => { }" />
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+    <aw-dialog v-else v-model="dialog" :draggable="true" :resize="true" :overlay="false" :width="mobile ? '100%' : '50%'">
       <template #header>
         <span v-if="selected" class="list-title text-body-1">{{ selected?.name }}さんの{{ formData.date }}の予定一覧</span>
       </template>

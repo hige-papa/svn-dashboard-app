@@ -1,6 +1,5 @@
 <template>
   <div>
-    <h3 class="list-title">{{ subtitle }}</h3>
     <div v-if="props.events.length === 0" class="no-events">
       予定はありません
     </div>
@@ -16,31 +15,11 @@
 </template>
 
 <script setup lang="ts">
-import type { User } from 'firebase/auth';
-
-const currentUser = useState<User>('user')
-
 interface Props {
   user?: ExtendedUserProfile;
   date?: Date
   events?: EventDisplay[]
 }
-
-const dateString = computed(() => {
-  if (props.date.toLocaleDateString() === new Date().toLocaleDateString()) return '本日'
-  const year = props.date.getFullYear()
-  const month = props.date.getMonth() + 1
-  const date = props.date.getDate()
-  return `${year}年${month}月${date}日`
-});
-
-const subtitle = computed(() => {
-    if (props.user && props.user.uid != currentUser.value.uid) {
-        return `${props.user?.displayName}さんの${dateString.value}の予定一覧`;
-    } else {
-        return `${dateString.value}の予定一覧`;
-    }
-});
 
 const props = withDefaults(defineProps<Props>(), {
   date: () => new Date(),
@@ -55,25 +34,6 @@ const onEventClick = (data: EventDisplay) => {
 </script>
 
 <style scoped>
-.list-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-}
-
-.list-title::before {
-  content: "";
-  display: inline-block;
-  width: 4px;
-  height: 20px;
-  background-color: var(--primary-color);
-  margin-right: 10px;
-  border-radius: 2px;
-}
-
 .no-events {
   text-align: center;
   padding: 40px 0;
