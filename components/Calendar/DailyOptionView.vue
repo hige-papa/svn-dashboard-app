@@ -50,10 +50,10 @@
                         </h3>
                         <div class="detail-content">
                             <span class="option-badge"
-                                :style="{ '--option-color': participationStatusDetails[optionData.lunchParticipation].color }">
-                                <i :class="participationStatusDetails[optionData.lunchParticipation].icon"
+                                :style="{ '--option-color': participationLunchStatusDetails[optionData.lunchParticipation].color }">
+                                <i :class="participationLunchStatusDetails[optionData.lunchParticipation].icon"
                                     class="icon"></i>
-                                {{ participationStatusDetails[optionData.lunchParticipation].name }}
+                                {{ participationLunchStatusDetails[optionData.lunchParticipation].name }}
                             </span>
                         </div>
                     </div>
@@ -65,10 +65,10 @@
                         </h3>
                         <div class="detail-content">
                             <span class="option-badge"
-                                :style="{ '--option-color': participationStatusDetails[optionData.dinnerParticipation].color }">
-                                <i :class="participationStatusDetails[optionData.dinnerParticipation].icon"
+                                :style="{ '--option-color': participationDinnerStatusDetails[optionData.dinnerParticipation].color }">
+                                <i :class="participationDinnerStatusDetails[optionData.dinnerParticipation].icon"
                                     class="icon"></i>
-                                {{ participationStatusDetails[optionData.dinnerParticipation].name }}
+                                {{ participationDinnerStatusDetails[optionData.dinnerParticipation].name }}
                             </span>
                         </div>
                     </div>
@@ -123,7 +123,7 @@
 <script setup lang="ts">
 import { useConstants } from '~/composables/common/useConstants';
 
-const { workstyleDetails, participationStatusDetails, } = useConstants();
+const { workstyleDetails, participationLunchStatusDetails, participationDinnerStatusDetails } = useConstants();
 
 // --- PropsとEmits ---
 interface Props {

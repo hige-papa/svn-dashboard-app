@@ -31,7 +31,7 @@
       <v-divider v-if="checkRole(section)"></v-divider>
     </template>
 
-    <v-list v-if="user" density="compact">
+    <v-list density="compact">
       <v-list-item density="compact" @click.stop="logoutAsync">
           <template v-slot:prepend>
             <v-icon icon="mdi-logout" size="small"></v-icon>

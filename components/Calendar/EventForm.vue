@@ -462,10 +462,10 @@
       </div>
     </div>
 
-    <Teleport to="body">
-      <Transition name="modal">
-        <div v-if="showModal" class="modal-overlay" @click="closeModal">
-          <div class="modal-container" @click.stop>
+    <!-- <Teleport to="body">
+      <Transition name="modal"> -->
+        <aw-dialog v-model="showModal" :draggable="true" :resize="true" :overlay="false">
+          <div>
             <div class="modal-header">
               <h3 class="modal-title">
                 <i :class="getModalIcon()" class="icon"></i>
@@ -515,23 +515,26 @@
               </button>
             </div>
           </div>
-        </div>
-      </Transition>
-    </Teleport>
+        </aw-dialog>
+      <!-- </Transition>
+    </Teleport> -->
 
-    <v-dialog v-model="dialog" :width="mobile ? '100%' : '50%'">
+    <aw-dialog v-model="dialog" :draggable="true" :resize="true" :overlay="false" :width="mobile ? '100%' : '50%'">
+      <template #header>
+        <span v-if="selected" class="list-title text-body-1">{{ selected?.name }}さんの{{ formData.date }}の予定一覧</span>
+      </template>
       <v-card rounded="lg">
-        <v-toolbar density="compact" class="position-fixed top-0" style="z-index: 5000;">
+        <!-- <v-toolbar density="compact" class="position-fixed top-0" style="z-index: 5000;">
           <h3 v-if="selected" class="list-title">{{ selected?.name }}さんの{{ formData.date }}の予定一覧</h3>
           <v-spacer></v-spacer>
           <v-icon icon="mdi-close" class="mr-3" @click="dialog = false" size="small"></v-icon>
-        </v-toolbar>
+        </v-toolbar> -->
         <v-card-text class="mt-10">
           <DailyTimeline v-if="date" :events="events" :time-slots="timeSlots" :date="date"
             :time-to-pixels="timeToPixels" @event-click="() => { }" />
         </v-card-text>
       </v-card>
-    </v-dialog>
+    </aw-dialog>
 
     <Transition name="notification">
       <div v-if="notification.show" class="notification" :class="notification.type">
