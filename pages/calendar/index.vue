@@ -86,7 +86,7 @@
       <EventsList v-if="currentView === 'daily'" class="events-list" :date="currentDate ?? new Date()" :events="myCurrentDayEvents" @event-click="handleShowEventDetails" />
     </div>
 
-    <aw-dialog v-model="eventListDialog" :draggable="true" :resize="true" :overlay="false" :width="mobile ? '100%' : '50%'">
+    <aw-dialog v-model="eventListDialog" :draggable="true" :resize="true" :overlay="false" :width="mobile ? '100%' : '50%'" :min-height="100" flat title>
       <v-card>
         <v-card-text>
           <EventsList v-if="currentView === 'weekly' && selectedDate" :date="selectedDate ?? new Date()" :events="selectedUserDayEvents" @event-click="handleShowEventDetails" :user="selectedUser" />
@@ -99,8 +99,8 @@
       </v-card>
     </aw-dialog>
 
-    <aw-dialog v-model="dailyOptionDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :fullscreen="mobile">
-      <v-card>
+    <aw-dialog v-model="dailyOptionDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :min-height="100" :fullscreen="mobile">
+      <v-card flat title>
         <DailyOptionForm v-if="selectedDate" :user="selectedUser" :date="getDateString(selectedDate)" @cancel="handleCancelDailyOption" @submit="handleSubmitDailyOption" :initial-data="dailyOption"></DailyOptionForm>
       </v-card>
     </aw-dialog>
@@ -118,8 +118,8 @@
       <EventDetail v-if="selectedEvent" :event="selectedEvent" @close="handleCloseEventDetails" @view="handleViewEvent" @edit="handleEditEvent" />
     </v-dialog> -->
 
-    <aw-dialog v-model="viewDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :fullscreen="mobile">
-      <v-card>
+    <aw-dialog v-model="viewDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :min-height="100" :fullscreen="mobile">
+      <v-card flat title>
         <EventView v-if="eventDetail" :event-data="eventDetail" @edit="handleEditEvent" @delete="handleDelete" @copy="handleCopy" @back="handleCloseView" />
       </v-card>
     </aw-dialog>

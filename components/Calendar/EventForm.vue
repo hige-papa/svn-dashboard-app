@@ -465,8 +465,14 @@
     <!-- <Teleport to="body">
       <Transition name="modal"> -->
         <aw-dialog v-model="showModal" :draggable="true" :resize="true" :overlay="false">
+          <template #header>
+              <h3 class="modal-title">
+                <i :class="getModalIcon()" class="icon"></i>
+                {{ getModalTitle() }}
+              </h3>
+          </template>
           <div>
-            <div class="modal-header">
+            <!-- <div class="modal-header">
               <h3 class="modal-title">
                 <i :class="getModalIcon()" class="icon"></i>
                 {{ getModalTitle() }}
@@ -474,7 +480,7 @@
               <button type="button" @click="closeModal" class="modal-close">
                 <i class="mdi mdi-close icon"></i>
               </button>
-            </div>
+            </div> -->
             <div class="modal-body">
               <div class="search-box">
                 <i class="mdi mdi-magnify icon"></i>
