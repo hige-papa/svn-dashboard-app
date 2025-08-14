@@ -4,7 +4,7 @@
             <div v-if="overlay" class="modal-overlay" @click.self="closeModal"></div>
             <div ref="modalRef" class="modal-content" :style="modalStyle" role="dialog" aria-modal="true"
                 aria-labelledby="modal-title">
-                <header ref="headerRef" :class="['modal-header', { 'draggable': draggable }]" @pointerdown.prevent="($event) => { if (draggable) { startDrag($event) } }">
+                <header ref="headerRef" :class="['modal-header', { 'draggable': draggable }]" @pointerdown.prevent="($event) => { if (draggable) { startDrag($event) } }" @dblclick="fullscreen">
                     <h2 id="modal-title" class="modal-title">
                         <slot name="header"></slot>
                     </h2>
@@ -29,15 +29,27 @@ import { type CSSProperties } from 'vue';
 
 // ----- Props & Emits --------------------------------------------------------
 
-const props = defineProps({
-    modelValue: { type: Boolean, required: true, },
-    initialWidth: { type: Number, default: 550 },
-    initialHeight: { type: Number, default: 400 },
-    minWidth: { type: Number, default: 320 },
-    minHeight: { type: Number, default: 250 },
-    draggable: { type: Boolean, default: true, },
-    resize: { type: Boolean, default: true, },
-    overlay: { type: Boolean, default: false, },
+interface Props {
+    modelValue: boolean
+    initialWidth?: number
+    initialHeight?: number
+    minWidth?: number
+    minHeight?: number
+    draggable?: boolean
+    resize?: boolean
+    overlay?: boolean,
+    fullscreen?: boolean,
+};
+
+const props = withDefaults(defineProps<Props>(), {
+    initialWidth: 550,
+    initialHeight: 400,
+    minWidth: 100,
+    minHeight: 100,
+    draggable: false,
+    resize: false,
+    overlay: true,
+    fullscreen: false,
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -55,7 +67,10 @@ const modalSizeOnDrag = { width: 0, height: 0 };
 
 // ----- Resizable State ------------------------------------------------------
 const isResizing = ref(false);
-const size = ref({ width: props.initialWidth, height: props.initialHeight });
+const size = ref({
+    width: props.fullscreen ? window.innerWidth : props.initialWidth,
+    height: props.fullscreen ? window.innerHeight : props.initialHeight
+});
 // ▼ リサイズ方向と開始時のモーダル位置を保持する変数を追加 ▼
 const resizeDirection = ref('');
 const startResizeInfo = { mouseX: 0, mouseY: 0, modalWidth: 0, modalHeight: 0, modalX: 0, modalY: 0 };
@@ -197,6 +212,26 @@ const onResize = (event: PointerEvent) => {
     position.value = { x: newX, y: newY };
 };
 
+const isFullscreen = ref<boolean>(false)
+
+const fullscreen = () => {
+    if (isFullscreen.value) {
+        size.value = { width: props.initialWidth, height: props.initialHeight };
+        nextTick(() => {
+            const width = size.value.width;
+            const height = size.value.height;
+            position.value = {
+                x: (window.innerWidth - width) / 2,
+                y: ((window.innerHeight - height) / 2) - 30,
+            };
+        });
+    } else {
+        size.value = { width: window.innerWidth, height: window.innerHeight };
+        position.value = { x: 0, y: 0 };
+    }
+    isFullscreen.value = !isFullscreen.value
+}
+
 const stopResize = () => {
     isResizing.value = false;
     window.removeEventListener('pointermove', onResize);
@@ -227,7 +262,10 @@ onUnmounted(() => {
 
 watch(() => props.modelValue, (newValue) => {
     if (newValue) {
-        size.value = { width: props.initialWidth, height: props.initialHeight };
+        size.value = {
+            width: props.fullscreen ? window.innerWidth : props.initialWidth,
+            height: props.fullscreen ? window.innerHeight : props.initialHeight
+        };
         nextTick(() => {
             const width = size.value.width;
             const height = size.value.height;

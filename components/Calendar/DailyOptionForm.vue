@@ -1,9 +1,9 @@
 <template>
   <div>
     <div class="container">
-      <div class="header">
+      <!-- <div class="header">
         <p class="page-subtitle">{{ subtitle }}</p>
-      </div>
+      </div> -->
 
       <div class="form-content">
         <form @submit.prevent="handleSubmit" class="form-grid">
@@ -127,7 +127,6 @@
 
 <script setup lang="ts">
 import type { User } from 'firebase/auth';
-import { padStart } from 'vuetify/lib/util/helpers.mjs';
 import { useConstants } from '~/composables/common/useConstants';
 
 const currentUser = useState<User>('user')
@@ -162,14 +161,6 @@ const formData = reactive<DailyUserOption>({
 
 const isLoading = ref(false);
 const isEditing = computed(() => !!props.initialData);
-
-const subtitle = computed(() => {
-    if (props.user) {
-        return `${props.user.displayName}さんの${ isEditing ? '日別ステータスを更新' : '日別ステータスを登録' }`;
-    } else {
-        return isEditing ? '日別ステータスを更新' : '日別ステータスを登録';
-    }
-});
 
 const getDateString = (date: Date) => {
   const year = date.getFullYear();

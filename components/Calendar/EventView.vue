@@ -1,10 +1,10 @@
 <template>
   <div class="page-container">
     <div v-if="isViewable" class="container">
-      <div class="header">
-        <!-- <h1 class="app-title">TASCAL</h1> -->
+      <!-- <div class="header">
+        <h1 class="app-title">TASCAL</h1>
         <p class="page-subtitle">予定の詳細</p>
-      </div>
+      </div> -->
 
       <div class="view-content">
         <div class="event-header">
@@ -553,7 +553,7 @@ onMounted(() => {
 
 <style scoped>
 .page-container {
-  background-color: var(--background-light);
+  /* background-color: var(--background-light); */
   color: var(--text-primary);
   line-height: 1.6;
   min-height: 100vh;
@@ -563,9 +563,9 @@ onMounted(() => {
 .container {
   max-width: 900px;
   margin: 0 auto;
-  background-color: var(--background-white);
+  /* background-color: var(--background-white); */
   /* border-radius: var(--radius-lg); */
-  box-shadow: var(--shadow-md);
+  /* box-shadow: var(--shadow-md); */
   overflow: hidden;
 }
 
