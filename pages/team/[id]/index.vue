@@ -3,7 +3,7 @@
     <div class="container">
       <div class="header">
         <!-- <h1 class="app-title">TASCAL</h1> -->
-        <p class="page-subtitle">備品詳細</p>
+        <p class="page-subtitle">チーム詳細</p>
       </div>
       
       <div class="content">
@@ -39,13 +39,6 @@
                 <div class="info-value">{{ item.category || '未設定' }}</div>
               </div>
               
-              <div class="info-item">
-                <label class="info-label">
-                  <i class="mdi mdi-package-variant-closed icon"></i>
-                  総数
-                </label>
-                <div class="info-value">{{ item.capacity }}</div>
-              </div>
             </div>
             
             <div v-if="item.description" class="info-item full-width mt-4">
@@ -82,7 +75,7 @@
           <div class="profile-section">
             <h3 class="section-title">
               <i class="mdi mdi-camera icon"></i>
-              備品画像
+              チーム画像
             </h3>
             
             <div class="avatar-display-section">
@@ -96,7 +89,7 @@
               </div>
               <div class="avatar-info">
                 <p class="avatar-text">
-                  {{ item.imageUrl ? '備品画像が設定されています' : '備品画像が設定されていません' }}
+                  {{ item.imageUrl ? 'チーム画像が設定されています' : 'チーム画像が設定されていません' }}
                 </p>
               </div>
             </div>
@@ -129,15 +122,15 @@
         <div v-else-if="isLoading" class="loading-container">
           <div class="loading-spinner">
             <i class="mdi mdi-loading icon loading-spin"></i>
-            <p>備品情報を読み込み中...</p>
+            <p>チーム情報を読み込み中...</p>
           </div>
         </div>
         
         <div v-else class="error-container">
           <div class="error-message">
             <i class="mdi mdi-alert-circle icon"></i>
-            <h3>備品情報が見つかりません</h3>
-            <p>指定された備品は存在しないか、アクセス権限がありません。</p>
+            <h3>チーム情報が見つかりません</h3>
+            <p>指定されたチームは存在しないか、アクセス権限がありません。</p>
             <button @click="handleBack" class="btn btn-primary">
               <i class="mdi mdi-arrow-left icon"></i>
               一覧に戻る
@@ -150,7 +143,7 @@
     <div v-if="showDeleteDialog" class="dialog-overlay" @click="closeDeleteDialog">
       <div class="dialog-content" @click.stop>
         <div class="dialog-header">
-          <h3>備品削除の確認</h3>
+          <h3>チーム削除の確認</h3>
           <button @click="closeDeleteDialog" class="dialog-close">
             <i class="mdi mdi-close"></i>
           </button>
@@ -183,19 +176,19 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
-import { useEquipment } from '~/composables/useEquipment'
+import { useTeam } from '~/composables/useTeam'
 
 // Nuxt3を想定
 const { back, push } = useRouter()
 const route = useRoute()
 
-const { getAsync, deleteAsync } = useEquipment()
+const { getAsync, deleteAsync } = useTeam()
 
 // SEOメタタグ設定
 useHead({
-  title: 'TASCAL - 備品詳細',
+  title: 'TASCAL - チーム詳細',
   meta: [
-    { name: 'description', content: 'TASCALシステムの備品詳細情報を表示します' }
+    { name: 'description', content: 'TASCALシステムのチーム詳細情報を表示します' }
   ],
   link: [
     { rel: 'stylesheet', href: 'https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/7.2.96/css/materialdesignicons.min.css' }
@@ -205,7 +198,7 @@ useHead({
 
 // リアクティブデータ
 const itemId = computed(() => route.params.id as string)
-const item = ref<Equipment | null>(null)
+const item = ref<Team | null>(null)
 const isLoading = ref(true)
 const showDeleteDialog = ref(false)
 const isDeleting = ref(false)
@@ -244,16 +237,16 @@ const statusIcon = computed(() => {
   }
 })
 
-// 備品データの読み込み
+// チームデータの読み込み
 const loadItem = async () => {
   try {
     isLoading.value = true
     const fetchedItem = await getAsync(itemId.value)
     item.value = fetchedItem
   } catch (error) {
-    console.error('備品データの読み込みに失敗しました:', error)
+    console.error('チームデータの読み込みに失敗しました:', error)
     item.value = null
-    showNotification('備品データの読み込みに失敗しました', 'error')
+    showNotification('チームデータの読み込みに失敗しました', 'error')
   } finally {
     isLoading.value = false
   }
@@ -262,11 +255,11 @@ const loadItem = async () => {
 // ハンドラー関数
 const handleBack = () => {
   // `/items` のような一覧ページへ戻る
-  push('/equipment')
+  push('/team')
 }
 
 const handleEdit = () => {
-  push(`/equipment/${itemId.value}/edit`)
+  push(`/team/${itemId.value}/edit`)
 }
 
 const handleDelete = () => {
@@ -282,10 +275,10 @@ const confirmDelete = async () => {
   try {
     isDeleting.value = true
     await deleteAsync(item.value.id)
-    showNotification('備品を削除しました')
+    showNotification('チームを削除しました')
     
     setTimeout(() => {
-      push('/equipment')
+      push('/team')
     }, 1500)
     
   } catch (error) {
