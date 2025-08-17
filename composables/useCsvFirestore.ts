@@ -146,7 +146,7 @@ export const useCsvFirestore = () => {
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
-        complete: async (results) => {
+        complete: async (results: any) => {
           const importResult: CsvImportResult = {
             success: false,
             data: [],
@@ -212,7 +212,7 @@ export const useCsvFirestore = () => {
           
           resolve(importResult)
         },
-        error: (parseError) => {
+        error: (parseError: any) => {
           loading.value = false
           const errorMessage = parseError?.message || 'CSVファイルの解析に失敗しました'
           error.value = errorMessage
