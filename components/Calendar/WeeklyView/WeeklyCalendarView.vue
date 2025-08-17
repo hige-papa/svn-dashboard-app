@@ -31,7 +31,7 @@
       </thead>
       <tbody>
         <tr
-          v-for="user in visibleUsers" 
+          v-for="user in sortedUser" 
           :key="user.uid"
           class="schedule-row"
         >
@@ -205,6 +205,25 @@ const getDinnerParticipation = (uid: string, date: Date) => {
 const visibleUsers = computed(() => {
   return props.users.filter(u => u.visible);
 });
+
+// ユーザーを並び替え ※本人が先頭、後は名前順
+const sortedUser = computed(() => {
+  return visibleUsers.value.sort((a, b) => {
+    // aが自分で、bが自分でない場合 → aを優先して前に
+      if (a.uid === user.value.uid && b.uid !== user.value.uid) {
+        return -1;
+      }
+
+      // bが自分で、aが自分でない場合 → bを優先して前に
+      if (b.uid === user.value.uid && a.uid !== user.value.uid) {
+        return 1;
+      }
+
+      // 上記以外（両方とも自分、または両方とも自分でない）の場合
+      // → 名前のアルファベット順（昇順）で比較
+      return a.displayName.localeCompare(b.displayName);
+  })  
+})
 
 // 今日かどうかを判定
 const isToday = (date: Date) => {

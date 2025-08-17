@@ -2,7 +2,7 @@
   <v-navigation-drawer v-model="state.drawer" :rail="state.rail" :permanent="!mobile">
 
     <v-list>
-      <v-list-item :title="user?.displayName ?? 'ユーザー'" :subtitle="user?.role ?? undefined">
+      <v-list-item :title="user?.displayName ?? 'ユーザー'" :subtitle="user?.role ?? undefined" @click="navigateTo('/profile')">
         <template v-slot:prepend>
           <v-avatar>
             <v-img v-if="user?.avatar" :src="user?.avatar" cover></v-img>
