@@ -5,6 +5,8 @@ interface TeamFormData {
   category: string
   imageUrl: string
   status: 'available' | 'in_use' | 'maintenance'
+  memberIds: string[]
+  members: string[]
 }
 
 interface Team extends TeamFormData {

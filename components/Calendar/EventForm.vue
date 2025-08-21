@@ -2,7 +2,6 @@
   <div class="page-container">
     <div class="container">
       <div class="header">
-        <!-- <h1 class="app-title">TASCAL</h1> -->
         <p class="page-subtitle">{{ initialData ? '予定を更新' : '新しい予定を登録' }}</p>
       </div>
 
@@ -299,7 +298,7 @@
             </label>
             <div class="master-select-section">
               <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 8px;">
-                参加者を選択してください（複数選択可）
+                参加者やチームを選択してください（複数選択可）
               </p>
               <div class="master-select-wrapper">
                 <div class="selected-items">
@@ -451,6 +450,10 @@
               <i class="mdi mdi-close icon"></i>
               キャンセル
             </button>
+            <button type="button" @click="showEventRelatedParties" class="btn btn-secondary">
+              <i class="mdi mdi-eye-outline icon"></i>
+              参加者の予定を確認
+            </button>
             <button type="submit" :disabled="isLoading" class="btn btn-primary">
               <i v-if="isLoading" class="mdi mdi-loading icon loading-spin"></i>
               <i v-else class="mdi mdi-content-save icon"></i>
@@ -462,146 +465,94 @@
       </div>
     </div>
 
-    <!-- <Teleport to="body">
-      <Transition name="modal"> -->
-        <v-dialog v-if="mobile" v-model="showModal" fullscreen>
-          <div>
-            <div class="modal-header">
-              <h3 class="modal-title">
-                <i :class="getModalIcon()" class="icon"></i>
-                {{ getModalTitle() }}
-              </h3>
-              <button type="button" @click="closeModal" class="modal-close">
-                <i class="mdi mdi-close icon"></i>
-              </button>
-            </div>
-            <div class="modal-body">
-              <div class="search-box">
-                <i class="mdi mdi-magnify icon"></i>
-                <input v-model="searchQuery" type="text" class="search-input" :placeholder="getSearchPlaceholder()">
-              </div>
-              <div class="selection-list">
-                <div v-if="filteredItems.length === 0" class="no-results">
-                  検索結果がありません
-                </div>
-                <label v-for="item in filteredItems" :key="item.id" class="selection-item"
-                  :class="{ disabled: item.isConflict }">
-                  <input type="checkbox" :value="item.id" :checked="isItemSelected(item.id)" :disabled="item.isConflict"
-                    @change="toggleItem(item.id)" class="selection-checkbox">
-                  <div class="selection-info">
-                    <div class="selection-name">{{ item.name }}</div>
-                    <div v-if="item.department" class="selection-meta">{{ item.department }}</div>
-                    <div v-if="item.capacity" class="selection-meta">定員: {{ item.capacity }}名</div>
-                    <div v-if="item.quantity" class="selection-meta">在庫: {{ item.quantity }}</div>
-                    <div v-if="item.isConflict" class="selection-conflict">
-                      <i class="mdi mdi-alert icon"></i>
-                      {{ item.conflictInfo }}
-                    </div>
-                  </div>
-                  <div class="h-100 d-flex align-center justify-center">
-                      <v-btn variant="text" color="primary" @click="viewUsageStatus(item)" :disabled="!formData.date" :size="mobile ? 'small' : 'auto'">
-                      {{ modalType === 'participant' ? '予定を確認' : '使用状況を確認' }}
-                    </v-btn>
-                  </div>
-                </label>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" @click="closeModal" class="btn btn-secondary">
-                キャンセル
-              </button>
-              <button type="button" @click="confirmSelection" class="btn btn-primary">
-                選択を確定
-              </button>
-            </div>
+    <aw-dialog v-model="showModal" :draggable="true" :resize="true" :overlay="false" :fullscreen="mobile">
+      <div>
+        <div class="modal-body">
+          <div v-if="modalType === 'participant'" class="modal-view-tabs">
+            <button
+              :class="{ active: modalView === 'participants' }"
+              @click="modalView = 'participants'"
+              class="modal-view-tab"
+            >
+              <i class="mdi mdi-account icon"></i>
+              参加者
+            </button>
+            <button
+              :class="{ active: modalView === 'teams' }"
+              @click="modalView = 'teams'"
+              class="modal-view-tab"
+            >
+              <i class="mdi mdi-account-group icon"></i>
+              チーム
+            </button>
           </div>
-        </v-dialog>
-        <aw-dialog v-else v-model="showModal" :draggable="true" :resize="true" :overlay="false">
-          <div>
-            <!-- <div class="modal-header">
-              <h3 class="modal-title">
-                <i :class="getModalIcon()" class="icon"></i>
-                {{ getModalTitle() }}
-              </h3>
-              <button type="button" @click="closeModal" class="modal-close">
-                <i class="mdi mdi-close icon"></i>
-              </button>
-            </div> -->
-            <div class="modal-body">
-              <div class="search-box">
-                <i class="mdi mdi-magnify icon"></i>
-                <input v-model="searchQuery" type="text" class="search-input" :placeholder="getSearchPlaceholder()">
-              </div>
-              <div class="selection-list">
-                <div v-if="filteredItems.length === 0" class="no-results">
-                  検索結果がありません
-                </div>
-                <label v-for="item in filteredItems" :key="item.id" class="selection-item"
-                  :class="{ disabled: item.isConflict }">
-                  <input type="checkbox" :value="item.id" :checked="isItemSelected(item.id)" :disabled="item.isConflict"
-                    @change="toggleItem(item.id)" class="selection-checkbox">
-                  <div class="selection-info">
-                    <div class="selection-name">{{ item.name }}</div>
-                    <div v-if="item.department" class="selection-meta">{{ item.department }}</div>
-                    <div v-if="item.capacity" class="selection-meta">定員: {{ item.capacity }}名</div>
-                    <div v-if="item.quantity" class="selection-meta">在庫: {{ item.quantity }}</div>
-                    <div v-if="item.isConflict" class="selection-conflict">
-                      <i class="mdi mdi-alert icon"></i>
-                      {{ item.conflictInfo }}
-                    </div>
-                  </div>
-                  <div class="h-100 d-flex align-center justify-center">
-                      <v-btn variant="text" color="primary" @click="viewUsageStatus(item)" :disabled="!formData.date" :size="mobile ? 'small' : 'auto'">
-                      {{ modalType === 'participant' ? '予定を確認' : '使用状況を確認' }}
-                    </v-btn>
-                  </div>
-                </label>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" @click="closeModal" class="btn btn-secondary">
-                キャンセル
-              </button>
-              <button type="button" @click="confirmSelection" class="btn btn-primary">
-                選択を確定
-              </button>
-            </div>
-          </div>
-        </aw-dialog>
-      <!-- </Transition>
-    </Teleport> -->
 
-    <v-dialog v-if="mobile" v-model="showModal" fullscreen>
-      <v-card rounded="lg">
-        <!-- <v-toolbar density="compact" class="position-fixed top-0" style="z-index: 5000;">
-          <h3 v-if="selected" class="list-title">{{ selected?.name }}さんの{{ formData.date }}の予定一覧</h3>
-          <v-spacer></v-spacer>
-          <v-icon icon="mdi-close" class="mr-3" @click="dialog = false" size="small"></v-icon>
-        </v-toolbar> -->
-        <v-card-title>
-          <span v-if="selected" class="list-title text-body-1">{{ selected?.name }}さんの{{ formData.date }}の予定一覧</span>
-        </v-card-title>
-        <v-card-text class="mt-10">
-          <DailyTimeline v-if="date" :events="events" :time-slots="timeSlots" :date="date"
-            :time-to-pixels="timeToPixels" @event-click="() => { }" />
-        </v-card-text>
-      </v-card>
-    </v-dialog>
-    <aw-dialog v-else v-model="dialog" :draggable="true" :resize="true" :overlay="false" :width="mobile ? '100%' : '50%'">
+          <div class="search-box">
+            <i class="mdi mdi-magnify icon"></i>
+            <input v-model="searchQuery" type="text" class="search-input" :placeholder="getSearchPlaceholder()">
+          </div>
+
+          <div class="selection-list" v-if="modalView === 'participants'">
+            <div v-if="filteredItems.length === 0" class="no-results">検索結果がありません</div>
+            <label v-for="item in (filteredItems as MasterItem[])" :key="item.id" class="selection-item" :class="{ disabled: item.isConflict }">
+              <input type="checkbox" :value="item.id" :checked="isItemSelected(item.id)" :disabled="item.isConflict" @change="toggleItem(item.id)" class="selection-checkbox">
+              <div class="selection-info">
+                <div class="selection-name">{{ item.name }}</div>
+                <div v-if="item.department" class="selection-meta">{{ item.department }}</div>
+                <div v-if="item.isConflict" class="selection-conflict">
+                  <i class="mdi mdi-alert icon"></i>
+                  {{ item.conflictInfo }}
+                </div>
+              </div>
+              <div class="h-100 d-flex align-center justify-center">
+                  <v-btn variant="text" color="primary" @click="viewUsageStatus(item)" :disabled="!formData.date" :size="mobile ? 'small' : 'auto'">
+                  {{ modalType === 'participant' ? '予定を確認' : '使用状況を確認' }}
+                </v-btn>
+              </div>
+            </label>
+          </div>
+
+          <div class="selection-list" v-if="modalView === 'teams'">
+            <div v-if="filteredItems.length === 0" class="no-results">検索結果がありません</div>
+            <div v-for="team in (filteredItems as TeamItem[])" :key="team.id" class="team-selection-item">
+              <div class="selection-info">
+                <div class="selection-name">{{ team.name }}</div>
+                <div class="selection-meta">メンバー: {{ team.memberCount || 0 }}名</div>
+              </div>
+              <button @click="addTeamMembers(team.id)" class="btn-add-team">
+                <i class="mdi mdi-plus icon"></i>
+                追加
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- <div class="modal-footer">
+          <button type="button" @click="closeModal" class="btn btn-secondary">
+            キャンセル
+          </button>
+          <button type="button" @click="confirmSelection" class="btn btn-primary">
+            選択を確定
+          </button>
+        </div> -->
+      </div>
+      <template #footer>
+        <div class="modal-footer">
+          <button type="button" @click="closeModal" class="btn btn-secondary">
+            キャンセル
+          </button>
+          <button type="button" @click="confirmSelection" class="btn btn-primary">
+            選択を確定
+          </button>
+        </div>
+      </template>
+    </aw-dialog>
+
+    <aw-dialog v-model="dialog" :draggable="true" :resize="true" :overlay="false" :fullscreen="mobile">
       <template #header>
         <span v-if="selected" class="list-title text-body-1">{{ selected?.name }}さんの{{ formData.date }}の予定一覧</span>
       </template>
-      <v-card rounded="lg">
-        <!-- <v-toolbar density="compact" class="position-fixed top-0" style="z-index: 5000;">
-          <h3 v-if="selected" class="list-title">{{ selected?.name }}さんの{{ formData.date }}の予定一覧</h3>
-          <v-spacer></v-spacer>
-          <v-icon icon="mdi-close" class="mr-3" @click="dialog = false" size="small"></v-icon>
-        </v-toolbar> -->
-        <v-card-text class="mt-10">
-          <DailyTimeline v-if="date" :events="events" :time-slots="timeSlots" :date="date"
+      <DailyTimeline v-if="date" :events="events" :time-slots="timeSlots" :date="date"
             :time-to-pixels="timeToPixels" @event-click="() => { }" />
-        </v-card-text>
-      </v-card>
     </aw-dialog>
 
     <Transition name="notification">
@@ -610,18 +561,50 @@
         <span>{{ notification.message }}</span>
       </div>
     </Transition>
+
+    <aw-dialog v-model="isShowEventRelatedParties" :draggable="true" :resize="true" :overlay="false" :fullscreen="mobile">
+      <template #header>
+        <span class="list-title text-body-1">参加者の予定一覧</span>
+      </template>
+      <v-container>
+        <!-- <div>eventRelatedParties: {{ eventRelatedParties?.length ?? 0 }}</div>
+        <div>relatedPartyEvents: {{ relatedPartyEvents?.length ?? 0 }}</div>
+        <div>date: {{ targetDate }}</div> -->
+        <GroupHorizontalTimeline :users="eventRelatedParties ?? []" :events="relatedPartyEvents" :date="targetDate" />
+      </v-container>
+    </aw-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import type { User } from 'firebase/auth'
 import { useMaster } from '~/composables/master/useMaster'
 import { useFacility } from '~/composables/useFacility'
 import { useEquipment } from '~/composables/useEquipment'
+import { useTeam } from '~/composables/useTeam'
 import { useCalendar } from '~/composables/useCalendar';
 import { useEventService } from '~/services/eventService'
 import { useConstants } from '~/composables/common/useConstants'
 import { useDisplay } from 'vuetify'
+
+interface MasterItem {
+  id: string;
+  name: string;
+  department?: string;
+  capacity?: number;
+  quantity?: number;
+  avatar?: string;
+  isConflict?: boolean;
+  conflictInfo?: string;
+}
+
+interface TeamItem {
+  id: string;
+  name: string;
+  members: string[];
+  memberCount: number;
+}
 
 const { eventTypeDetails } = useConstants()
 
@@ -633,45 +616,17 @@ const { back } = useRouter()
 const { getListAsync: getUsersAsync } = useMaster('users')
 const { getListAsync: getFacilitiesAsync } = useFacility()
 const { getListAsync: getEquipmentsAsync } = useEquipment()
+const { getListAsync: getTeamsAsync } = useTeam()
 const { timeToPixels, timeSlots } = useCalendar();
 const { getEventsByParticipantInRange, getEventsByEquipmentInRange, getEventsByFacilityInRange } = useEventService();
 
 interface Props {
   date?: string,
   participantIds?: string[],
-  initialData?: EventFormData
+  initialData?: any // EventFormData
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  // initialData: () => ({
-  //   title: '',
-  //   dateType: 'single',
-  //   date: '',
-  //   startDate: '',
-  //   endDate: '',
-  //   recurringStartDate: '',
-  //   recurringPattern: 'weekly',
-  //   selectedWeekdays: [],
-  //   monthlyType: 'date',
-  //   monthlyDate: 1,
-  //   monthlyWeek: '1',
-  //   monthlyWeekday: 1,
-  //   recurringEndType: 'never',
-  //   recurringEndDate: '',
-  //   recurringCount: 10,
-  //   startTime: '',
-  //   endTime: '',
-  //   location: '',
-  //   participantIds: [],
-  //   participants: [],
-  //   facilityIds: [],
-  //   facilities: [],
-  //   equipmentIds: [],
-  //   equipments: [],
-  //   priority: 'medium',
-  //   description: ''
-  // })
-})
+const props = withDefaults(defineProps<Props>(), {})
 
 const weekDays = ['日', '月', '火', '水', '木', '金', '土']
 
@@ -687,7 +642,7 @@ useHead({
 
 const formData = reactive<EventFormData>({
   title: '',
-  eventType: 'normal', // ◀◀◀ 追加
+  eventType: 'normal',
   dateType: 'single',
   date: '',
   startDate: '',
@@ -723,31 +678,41 @@ const conflicts = ref<any[]>([])
 const notification = reactive<any>({ show: false, message: '', type: 'success' })
 
 const showModal = ref(false)
-const modalType = ref<ModalType>(null)
+const modalType = ref<null | 'participant' | 'facility' | 'equipment'>(null)
+const modalView = ref<'participants' | 'teams'>('participants')
 const searchQuery = ref('')
 const tempSelection = ref<string[]>([])
 
 const participantsMaster = ref<MasterItem[]>([])
 const facilitiesMaster = ref<MasterItem[]>([])
 const equipmentMaster = ref<MasterItem[]>([])
+const teamsMaster = ref<TeamItem[]>([])
 
 const selectedParticipantsData = computed(() => participantsMaster.value.filter(p => formData.participantIds.includes(p.id)))
 const selectedFacilitiesData = computed(() => facilitiesMaster.value.filter(f => formData.facilityIds.includes(f.id)))
 const selectedEquipmentData = computed(() => equipmentMaster.value.filter(e => formData.equipmentIds.includes(e.id)))
 
-const filteredItems = computed(() => {
+const filteredItems = computed((): MasterItem[] | TeamItem[] => {
   const query = searchQuery.value.toLowerCase()
-  let items: MasterItem[] = []
+  let items: MasterItem[] | TeamItem[] = []
+
   switch (modalType.value) {
-    case 'participant': items = participantsMaster.value; break
-    case 'facility': items = facilitiesMaster.value; break
-    case 'equipment': items = equipmentMaster.value; break
+    case 'participant':
+      items = modalView.value === 'participants' ? participantsMaster.value : teamsMaster.value
+      break
+    case 'facility':
+      items = facilitiesMaster.value
+      break
+    case 'equipment':
+      items = equipmentMaster.value
+      break
   }
+
   if (!query) return items
-  return items.filter(item => item.name.toLowerCase().includes(query) || item.department?.toLowerCase().includes(query))
+  return items.filter(item => item.name.toLowerCase().includes(query))
 })
 
-const setDefaultValues = (form?: EventFormData) => {
+const setDefaultValues = (form?: any) => {
   const defaults = {
     title: '', eventType: 'normal', dateType: 'single', date: '', startDate: '', endDate: '',
     recurringStartDate: '', recurringPattern: 'weekly', selectedWeekdays: [], monthlyType: 'date',
@@ -756,13 +721,12 @@ const setDefaultValues = (form?: EventFormData) => {
     participantIds: [], participants: [], facilityIds: [], equipmentIds: [],
     priority: 'medium', description: '', private: false, equipments: [], eventTypeColor: '',
     eventTypeName: '', facilities: []
-  } as EventFormData;
+  };
   Object.assign(formData, defaults, form);
 
   if (!form) {
     const now = new Date();
 
-    // ローカルタイムゾーンでYYYY-MM-DD形式の文字列を生成
     const toLocaleDateString = (date: Date) => {
       const year = date.getFullYear();
       const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -770,7 +734,6 @@ const setDefaultValues = (form?: EventFormData) => {
       return `${year}-${month}-${day}`;
     };
 
-    // ローカルタイムゾーンでHH:mm形式の文字列を生成
     const toLocaleTimeString = (date: Date) => {
       const hours = date.getHours().toString().padStart(2, '0');
       const minutes = date.getMinutes().toString().padStart(2, '0');
@@ -809,8 +772,25 @@ watch(() => formData.dateType, (newType) => {
   }
 });
 
+const targetDate = computed(() => {
+  switch (formData.dateType) {
+    case 'single':
+      return new Date(formData.date);
+    case 'range':
+      return new Date(formData.startDate);
+    case 'recurring':
+      return new Date(formData.recurringStartDate);
+    default:
+      return new Date();
+  }
+})
 
-const openParticipantModal = () => { modalType.value = 'participant'; tempSelection.value = [...formData.participantIds]; showModal.value = true }
+const openParticipantModal = () => {
+  modalType.value = 'participant';
+  modalView.value = 'participants';
+  tempSelection.value = [...formData.participantIds];
+  showModal.value = true
+}
 const openFacilityModal = () => { modalType.value = 'facility'; tempSelection.value = [...formData.facilityIds]; showModal.value = true }
 const openEquipmentModal = () => { modalType.value = 'equipment'; tempSelection.value = [...formData.equipmentIds]; showModal.value = true }
 
@@ -824,16 +804,38 @@ const confirmSelection = () => {
       break
     case 'facility':
       formData.facilityIds = [...tempSelection.value];
-      formData.facilities = facilitiesMaster.value.filter(p => tempSelection.value.includes(p.id)).map(p => p.name);
+      formData.facilities = facilitiesMaster.value.filter(f => tempSelection.value.includes(f.id)).map(f => f.name);
       break
     case 'equipment':
       formData.equipmentIds = [...tempSelection.value];
-      formData.equipments = equipmentMaster.value.filter(p => tempSelection.value.includes(p.id)).map(p => p.name);
+      formData.equipments = equipmentMaster.value.filter(e => tempSelection.value.includes(e.id)).map(e => e.name);
       break
   }
   checkConflicts()
   closeModal()
 }
+
+const addTeamMembers = (teamId: string) => {
+  const team = teamsMaster.value.find(t => t.id === teamId)
+  if (team && team.members) {
+    let addedCount = 0
+    team.members.forEach((memberId: string) => {
+      if (!tempSelection.value.includes(memberId)) {
+        tempSelection.value.push(memberId)
+        addedCount++
+      }
+    })
+    
+    if (addedCount > 0) {
+      showNotification(`チーム「${team.name}」から${addedCount}名を追加しました`, 'success');
+    } else {
+      showNotification(`チーム「${team.name}」のメンバーは全員追加済みです`, 'info');
+    }
+    
+    modalView.value = 'participants';
+  }
+}
+
 
 const isItemSelected = (id: string) => tempSelection.value.includes(id)
 
@@ -847,23 +849,13 @@ const removeParticipant = (id: string) => { const i = formData.participantIds.in
 const removeFacility = (id: string) => { const i = formData.facilityIds.indexOf(id); if (i > -1) { formData.facilityIds.splice(i, 1); checkConflicts() } }
 const removeEquipment = (id: string) => { const i = formData.equipmentIds.indexOf(id); if (i > -1) { formData.equipmentIds.splice(i, 1); checkConflicts() } }
 
-const getModalIcon = () => {
-  switch (modalType.value) {
-    case 'participant': return 'mdi mdi-account-group';
-    case 'facility': return 'mdi mdi-office-building';
-    case 'equipment': return 'mdi mdi-chair-rolling';
-    default: return ''
-  }
-}
-const getModalTitle = () => {
-  switch (modalType.value) {
-    case 'participant': return '参加者を選択';
-    case 'facility': return '施設を選択';
-    case 'equipment': return '備品を選択';
-    default: return ''
-  }
-}
+const getModalIcon = () => { /* ... */ }
+const getModalTitle = () => { /* ... */ }
+
 const getSearchPlaceholder = () => {
+  if (modalType.value === 'participant' && modalView.value === 'teams') {
+    return 'チーム名で検索...'
+  }
   switch (modalType.value) {
     case 'participant': return '名前や部署で検索...';
     case 'facility': return '施設名で検索...';
@@ -872,12 +864,8 @@ const getSearchPlaceholder = () => {
   }
 }
 
-const checkConflicts = async () => {
-  // Mock implementation
-}
-const updateMasterConflicts = () => {
-  // Mock implementation
-}
+const checkConflicts = async () => { /* Mock */ }
+const updateMasterConflicts = () => { /* Mock */ }
 const clearConflicts = () => { conflicts.value = []; updateMasterConflicts() }
 
 const getConflictIcon = (type: string) => { /* ... */ }
@@ -899,12 +887,12 @@ const validateForm = (): boolean => {
 }
 const clearError = (fieldName: keyof any) => { if (errors[fieldName]) delete errors[fieldName] }
 
-const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
   notification.message = message; notification.type = type; notification.show = true
   setTimeout(() => { notification.show = false }, 3000)
 }
 
-const emit = defineEmits<{ (e: 'submit', data: EventFormData): void }>()
+const emit = defineEmits<{ (e: 'submit', data: any): void }>()
 
 const handleSubmit = async () => {
   if (!validateForm()) return showNotification('入力内容を確認してください', 'error')
@@ -915,8 +903,6 @@ const handleSubmit = async () => {
     emit('submit', { ...formData })
     showNotification('予定が正常に保存されました！')
     resetForm()
-    // back()
-    // navigateTo('/calendar')
   } catch (error) {
     console.error('保存エラー:', error)
     showNotification('保存に失敗しました', 'error')
@@ -934,12 +920,9 @@ const resetForm = () => {
 }
 
 const dialog = ref<boolean>(false)
-
 const date = ref<Date>();
-
 const selected = ref<MasterItem>();
-
-const events = ref<EventDisplay[]>([])
+const events = ref<any[]>([]) // EventDisplay[]
 
 const viewUsageStatus = async (item: MasterItem) => {
   if (item && formData.date) {
@@ -956,86 +939,117 @@ const viewUsageStatus = async (item: MasterItem) => {
   }
 }
 
+const isShowEventRelatedParties = ref<boolean>(false)
+const eventRelatedParties = computed(() => {
+  return [
+    ...participantsMaster.value.filter(e => formData.participantIds.some(e2 => e2 === e.id)).map(e => { return { id: e.id, type: 'user', name: e.name, avatar: e.avatar } }),
+    ...facilitiesMaster.value.filter(e => formData.facilityIds.some(e2 => e2 === e.id)).map(e => { return { id: e.id, type: 'facility', name: e.name, avatar: e.avatar } }),
+    ...equipmentMaster.value.filter(e => formData.equipmentIds.some(e2 => e2 === e.id)).map(e => { return { id: e.id, type: 'equipment', name: e.name, avatar: e.avatar } }),
+  ]
+})
+const relatedPartyEvents = ref<EventDisplay[]>([]) // EventDisplay[]
+
+const showEventRelatedParties = async () => {
+  let result: EventDisplay[] = []
+  for (const e of eventRelatedParties.value) {
+    switch (e.type) {
+      case 'user':
+        let userEvents = await getEventsByParticipantInRange(e.id, formData.date, formData.date);
+        userEvents = userEvents.filter(e => { return result.findIndex(e2 => e2.id === e.id) < 0 })
+        result = [ ...result, ...userEvents]
+        break
+      case 'facility':
+        let facilityEvents = await getEventsByFacilityInRange(e.id, formData.startDate, formData.startDate);
+        facilityEvents = facilityEvents.filter(e => { return result.findIndex(e2 => e2.id === e.id) < 0 })
+        result = [ ...result, ...facilityEvents]
+        break
+      case 'equipment':
+        let equipmentEvents = await getEventsByEquipmentInRange(e.id, formData.recurringStartDate, formData.recurringStartDate);
+        equipmentEvents = equipmentEvents.filter(e => { return result.findIndex(e2 => e2.id === e.id) < 0 })
+        result = [ ...result, ...equipmentEvents]
+        break
+    }
+  }
+  relatedPartyEvents.value = result
+  isShowEventRelatedParties.value = true
+}
+
 onMounted(() => {
   setDefaultValues(props.initialData)
   getUsersAsync().then(users => {
-    participantsMaster.value = (users as ExtendedUserProfile[]).map(user => ({
+    participantsMaster.value = (users as any[]).map(user => ({
       id: user.uid,
       name: user.displayName || '未設定',
-      department: user.department || ''
+      department: user.department || '',
+      avatar: user.avatar,
     }))
     if (!props.initialData) {
       if (props.participantIds) {
         formData.participantIds = [ ...formData.participantIds, ...props.participantIds ];
-      } else {
+      } else if (user.value) {
         formData.participantIds.push(user.value.uid);
       }
       formData.participants = participantsMaster.value.filter(p => formData.participantIds.includes(p.id)).map(p => p.name);
     }
   })
   getEquipmentsAsync().then(equipments => {
-    equipmentMaster.value = equipments.map(equipment => ({
+    equipmentMaster.value = (equipments as any[]).map(equipment => ({
       id: equipment.id,
       name: equipment.name,
       capacity: equipment.capacity,
+      avatar: equipment.imageUrl,
     }))
   })
   getFacilitiesAsync().then(facilities => {
-    facilitiesMaster.value = facilities.map(facility => ({
+    facilitiesMaster.value = (facilities as any[]).map(facility => ({
       id: facility.id,
       name: facility.name,
       capacity: facility.capacity,
+      avatar: facility.imageUrl,
     }))
   })
-  // alert(JSON.stringify(props.initialData))
+  getTeamsAsync().then(teams => {
+    teamsMaster.value = (teams as any[]).map(team => ({
+      id: team.id,
+      name: team.name,
+      members: team.members || [],
+      memberCount: team.members?.length || 0
+    }))
+  })
 })
 </script>
 
 <style scoped>
+/* 全てのスタイルをここに含めます */
 .page-container {
-  background-color: var(--background-light);
-  color: var(--text-primary);
+  background-color: #f8f9fa; /* --background-light */
+  color: #212529; /* --text-primary */
   line-height: 1.6;
   min-height: 100vh;
   padding: 24px;
 }
-
 .container {
   max-width: 800px;
   margin: 0 auto;
-  background-color: var(--background-white);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  background-color: #ffffff; /* --background-white */
+  border-radius: 12px; /* --radius-lg */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); /* --shadow-md */
   overflow: hidden;
 }
-
 .header {
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  background: linear-gradient(135deg, #4361ee, #7209b7); /* --primary-color, --accent-color */
   color: white;
   padding: 32px 40px;
   text-align: center;
   position: relative;
 }
-
 .header::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='m36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
   opacity: 0.1;
 }
-
-.app-title {
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  position: relative;
-  z-index: 1;
-}
-
 .page-subtitle {
   font-size: 16px;
   font-weight: 400;
@@ -1043,1025 +1057,270 @@ onMounted(() => {
   position: relative;
   z-index: 1;
 }
-
-.form-content {
-  padding: 40px;
-}
-
-.form-grid {
-  display: grid;
-  gap: 24px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-group.row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
+.form-content { padding: 40px; }
+.form-grid { display: grid; gap: 24px; }
+.form-group { display: flex; flex-direction: column; gap: 8px; }
+.form-group.row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .form-label {
   font-weight: 600;
   font-size: 14px;
-  color: var(--text-primary);
+  color: #212529; /* --text-primary */
   display: flex;
   align-items: center;
   gap: 6px;
 }
-
-.form-label .required {
-  color: var(--danger-color);
-  font-size: 12px;
-}
-
-.form-input,
-.form-textarea,
-.form-select {
+.form-label .required { color: #dc2626; /* --danger-color */ font-size: 12px; }
+.form-input, .form-textarea, .form-select {
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  border: 2px solid #dee2e6; /* --border-color */
+  border-radius: 6px; /* --radius-sm */
   font-size: 14px;
-  color: var(--text-primary);
-  background-color: var(--background-white);
-  transition: var(--transition);
+  color: #212529; /* --text-primary */
+  background-color: #ffffff; /* --background-white */
+  transition: all 0.2s ease-in-out; /* --transition */
 }
-
-.form-input:focus,
-.form-textarea:focus,
-.form-select:focus {
+.form-input:focus, .form-textarea:focus, .form-select:focus {
   outline: none;
-  border-color: var(--primary-color);
+  border-color: #4361ee; /* --primary-color */
   box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
 }
-
-.form-input:disabled,
-.form-select:disabled {
-  background-color: var(--background-light);
-  color: var(--text-light);
+.form-input:disabled, .form-select:disabled {
+  background-color: #f8f9fa; /* --background-light */
+  color: #adb5bd; /* --text-light */
   cursor: not-allowed;
 }
-
-.form-textarea {
-  min-height: 100px;
-  resize: vertical;
-}
-
-/* ▼▼▼ ここから追加 ▼▼▼ */
-.event-type-options {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
-}
-
-.event-type-option {
-  position: relative;
-}
-
-.event-type-radio {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
+.form-textarea { min-height: 100px; resize: vertical; }
+.event-type-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.event-type-option { position: relative; }
+.event-type-radio { position: absolute; opacity: 0; pointer-events: none; }
 .event-type-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: var(--transition);
-  font-size: 14px;
-  font-weight: 500;
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 16px; border: 2px solid #dee2e6; /* --border-color */
+  border-radius: 6px; /* --radius-sm */ cursor: pointer;
+  transition: all 0.2s ease-in-out; /* --transition */ font-size: 14px; font-weight: 500;
 }
-
-.event-type-color-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background-color: var(--event-type-color);
-}
-
-.event-type-label:hover {
-  border-color: var(--event-type-color);
-  background-color: color-mix(in srgb, var(--event-type-color) 10%, white);
-}
-
-.event-type-radio:checked+.event-type-label {
-  border-color: var(--event-type-color);
-  background-color: var(--event-type-color);
-  color: white;
+.event-type-color-dot { width: 12px; height: 12px; border-radius: 50%; background-color: var(--event-type-color); }
+.event-type-label:hover { border-color: var(--event-type-color); background-color: color-mix(in srgb, var(--event-type-color) 10%, white); }
+.event-type-radio:checked + .event-type-label {
+  border-color: var(--event-type-color); background-color: var(--event-type-color); color: white;
   box-shadow: 0 2px 8px color-mix(in srgb, var(--event-type-color) 40%, transparent);
 }
-
-.event-type-radio:checked+.event-type-label .event-type-color-dot {
-  background-color: white;
-}
-
-/* ▲▲▲ ここまで追加 ▲▲▲ */
-
-.date-type-options {
-  display: flex;
-  gap: 12px;
-}
-
-.date-type-option {
-  flex: 1;
-  position: relative;
-}
-
-.date-type-radio {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
+.event-type-radio:checked + .event-type-label .event-type-color-dot { background-color: white; }
+.date-type-options { display: flex; gap: 12px; }
+.date-type-option { flex: 1; position: relative; }
+.date-type-radio { position: absolute; opacity: 0; pointer-events: none; }
 .date-type-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 12px;
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: var(--transition);
-  font-size: 14px;
-  font-weight: 500;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 12px; border: 2px solid #dee2e6; /* --border-color */
+  border-radius: 6px; /* --radius-sm */ cursor: pointer;
+  transition: all 0.2s ease-in-out; /* --transition */ font-size: 14px; font-weight: 500;
 }
-
-.date-type-label:hover {
-  border-color: var(--primary-color);
-  background-color: var(--primary-light);
+.date-type-label:hover { border-color: #4361ee; /* --primary-color */ background-color: #eef2ff; /* --primary-light */ }
+.date-type-radio:checked + .date-type-label { border-color: #4361ee; /* --primary-color */ background-color: #4361ee; /* --primary-color */ color: white; }
+.time-inputs { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; }
+.time-separator { font-weight: 600; color: #6c757d; /* --text-secondary */ text-align: center; }
+.date-range-section, .recurring-section {
+  display: grid; gap: 24px; padding: 20px;
+  background-color: #f8f9fa; /* --background-light */
+  border-radius: 8px; /* --radius-md */
 }
-
-.date-type-radio:checked+.date-type-label {
-  border-color: var(--primary-color);
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.time-inputs {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 12px;
-  align-items: center;
-}
-
-.time-separator {
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-align: center;
-}
-
-.date-range-section,
-.recurring-section {
-  display: grid;
-  gap: 24px;
-  padding: 20px;
-  background-color: var(--background-light);
-  border-radius: var(--radius-md);
-}
-
-.weekday-options {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.weekday-option {
-  position: relative;
-}
-
-.weekday-checkbox {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
+.weekday-options { display: flex; gap: 8px; flex-wrap: wrap; }
+.weekday-option { position: relative; }
+.weekday-checkbox { position: absolute; opacity: 0; pointer-events: none; }
 .weekday-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 2px solid var(--border-color);
-  border-radius: 50%;
-  cursor: pointer;
-  transition: var(--transition);
-  font-size: 14px;
-  font-weight: 500;
+  display: flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border: 2px solid #dee2e6; /* --border-color */
+  border-radius: 50%; cursor: pointer; transition: all 0.2s ease-in-out; /* --transition */
+  font-size: 14px; font-weight: 500;
 }
-
-.weekday-label:hover {
-  border-color: var(--primary-color);
-  background-color: var(--primary-light);
-}
-
-.weekday-checkbox:checked+.weekday-label {
-  border-color: var(--primary-color);
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.monthly-options {
-  display: grid;
-  gap: 16px;
-}
-
-.monthly-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.monthly-radio {
-  margin: 0;
-}
-
-.monthly-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-}
-
-.monthly-input {
-  width: 80px;
-}
-
-.monthly-select {
-  width: auto;
-  padding: 8px 12px;
-}
-
-.end-condition-options {
-  display: grid;
-  gap: 12px;
-}
-
-.end-condition-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.end-condition-radio {
-  margin: 0;
-}
-
-.end-condition-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-}
-
-.end-date-input,
-.count-input {
-  width: 150px;
-}
-
-.count-input {
-  width: 80px;
-}
-
+.weekday-label:hover { border-color: #4361ee; /* --primary-color */ background-color: #eef2ff; /* --primary-light */ }
+.weekday-checkbox:checked + .weekday-label { border-color: #4361ee; /* --primary-color */ background-color: #4361ee; /* --primary-color */ color: white; }
+.monthly-options { display: grid; gap: 16px; }
+.monthly-option { display: flex; align-items: center; gap: 8px; }
+.monthly-radio { margin: 0; }
+.monthly-label { display: flex; align-items: center; gap: 8px; flex: 1; }
+.monthly-input { width: 80px; }
+.monthly-select { width: auto; padding: 8px 12px; }
+.end-condition-options { display: grid; gap: 12px; }
+.end-condition-option { display: flex; align-items: center; gap: 8px; }
+.end-condition-radio { margin: 0; }
+.end-condition-label { display: flex; align-items: center; gap: 8px; flex: 1; }
+.end-date-input, .count-input { width: 150px; }
+.count-input { width: 80px; }
 .master-select-section {
-  border: 2px dashed var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 20px;
-  transition: var(--transition);
+  border: 2px dashed #dee2e6; /* --border-color */ border-radius: 8px; /* --radius-md */
+  padding: 20px; transition: all 0.2s ease-in-out; /* --transition */
 }
-
-.master-select-section:hover {
-  border-color: var(--primary-color);
-  background-color: var(--primary-light);
-}
-
-.master-select-wrapper {
-  margin-top: 12px;
-}
-
-.selected-items {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-
+.master-select-section:hover { border-color: #4361ee; /* --primary-color */ background-color: #eef2ff; /* --primary-light */ }
+.master-select-wrapper { margin-top: 12px; }
+.selected-items { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .selected-tag {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background-color: var(--primary-light);
-  color: var(--primary-color);
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+  background-color: #eef2ff; /* --primary-light */ color: #4361ee; /* --primary-color */
+  padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 500;
 }
-
-.tag-info {
-  font-size: 11px;
-  opacity: 0.8;
-}
-
+.tag-info { font-size: 11px; opacity: 0.8; }
 .tag-remove {
-  background: none;
-  border: none;
-  color: var(--primary-color);
-  cursor: pointer;
-  font-size: 14px;
-  padding: 0;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: var(--transition);
+  background: none; border: none; color: #4361ee; /* --primary-color */ cursor: pointer;
+  font-size: 14px; padding: 0; width: 16px; height: 16px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s ease-in-out; /* --transition */
 }
-
-.tag-remove:hover {
-  background-color: var(--primary-color);
-  color: white;
-}
-
+.tag-remove:hover { background-color: #4361ee; /* --primary-color */ color: white; }
 .btn-select-master {
-  background-color: transparent;
-  color: var(--primary-color);
-  border: 2px solid var(--primary-color);
-  border-radius: 20px;
-  padding: 6px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  background-color: transparent; color: #4361ee; /* --primary-color */
+  border: 2px solid #4361ee; /* --primary-color */ border-radius: 20px;
+  padding: 6px 16px; font-size: 13px; font-weight: 500; cursor: pointer;
+  transition: all 0.2s ease-in-out; /* --transition */ display: flex; align-items: center; gap: 4px;
 }
-
-.btn-select-master:hover {
-  background-color: var(--primary-color);
-  color: white;
-}
-
+.btn-select-master:hover { background-color: #4361ee; /* --primary-color */ color: white; }
 .conflicts-section {
-  background-color: #fef3c7;
-  border: 2px solid #f59e0b;
-  border-radius: var(--radius-md);
-  padding: 20px;
-  margin: 16px 0;
+  background-color: #fef3c7; border: 2px solid #f59e0b;
+  border-radius: 8px; /* --radius-md */ padding: 20px; margin: 16px 0;
 }
-
-.conflicts-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  color: #92400e;
-  margin-bottom: 16px;
-}
-
-.conflicts-list {
-  display: grid;
-  gap: 12px;
-}
-
+.conflicts-header { display: flex; align-items: center; gap: 8px; font-weight: 600; color: #92400e; margin-bottom: 16px; }
+.conflicts-list { display: grid; gap: 12px; }
 .conflict-item {
-  background-color: white;
-  border: 1px solid #fcd34d;
-  border-radius: var(--radius-sm);
-  padding: 12px;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 12px;
+  background-color: white; border: 1px solid #fcd34d; border-radius: 6px; /* --radius-sm */
+  padding: 12px; display: grid; grid-template-columns: auto 1fr; gap: 12px;
 }
-
-.conflict-type {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 500;
-  color: #92400e;
-  font-size: 13px;
-}
-
-.conflict-details {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.conflict-name {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.conflict-info {
-  display: flex;
-  gap: 12px;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.conflict-event {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.priority-options {
-  display: flex;
-  gap: 12px;
-}
-
-.priority-option {
-  flex: 1;
-  position: relative;
-}
-
-.priority-radio {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
+.conflict-type { display: flex; align-items: center; gap: 6px; font-weight: 500; color: #92400e; font-size: 13px; }
+.conflict-details { display: flex; flex-direction: column; gap: 4px; }
+.conflict-name { font-weight: 600; color: #212529; /* --text-primary */ }
+.conflict-info { display: flex; gap: 12px; font-size: 13px; color: #6c757d; /* --text-secondary */ }
+.conflict-event { font-size: 13px; color: #6c757d; /* --text-secondary */ }
+.priority-options { display: flex; gap: 12px; }
+.priority-option { flex: 1; position: relative; }
+.priority-radio { position: absolute; opacity: 0; pointer-events: none; }
 .priority-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 12px;
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: var(--transition);
-  font-size: 14px;
-  font-weight: 500;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 12px; border: 2px solid #dee2e6; /* --border-color */ border-radius: 6px; /* --radius-sm */
+  cursor: pointer; transition: all 0.2s ease-in-out; /* --transition */ font-size: 14px; font-weight: 500;
 }
-
-.priority-label:hover {
-  border-color: var(--primary-color);
-  background-color: var(--primary-light);
-}
-
-.priority-radio:checked+.priority-label {
-  border-color: var(--primary-color);
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.priority-radio:checked+.priority-label.low {
-  background-color: var(--success-color);
-  border-color: var(--success-color);
-}
-
-.priority-radio:checked+.priority-label.medium {
-  background-color: var(--warning-color);
-  border-color: var(--warning-color);
-}
-
-.priority-radio:checked+.priority-label.high {
-  background-color: var(--danger-color);
-  border-color: var(--danger-color);
-}
-
+.priority-label:hover { border-color: #4361ee; /* --primary-color */ background-color: #eef2ff; /* --primary-light */ }
+.priority-radio:checked + .priority-label { border-color: #4361ee; /* --primary-color */ background-color: #4361ee; /* --primary-color */ color: white; }
+.priority-radio:checked + .priority-label.low { background-color: #22c55e; border-color: #22c55e; }
+.priority-radio:checked + .priority-label.medium { background-color: #f59e0b; border-color: #f59e0b; }
+.priority-radio:checked + .priority-label.high { background-color: #dc2626; border-color: #dc2626; }
 .form-actions {
-  display: flex;
-  gap: 16px;
-  justify-content: flex-end;
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border-color);
+  display: flex; gap: 16px; justify-content: flex-end;
+  margin-top: 32px; padding-top: 24px; border-top: 1px solid #dee2e6; /* --border-color */
 }
-
 .btn {
-  padding: 14px 28px;
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  padding: 14px 28px; border-radius: 6px; /* --radius-sm */ font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s ease-in-out; /* --transition */ border: none; display: flex; align-items: center; gap: 8px;
 }
-
 .btn-secondary {
-  background-color: var(--background-light);
-  color: var(--text-secondary);
-  border: 2px solid var(--border-color);
+  background-color: #f8f9fa; /* --background-light */ color: #6c757d; /* --text-secondary */
+  border: 2px solid #dee2e6; /* --border-color */
 }
-
-.btn-secondary:hover {
-  background-color: var(--border-color);
-  color: var(--text-primary);
-}
-
-.btn-primary {
-  background-color: var(--primary-color);
-  color: white;
-  box-shadow: var(--shadow-sm);
-}
-
+.btn-secondary:hover { background-color: #dee2e6; /* --border-color */ color: #212529; /* --text-primary */ }
+.btn-primary { background-color: #4361ee; /* --primary-color */ color: white; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* --shadow-sm */ }
 .btn-primary:hover {
-  background-color: var(--primary-hover);
-  box-shadow: var(--shadow-md);
+  background-color: #3a53c4; /* --primary-hover */ box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); /* --shadow-md */
   transform: translateY(-1px);
 }
-
-.btn-primary:disabled {
-  background-color: var(--text-light);
-  cursor: not-allowed;
-  transform: none;
-}
-
-.form-error {
-  color: var(--danger-color);
-  font-size: 13px;
-  margin-top: 4px;
-}
-
-.form-group.error .form-input,
-.form-group.error .form-textarea,
-.form-group.error .form-select {
-  border-color: var(--danger-color);
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.modal-container {
-  background-color: white;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  max-width: 500px;
-  width: 100%;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  margin-top: 5%;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.modal-title {
-  font-size: 18px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: var(--radius-sm);
-  transition: var(--transition);
-}
-
-.modal-close:hover {
-  background-color: var(--background-light);
-}
-
-.modal-body {
-  padding: 24px;
-  height: 380px;
-  flex: 1;
-}
-
-.search-box {
-  position: relative;
-  margin-bottom: 20px;
-}
-
-.search-box .icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-secondary);
-}
-
+.btn-primary:disabled { background-color: #adb5bd; /* --text-light */ cursor: not-allowed; transform: none; }
+.form-error { color: #dc2626; /* --danger-color */ font-size: 13px; margin-top: 4px; }
+.form-group.error .form-input, .form-group.error .form-textarea, .form-group.error .form-select { border-color: #dc2626; /* --danger-color */ }
+.modal-body { padding: 24px; height: 380px; flex: 1; }
+.search-box { position: relative; margin-bottom: 20px; }
+.search-box .icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #6c757d; /* --text-secondary */ }
 .search-input {
-  width: 100%;
-  padding: 12px 16px 12px 40px;
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-  transition: var(--transition);
+  width: 100%; padding: 12px 16px 12px 40px; border: 2px solid #dee2e6; /* --border-color */
+  border-radius: 6px; /* --radius-sm */ font-size: 14px; transition: all 0.2s ease-in-out; /* --transition */
 }
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
-}
-
-.selection-list {
-  display: grid;
-  gap: 8px;
-  max-height: 280px;
-  overflow-y: auto;
-}
-
-.no-results {
-  text-align: center;
-  color: var(--text-secondary);
-  padding: 40px 0;
-}
-
+.search-input:focus { outline: none; border-color: #4361ee; /* --primary-color */ box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1); }
+.selection-list { display: grid; gap: 8px; max-height: 280px; overflow-y: auto; }
+.no-results { text-align: center; color: #6c757d; /* --text-secondary */ padding: 40px 0; }
 .selection-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: var(--transition);
+  display: flex; align-items: flex-start; gap: 12px; padding: 12px;
+  border: 1px solid #dee2e6; /* --border-color */ border-radius: 6px; /* --radius-sm */
+  cursor: pointer; transition: all 0.2s ease-in-out; /* --transition */
 }
-
-.selection-item:hover {
-  background-color: var(--background-light);
-  border-color: var(--primary-color);
-}
-
-.selection-item.disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.selection-checkbox {
-  margin-top: 4px;
-}
-
-.selection-info {
-  flex: 1;
-}
-
-.selection-name {
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.selection-meta {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin-top: 2px;
-}
-
-.selection-conflict {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--danger-color);
-  margin-top: 4px;
-}
-
+.selection-item:hover { background-color: #f8f9fa; /* --background-light */ border-color: #4361ee; /* --primary-color */ }
+.selection-item.disabled { opacity: 0.6; cursor: not-allowed; }
+.selection-checkbox { margin-top: 4px; }
+.selection-info { flex: 1; }
+.selection-name { font-weight: 500; color: #212529; /* --text-primary */ }
+.selection-meta { font-size: 13px; color: #6c757d; /* --text-secondary */ margin-top: 2px; }
+.selection-conflict { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #dc2626; /* --danger-color */ margin-top: 4px; }
 .modal-footer {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  height: 100px;
-  padding: 24px;
-  border-top: 1px solid var(--border-color);
+  display: flex; gap: 12px; justify-content: flex-end; height: 100px; padding: 24px;
+  border-top: 1px solid #dee2e6; /* --border-color */
 }
-
 .notification {
-  position: fixed;
-  top: 80px;
-  right: 24px;
-  background-color: var(--success-color);
-  color: white;
-  padding: 16px 24px;
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-lg);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  z-index: 1000;
+  position: fixed; top: 80px; right: 24px; background-color: #22c55e; /* --success-color */
+  color: white; padding: 16px 24px; border-radius: 6px; /* --radius-sm */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); /* --shadow-lg */
+  display: flex; align-items: center; gap: 12px; z-index: 1000;
 }
-
-.notification.error {
-  background-color: var(--danger-color);
-}
-
-.icon {
-  font-size: 16px;
-  line-height: 1;
-}
-
-.loading-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.notification-enter-active,
-.notification-leave-active {
-  transition: all 0.3s ease;
-}
-
-.notification-enter-from,
-.notification-leave-to {
-  transform: translateX(100%);
-  opacity: 0;
-}
-
-.modal-enter-active,
-.modal-leave-active {
-  transition: all 0.3s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-
-.modal-enter-from .modal-container,
-.modal-leave-to .modal-container {
-  transform: scale(0.9);
-}
-
-@media (max-width: 768px) {
-  .page-container {
-    padding: 0;
-  }
-
-  .container {
-    border-radius: 0;
-  }
-
-  .header {
-    padding: 24px 20px;
-  }
-
-  .form-content {
-    padding: 24px 20px;
-  }
-
-  .form-group.row {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-
-  .event-type-options,
-  /* ◀◀◀ 追加 */
-  .date-type-options {
-    flex-direction: column;
-  }
-
-  .time-inputs {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .time-separator {
-    display: none;
-  }
-
-  .weekday-options {
-    justify-content: space-between;
-  }
-
-  .priority-options {
-    flex-direction: column;
-  }
-
-  .end-date-input,
-  .count-input {
-    width: 100%;
-  }
-
-  .conflicts-section {
-    padding: 16px;
-  }
-
-  .conflict-item {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-
-  .form-actions {
-    flex-direction: column-reverse;
-  }
-
-  .btn {
-    justify-content: center;
-  }
-
-  .modal-container {
-    max-height: 90vh;
-  }
-}
-
-/* ▼▼▼ ここから追加 ▼▼▼ */
+.notification.error { background-color: #dc2626; /* --danger-color */ }
+.icon { font-size: 16px; line-height: 1; }
+.loading-spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.notification-enter-active, .notification-leave-active { transition: all 0.3s ease; }
+.notification-enter-from, .notification-leave-to { transform: translateX(100%); opacity: 0; }
 .privacy-option {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  background-color: var(--background-light);
-  border-radius: var(--radius-md);
-  border: 2px solid transparent;
-  transition: var(--transition);
+  display: flex; align-items: flex-start; gap: 12px; padding: 16px;
+  background-color: #f8f9fa; /* --background-light */ border-radius: 8px; /* --radius-md */
+  border: 2px solid transparent; transition: all 0.2s ease-in-out; /* --transition */
 }
-
-.privacy-option:has(.privacy-checkbox:checked) {
-  border-color: var(--primary-color);
-  background-color: color-mix(in srgb, var(--primary-color) 8%, white);
-}
-
-.privacy-checkbox {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  margin-top: 2px;
-  accent-color: var(--primary-color);
-  cursor: pointer;
-}
-
-.privacy-label {
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.privacy-text {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.form-helper-text {
-  font-size: 13px;
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-
+.privacy-option:has(.privacy-checkbox:checked) { border-color: #4361ee; /* --primary-color */ background-color: color-mix(in srgb, #4361ee 8%, white); }
+.privacy-checkbox { flex-shrink: 0; width: 20px; height: 20px; margin-top: 2px; accent-color: #4361ee; /* --primary-color */ cursor: pointer; }
+.privacy-label { cursor: pointer; display: flex; flex-direction: column; gap: 4px; }
+.privacy-text { font-weight: 600; color: #212529; /* --text-primary */ }
+.form-helper-text { font-size: 13px; color: #6c757d; /* --text-secondary */ line-height: 1.5; }
 .list-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-left: 20px;
-  display: flex;
-  align-items: center;
+  font-size: 18px; font-weight: 600; color: #212529; /* --text-primary */
+  margin-left: 20px; display: flex; align-items: center;
 }
-
 .list-title::before {
-  content: "";
-  display: inline-block;
-  width: 4px;
-  height: 20px;
-  background-color: var(--primary-color);
-  margin-right: 10px;
-  border-radius: 2px;
+  content: ""; display: inline-block; width: 4px; height: 20px;
+  background-color: #4361ee; /* --primary-color */ margin-right: 10px; border-radius: 2px;
 }
-
-/* ▲▲▲ ここまで追加 ▲▲▲ */
+.modal-view-tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #dee2e6; /* --border-color */ }
+.modal-view-tab {
+  flex: 1; padding: 12px; border: none; background-color: transparent; cursor: pointer;
+  font-size: 14px; font-weight: 600; color: #6c757d; /* --text-secondary */
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  position: relative; transition: color 0.2s ease-in-out;
+}
+.modal-view-tab::after {
+  content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 2px;
+  background-color: #4361ee; /* --primary-color */ transform: scaleX(0); transition: transform 0.3s ease;
+}
+.modal-view-tab.active { color: #4361ee; /* --primary-color */ }
+.modal-view-tab.active::after { transform: scaleX(1); }
+.team-selection-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px; border: 1px solid #dee2e6; /* --border-color */
+  border-radius: 6px; /* --radius-sm */ transition: all 0.2s ease-in-out; /* --transition */
+}
+.team-selection-item:hover { background-color: #f8f9fa; /* --background-light */ }
+.btn-add-team {
+  background-color: #eef2ff; /* --primary-light */ color: #4361ee; /* --primary-color */
+  border: none; border-radius: 6px; /* --radius-sm */ padding: 8px 16px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; gap: 4px; transition: all 0.2s ease-in-out; /* --transition */
+}
+.btn-add-team:hover { background-color: #4361ee; /* --primary-color */ color: white; }
 
 @media (max-width: 768px) {
-  .app-title {
-    font-size: 26px;
-  }
-
-  .page-subtitle {
-    font-size: 14px;
-  }
-
-  .form-label {
-    font-size: 14px;
-  }
-
-  .form-label .required {
-    font-size: 10px;
-  }
-
-  .form-select {
-    font-size: 12px;
-  }
-
-  .event-type-label {
-    font-size: 12px;
-  }
-
-  .date-type-label {
-    font-size: 12px;
-  }
-
-  .weekday-label {
-    font-size: 12px;
-  }
-
-  .selected-tag {
-    font-size: 11px;
-  }
-
-  .tag-info {
-    font-size: 9px;
-  }
-
-  .tag-remove {
-    font-size: 12px;
-  }
-
-  .btn-select-master {
-    font-size: 11px;
-  }
-
-  .conflict-type {
-    font-size: 11px;
-  }
-
-  .conflict-info {
-    font-size: 11px;
-  }
-
-  .conflict-event {
-    font-size: 11px;
-  }
-
-  .priority-label {
-    font-size: 12px;
-  }
-
-  .btn {
-    font-size: 12px;
-  }
-
-  .form-error {
-    font-size: 11px;
-  }
-
-  .modal-title {
-    font-size: 16px;
-  }
-
-  .search-input {
-    font-size: 12px;
-  }
-
-  .selection-meta {
-    font-size: 11px;
-  }
-
-  .selection-conflict {
-    font-size: 10px;
-  }
-
-  .icon {
-    font-size: 14px;
-  }
-
-  .form-helper-text {
-    font-size: 11px;
-  }
-
-  .privacy-text {
-    font-size: 11px;
-  }
-
-  .list-title {
-    font-size: 14px;
-    font-weight: 500;
-  }
+  .page-container { padding: 0; }
+  .container { border-radius: 0; }
+  .header { padding: 24px 20px; }
+  .form-content { padding: 24px 20px; }
+  .form-group.row { grid-template-columns: 1fr; gap: 24px; }
+  .event-type-options, .date-type-options { flex-direction: column; }
+  .time-inputs { grid-template-columns: 1fr; gap: 16px; }
+  .time-separator { display: none; }
+  .weekday-options { justify-content: space-between; }
+  .priority-options { flex-direction: column; }
+  .end-date-input, .count-input { width: 100%; }
+  .conflicts-section { padding: 16px; }
+  .conflict-item { grid-template-columns: 1fr; gap: 8px; }
+  .form-actions { flex-direction: column-reverse; }
+  .btn { justify-content: center; }
 }
 </style>

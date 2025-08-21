@@ -389,34 +389,16 @@ onMounted(() => {
 
 <style scoped>
 /* 既存のスタイルをコピー */
-:root {
-  --background-light: #f8f9fa;
-  --text-primary: #212529;
-  --text-secondary: #6c757d;
-  --background-white: #ffffff;
-  --radius-lg: 12px;
-  --radius-md: 8px;
-  --radius-sm: 6px;
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --primary-color: #4361ee;
-  --accent-color: #7209b7;
-  --border-color: #dee2e6;
-  --transition: all 0.2s ease-in-out;
-  --primary-light: #e0e6fd;
-  --primary-hover: #3a53c4;
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-}
-
 .page-container {
   background-color: var(--background-light);
   color: var(--text-primary);
   line-height: 1.6;
   min-height: 100vh;
+  width: 100%;
   padding: 24px;
 }
 .container {
-  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
   background-color: var(--background-white);
   border-radius: var(--radius-lg);
