@@ -19,6 +19,11 @@
 
                 <div v-if="resize" v-for="dir in ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw']" :key="dir"
                     :class="['resize-handle', dir]" @pointerdown.prevent="startResize($event, dir)"></div>
+                    
+                <footer class="modal-footer">
+                    <slot name="footer"></slot>
+                </footer>
+
             </div>
         </div>
     </Transition>
@@ -215,6 +220,7 @@ const onResize = (event: PointerEvent) => {
 const isFullscreen = ref<boolean>(false)
 
 const fullscreen = () => {
+    if (props.fullscreen) return
     if (isFullscreen.value) {
         size.value = { width: props.initialWidth, height: props.initialHeight };
         nextTick(() => {
@@ -270,8 +276,8 @@ watch(() => props.modelValue, (newValue) => {
             const width = size.value.width;
             const height = size.value.height;
             position.value = {
-                x: (window.innerWidth - width) / 2,
-                y: ((window.innerHeight - height) / 2) - 30,
+                x: props.fullscreen ? 0 : (window.innerWidth - width) / 2,
+                y: props.fullscreen ? 0 : ((window.innerHeight - height) / 2) - 30,
             };
         });
     }
@@ -449,5 +455,14 @@ watch(() => props.modelValue, (newValue) => {
     width: 12px;
     height: 12px;
     cursor: sw-resize;
+}
+
+.modal-footer {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--background-light);
+    z-index: 9;
 }
 </style>

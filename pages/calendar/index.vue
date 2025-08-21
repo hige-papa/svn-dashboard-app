@@ -87,23 +87,7 @@
       <EventsList class="events-list" :date="currentDate ?? new Date()" :events="myCurrentDayEvents" @event-click="handleShowEventDetails" />
     </div>
 
-    <v-dialog v-if="mobile" v-model="viewDialog" fullscreen>
-      <v-card>
-        <v-card-title>
-          <h3 class="list-title">{{ eventListSubtitle }}</h3>
-        </v-card-title>
-        <v-card-text>
-          <EventsList v-if="currentView === 'weekly' && selectedDate" :date="selectedDate ?? new Date()" :events="selectedUserDayEvents" @event-click="handleShowEventDetails" :user="selectedUser" />
-          <EventsList v-else-if="currentView === 'monthly' && selectedDate" :date="selectedDate ?? new Date()" :events="mySelectedDayEvents" @event-click="handleShowEventDetails" />
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" variant="text" :size="mobile ? 'small' : 'auto'" @click="openDailyOptionDialog">日別ステータスを編集する</v-btn>
-          <v-btn color="primary" variant="text" :size="mobile ? 'small' : 'auto'" @click="goToRegister()">予定を登録する</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-    <aw-dialog v-else v-model="eventListDialog" :draggable="true" :resize="true" :overlay="false" :width="mobile ? '100%' : '50%'">
+    <aw-dialog v-model="eventListDialog" :draggable="true" :resize="true" :overlay="false" :width="mobile ? '100%' : '50%'" :fullscreen="mobile">
       <template #header>
         <h3 class="list-title">{{ eventListSubtitle }}</h3>
       </template>
@@ -120,10 +104,7 @@
       </v-card>
     </aw-dialog>
 
-    <v-dialog v-if="mobile" v-model="viewDialog" fullscreen>
-      <DailyOptionForm v-if="selectedDate" :user="selectedUser" :date="getDateString(selectedDate)" @cancel="handleCancelDailyOption" @submit="handleSubmitDailyOption" :initial-data="dailyOption"></DailyOptionForm>
-    </v-dialog>
-    <aw-dialog v-else v-model="dailyOptionDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :fullscreen="mobile">
+    <aw-dialog v-model="dailyOptionDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :fullscreen="mobile">
       <template #header>
         <h3>
           <p class="list-title">{{ dailyOptionSubtitle }}</p>
@@ -141,14 +122,7 @@
     <!-- <EventDetail v-if="showDetail" :event="selectedEvent" :visible="showDetail" :position="detailPosition"
       @close="hideEventDetails" /> -->
 
-    <!-- <v-dialog v-model="eventDetailDialog" :width="mobile ? '100%' : '50%'">
-      <EventDetail v-if="selectedEvent" :event="selectedEvent" @close="handleCloseEventDetails" @view="handleViewEvent" @edit="handleEditEvent" />
-    </v-dialog> -->
-
-    <v-dialog v-if="mobile" v-model="viewDialog" fullscreen>
-      <EventView v-if="eventDetail" :event-data="eventDetail" @edit="handleEditEvent" @delete="handleDelete" @copy="handleCopy" @back="handleCloseView" />
-    </v-dialog>
-    <aw-dialog v-else v-model="viewDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :fullscreen="mobile">
+    <aw-dialog v-model="viewDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :fullscreen="mobile">
       <template #header>
         <p class="list-title">予定の詳細</p>
       </template>

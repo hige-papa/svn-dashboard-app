@@ -255,35 +255,6 @@
       </v-container>
     </div>
 
-    <!-- <v-dialog v-model="showDeleteModal" :width="mobile ? '100%' : '50%'">
-        <div class="modal-overlay" @click="closeDeleteModal">
-          <div class="modal-container" @click.stop>
-            <div class="modal-header">
-              <h3 class="modal-title">
-                <i class="mdi mdi-alert icon"></i>
-                予定を削除
-              </h3>
-              <button type="button" @click="closeDeleteModal" class="modal-close">
-                <i class="mdi mdi-close icon"></i>
-              </button>
-            </div>
-            <div class="modal-body">
-              <p>この予定を削除してもよろしいですか？</p>
-              <p class="delete-warning">「{{ eventData.title }}」</p>
-              <p>この操作は取り消すことができません。</p>
-            </div>
-            <div class="modal-footer">
-              <button type="button" @click="closeDeleteModal" class="btn btn-secondary">
-                キャンセル
-              </button>
-              <button type="button" @click="confirmDelete" class="btn btn-danger">
-                削除する
-              </button>
-            </div>
-          </div>
-        </div>
-    </v-dialog> -->
-
     <!-- <Teleport to="body"> -->
       <Transition name="modal">
         <div v-if="showDeleteModal" class="modal-overlay" @click="closeDeleteModal">

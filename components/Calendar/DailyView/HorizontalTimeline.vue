@@ -1,64 +1,32 @@
 <template>
   <div class="horizontal-schedule">
-    <div class="time-row">
-      <div 
-        v-for="(time, index) in timeSlots" 
-        :key="index" 
-        class="time-slot" 
-        :class="{
-          'hour-slot': time.endsWith(':00'),
-          'half-hour-slot': time.endsWith(':30')
-        }"
-        :style="{ left: `${index * 32}px` }"
-      >
-        <span v-if="time.endsWith(':00')" class="time-label">{{ time }}</span>
-      </div>
-    </div>
-    
     <div class="schedule-area">
       <div class="time-grid">
-        <div 
-          v-for="(time, index) in timeSlots" 
-          :key="index" 
-          class="time-grid-line" 
-          :class="{
-            'hour-line': time.endsWith(':00'),
-            'half-hour-line': time.endsWith(':30')
-          }"
-          :style="{ left: `${index * 32}px` }"
-        ></div>
+        <div v-for="(time, index) in timeSlots" :key="index" class="time-grid-line" :class="{
+          'hour-line': time.endsWith(':00'),
+          'half-hour-line': time.endsWith(':30')
+        }" :style="{ left: `${index * 32}px` }"></div>
       </div>
-      
-      <div 
-        v-if="isToday"
-        class="current-time-indicator" 
-        :style="{ left: `${currentTimePosition}px` }"
-      >
+
+      <!-- <div v-if="isToday" class="current-time-indicator" :style="{ left: `${currentTimePosition}px` }">
         <div class="current-time-dot"></div>
-      </div>
-      
-      <div 
-        v-for="(event, index) in events"
-        :key="event.id"
-        class="event"
-        :style="{
-          top: `${getEventTopPosition(index)}px`,
-          left: `${timeToPixels(event.startTime)}px`,
-          width: `${timeToPixels(event.endTime) - timeToPixels(event.startTime)}px`,
-          '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey',
-        }"
-        @click="onEventClick($event, event)"
-      >
+      </div> -->
+
+      <div v-for="(event, index) in events" :key="event.id" class="event" :style="{
+        top: `${getEventTopPosition(index)}px`,
+        left: `${timeToPixels(event.startTime)}px`,
+        width: `${timeToPixels(event.endTime) - timeToPixels(event.startTime)}px`,
+        '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey',
+      }" @click="onEventClick($event, event)">
         <div class="event-details">
           <div class="event-title">{{ isViewable(event) ? event.title : '予定あり' }}</div>
-          <div class="event-time">
-            <svg class="small-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <!-- <div class="event-time">
+            <svg class="small-icon" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
             {{ event.startTime }} - {{ event.endTime }}
-          </div>
-          <div v-if="event.location" class="event-location">
-             <svg class="small-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-            {{ event.location }}
-          </div>
+          </div> -->
         </div>
       </div>
     </div>
@@ -73,7 +41,7 @@ const user = useState<User>('user');
 
 const props = defineProps({
   events: {
-    type: Array<EventDisplay>,
+    type: Array<EventDisplay>, // EventDisplay
     required: true
   },
   timeSlots: {
@@ -94,15 +62,15 @@ const emit = defineEmits(['eventClick']);
 
 const { eventTypeDetails } = useConstants();
 
-const isViewable = (event: EventDisplay) => {
+const isViewable = (event: any) => { // EventDisplay
   return event.private ? (event.participantIds?.includes(user.value.uid)) ?? false : true;
 }
 
 const isToday = computed(() => {
   const today = new Date();
   return props.date.getDate() === today.getDate() &&
-         props.date.getMonth() === today.getMonth() &&
-         props.date.getFullYear() === today.getFullYear();
+    props.date.getMonth() === today.getMonth() &&
+    props.date.getFullYear() === today.getFullYear();
 });
 
 const currentTimePosition = ref(0);
@@ -112,18 +80,19 @@ const updateCurrentTimeIndicator = () => {
   const now = new Date();
   const hours = now.getHours();
   const minutes = now.getMinutes();
-  
+
   if (hours >= 8 && hours <= 20) {
     currentTimePosition.value = props.timeToPixels(`${hours}:${minutes}`);
   }
 };
 
 const getEventTopPosition = (index: number) => {
-  // イベントが重ならないように表示するための簡易的なtop位置計算
-  return (index % 3) * 65 + 5; // 3段まで表示し、それ以降は折り返す
+  // イベントが時間的に重なった場合、縦に並べて表示
+  // 行の高さに合わせて最大2段までとする
+  return (index % 2) * 40 + 5;
 };
 
-const onEventClick = (event: Event, eventData: EventDisplay) => {
+const onEventClick = (event: Event, eventData: any) => { // EventDisplay
   emit('eventClick', { event, eventData });
 };
 
@@ -143,52 +112,18 @@ onBeforeUnmount(() => {
 .horizontal-schedule {
   display: flex;
   flex-direction: column;
-  background-color: var(--background-white);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
-  overflow-x: auto;
+  /* table cellに埋め込むため、不要なスタイルを削除 */
+  overflow-x: hidden;
   overflow-y: hidden;
-}
-
-.time-row {
-  position: relative;
-  display: flex;
-  height: 40px;
-  border-bottom: 1px solid var(--border-color);
-  background-color: var(--background-light);
-  min-width: 832px; /* 32px * 26 slots */
-}
-
-.time-slot {
-  position: absolute;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  color: var(--text-secondary);
-  padding-left: 8px;
-  width: 64px; /* 1時間分 */
-}
-
-.hour-slot {
-  border-left: 1px solid var(--border-color);
-  font-weight: 600;
-}
-
-.half-hour-slot {
-  border-left: 1px dashed var(--border-color);
-}
-
-.time-label {
-  transform: translateY(-5px);
 }
 
 .schedule-area {
   position: relative;
   flex-grow: 1;
-  min-height: 220px;
-  min-width: 832px; /* 32px * 26 slots */
+  min-height: 85px;
+  /* 親の行の高さに合わせる */
+  min-width: 832px;
+  /* 32px * 26 slots */
 }
 
 .time-grid {
@@ -237,19 +172,22 @@ onBeforeUnmount(() => {
 .event {
   position: absolute;
   top: 5px;
-  height: 60px;
+  height: 35px;
+  /* 高さを調整 */
   background-color: color-mix(in srgb, var(--event-color) 15%, #FFF);
   border-top: 4px solid var(--event-color);
   color: var(--event-color);
   box-shadow: var(--shadow-sm);
   border-radius: var(--radius-sm);
-  padding: 8px 12px;
+  padding: 4px 8px;
+  /* paddingを調整 */
   overflow: hidden;
   cursor: pointer;
   z-index: 5;
   transition: var(--transition);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  /* contentを上揃えに */
 }
 
 .event:hover {
@@ -267,25 +205,35 @@ onBeforeUnmount(() => {
 
 .event-title {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
+  /* font sizeを調整 */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--text-primary);
 }
 
-.event-time, .event-location {
+.event-time {
   display: flex;
   align-items: center;
   color: var(--text-secondary);
-  font-size: 12px;
-  margin-top: 4px;
+  font-size: 11px;
+  /* font sizeを調整 */
+  margin-top: 2px;
+  /* marginを調整 */
+}
+
+.event-location {
+  display: none;
+  /* 省スペースのため非表示 */
 }
 
 .small-icon {
-  width: 14px;
-  height: 14px;
-  margin-right: 6px;
+  width: 12px;
+  /* icon sizeを調整 */
+  height: 12px;
+  margin-right: 4px;
+  /* marginを調整 */
   flex-shrink: 0;
   stroke: currentColor;
   fill: none;

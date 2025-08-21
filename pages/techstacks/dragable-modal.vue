@@ -8,6 +8,7 @@
         <v-checkbox v-model="draggable" label="ドラッグ" density="compact" hide-details></v-checkbox>
         <v-checkbox v-model="resize" label="リサイズ" density="compact" hide-details></v-checkbox>
         <v-checkbox v-model="overlay" label="オーバーレイ" density="compact" hide-details></v-checkbox>
+        <v-checkbox v-model="fullscreen" label="フルスクリーン" density="compact" hide-details></v-checkbox>
       </v-card-text>
       <v-card-actions>
         <button class="action-button" @click="isModalOpen = true">
@@ -25,6 +26,7 @@
       :draggable="draggable"
       :resize="resize"
       :overlay="overlay"
+      :fullscreen="fullscreen"
     >
       <template #header>
         <!-- 📄 ドキュメント編集 -->
@@ -51,6 +53,8 @@ const draggable = ref<boolean>(false);
 const resize = ref<boolean>(false);
 
 const overlay = ref<boolean>(false);
+
+const fullscreen = ref<boolean>(false);
 </script>
 
 <style>
