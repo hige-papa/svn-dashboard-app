@@ -221,7 +221,7 @@ const sortedUser = computed(() => {
 
       // 上記以外（両方とも自分、または両方とも自分でない）の場合
       // → 名前のアルファベット順（昇順）で比較
-      return a.displayName.localeCompare(b.displayName);
+      return a.displayName?.localeCompare(b.displayName ?? '');
   })  
 })
 
