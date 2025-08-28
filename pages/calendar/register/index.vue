@@ -1,5 +1,5 @@
 <template>
-    <EventForm :date="date" :partcipant-ids="participantIds" @submit="handleSubmit"></EventForm>
+    <EventForm :date="date" :participant-ids="participantIds" @submit="handleSubmit"></EventForm>
 </template>
 
 <script setup lang="ts">

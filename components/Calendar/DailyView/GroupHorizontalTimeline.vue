@@ -14,7 +14,7 @@
                   'hour-slot-header': time.endsWith(':00'),
                   'half-hour-slot-header': time.endsWith(':30')
                 }"
-                :style="{ left: `${index * 32}px` }"
+                :style="{ left: `${index * 96}px` }"
               >
                 <span v-if="time.endsWith(':00')" class="time-label-header">{{ time }}</span>
               </div>
@@ -39,10 +39,10 @@
           </td>
           <td class="timeline-cell">
             <HorizontalTimeline
-              :events="getUserEvents(user.id)"
+              :events="getUserEvents(user)"
               :date="props.date"
               :time-slots="timeSlots"
-              :time-to-pixels="timeToPixels"
+              :time-to-pixels="timeToPixelsForHorizontal"
               @event-click="handleEventClick"
             />
           </td>
@@ -55,12 +55,13 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { User } from 'firebase/auth';
+import { useCalendar } from '~/composables/useCalendar'
 
 const user = useState<User>('user');
 
 interface GroupMember {
     id: string
-    type: string
+    type: 'user' | 'facility' | 'equipment'
     name: string
     avatar?: string
 }
@@ -94,32 +95,43 @@ const sortedUsers = computed(() => {
   });
 });
 
-const getUserEvents = (userId: string): EventDisplay[] => {
+const getUserEvents = (member: GroupMember): EventDisplay[] => {
   if (!props.events || !Array.isArray(props.events)) {
     return [];
   }
-  return props.events.filter(event => event.participantIds?.includes(userId));
-};
-
-const timeSlots = computed(() => {
-  const slots = [];
-  for (let i = 8; i <= 21; i++) {
-    slots.push(`${String(i).padStart(2, '0')}:00`);
-    if (i < 21) {
-      slots.push(`${String(i).padStart(2, '0')}:30`);
-    }
+  switch (member.type) {
+    case 'user':
+      return props.events.filter(event => event.participantIds?.includes(member.id));
+    case 'facility':
+      return props.events.filter(event => event.facilityIds?.includes(member.id));
+    case 'equipment':
+      return props.events.filter(event => event.equipmentIds?.includes(member.id));
+    default:
+      return []
   }
-  return slots;
-});
-
-const timeToPixels = (time: string): number => {
-  if (!time) return 0;
-  const [hours, minutes] = time.split(':').map(Number);
-  const totalMinutes = (hours * 60) + minutes;
-  const startTotalMinutes = 8 * 60;
-  const pixelPerMinute = 64 / 60;
-  return (totalMinutes - startTotalMinutes) * pixelPerMinute;
 };
+
+const { timeSlots, timeToPixelsForHorizontal } = useCalendar()
+
+// const timeSlots = computed(() => {
+//   const slots = [];
+//   for (let i = 8; i <= 21; i++) {
+//     slots.push(`${String(i).padStart(2, '0')}:00`);
+//     if (i < 21) {
+//       slots.push(`${String(i).padStart(2, '0')}:30`);
+//     }
+//   }
+//   return slots;
+// });
+
+// const timeToPixels = (time: string): number => {
+//   if (!time) return 0;
+//   const [hours, minutes] = time.split(':').map(Number);
+//   const totalMinutes = (hours * 60) + minutes;
+//   const startTotalMinutes = 8 * 60;
+//   const pixelPerMinute = 64 / 60;
+//   return (totalMinutes - startTotalMinutes) * pixelPerMinute;
+// };
 
 const handleEventClick = (payload: { event: Event, eventData: EventDisplay }) => {
   emit('eventClick', payload);

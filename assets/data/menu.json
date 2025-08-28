@@ -16,6 +16,27 @@
         "icon": "mdi-calendar",
         "isActive": false,
         "path": "/calendar"
+      },
+      {
+        "id": "team",
+        "label": "チーム",
+        "icon": "mdi-account-group",
+        "isActive": false,
+        "path": "/team"
+      },
+      {
+        "id": "facility",
+        "label": "施設",
+        "icon": "mdi-sofa",
+        "isActive": false,
+        "path": "/facility"
+      },
+      {
+        "id": "equipment",
+        "label": "備品",
+        "icon": "mdi-tools",
+        "isActive": false,
+        "path": "/equipment"
       }
     ]
   },

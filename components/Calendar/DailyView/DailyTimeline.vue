@@ -131,7 +131,8 @@ const updateCurrentTimeIndicator = () => {
   const minutes = now.getMinutes();
   
   // 8時から20時の間のみ表示
-  if (hours >= 8 && hours <= 20) {
+  // if (hours >= 8 && hours <= 20) {
+  if (hours >= 9 && hours <= 18) {
     currentTimePosition.value = props.timeToPixels(`${hours}:${minutes}`);
   }
 };
@@ -198,7 +199,7 @@ onBeforeUnmount(() => {
   flex-grow: 1;
   position: relative;
   padding: 0 4px;
-  min-height: 832px; /* 32px * 26 (全時間スロット) */
+  min-height: 576px; /* 32px * 26 (全時間スロット) */
 }
 
 .time-grid {

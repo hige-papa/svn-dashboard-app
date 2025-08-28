@@ -14,8 +14,26 @@
               <i class="mdi mdi-account icon"></i>
               基本情報
             </h3>
-            
+
             <div class="form-group row">
+              <div class="form-group" :class="{ error: errors.name }">
+                <label class="form-label" for="userName">
+                  <i class="mdi mdi-numeric icon"></i>
+                  コード
+                  <span class="required">*</span>
+                </label>
+                <input 
+                  id="code"
+                  v-model="formData.code"
+                  type="text" 
+                  class="form-input" 
+                  placeholder="例：user-001"
+                  @blur="validateField('code')"
+                  @input="clearError('code')"
+                >
+                <div v-if="errors.name" class="form-error">{{ errors.name }}</div>
+              </div>
+
               <div class="form-group" :class="{ error: errors.name }">
                 <label class="form-label" for="userName">
                   <i class="mdi mdi-account icon"></i>
@@ -33,6 +51,26 @@
                 >
                 <div v-if="errors.name" class="form-error">{{ errors.name }}</div>
               </div>
+            </div>
+            
+            <div class="form-group row">
+              <!-- <div class="form-group" :class="{ error: errors.name }">
+                <label class="form-label" for="userName">
+                  <i class="mdi mdi-account icon"></i>
+                  氏名
+                  <span class="required">*</span>
+                </label>
+                <input 
+                  id="userName"
+                  v-model="formData.name"
+                  type="text" 
+                  class="form-input" 
+                  placeholder="例：田中太郎"
+                  @blur="validateField('name')"
+                  @input="clearError('name')"
+                >
+                <div v-if="errors.name" class="form-error">{{ errors.name }}</div>
+              </div> -->
               
               <div class="form-group" :class="{ error: errors.email }">
                 <label class="form-label" for="userEmail">
@@ -52,9 +90,27 @@
                 >
                 <div v-if="errors.email" class="form-error">{{ errors.email }}</div>
               </div>
+
+              <div v-if="!isEditMode" class="form-group" :class="{ error: errors.password }">
+                <label class="form-label" for="userPassword">
+                  <i class="mdi mdi-lock icon"></i>
+                  パスワード
+                  <span class="required">*</span>
+                </label>
+                <input 
+                  id="userPassword"
+                  v-model="formData.password"
+                  type="password" 
+                  class="form-input" 
+                  placeholder="6文字以上で入力してください"
+                  @blur="validateField('password')"
+                  @input="clearError('password')"
+                >
+                <div v-if="errors.password" class="form-error">{{ errors.password }}</div>
+              </div>
             </div>
             
-            <div v-if="!isEditMode" class="form-group mb-4" :class="{ error: errors.password }">
+            <!-- <div v-if="!isEditMode" class="form-group mb-4" :class="{ error: errors.password }">
               <label class="form-label" for="userPassword">
                 <i class="mdi mdi-lock icon"></i>
                 パスワード
@@ -70,7 +126,7 @@
                 @input="clearError('password')"
               >
               <div v-if="errors.password" class="form-error">{{ errors.password }}</div>
-            </div>
+            </div> -->
             
             <div class="form-group row">
               <div class="form-group">
@@ -392,32 +448,6 @@ useHead({
   ]
 })
 
-// 型定義
-interface UserFormData {
-  name: string
-  email: string
-  password: string
-  phone: string
-  department: string
-  role: 'admin' | 'user' | 'viewer' | ''
-  status: 'active' | 'inactive'
-  bio: string
-  avatar: string
-  notifications: {
-    email: boolean
-    calendar: boolean
-    system: boolean
-  }
-}
-
-interface UserFormErrors {
-  name?: string
-  email?: string
-  password?: string
-  department?: string
-  role?: string
-}
-
 // useUserProfileを使用
 const {
   createUserProfile,
@@ -434,12 +464,13 @@ const isEditMode = computed(() => !!route.params.id)
 const userId = computed(() => route.params.id as string)
 
 const formData = reactive<UserFormData>({
+  code: '',
   name: '',
   email: '',
   password: '',
   phone: '',
   department: '',
-  role: '',
+  role: 'user',
   status: 'active',
   bio: '',
   avatar: '',
@@ -475,6 +506,7 @@ const loadUser = async () => {
     if (userProfile) {
       // フォームデータに設定
       Object.assign(formData, {
+        code: userProfile.code,
         name: userProfile.displayName,
         email: userProfile.email || '',
         phone: userProfile.phone || '',
@@ -520,6 +552,13 @@ const loadDepartments = async () => {
 // バリデーション
 const validateField = (fieldName: keyof UserFormErrors) => {
   switch (fieldName) {
+    case 'code':
+      if (!formData.name.trim()) {
+        errors.name = 'コードを入力してください'
+      } else if (formData.name.length < 2) {
+        errors.name = 'コードは4文字以上で入力してください'
+      }
+      break
     case 'name':
       if (!formData.name.trim()) {
         errors.name = '氏名を入力してください'
@@ -561,6 +600,7 @@ const validateForm = (): boolean => {
   })
   
   // 全フィールドをバリデーション
+  validateField('code')
   validateField('name')
   validateField('email')
   if (!isEditMode.value) {
@@ -630,6 +670,7 @@ const handleSubmit = async () => {
     if (isEditMode.value) {
       // 更新処理
       const updateData = {
+        code: formData.code,
         displayName: formData.name,
         displayNameEng: formData.name, // 英語名がない場合は同じ値を使用
         email: formData.email,
@@ -648,6 +689,7 @@ const handleSubmit = async () => {
     } else {
       // 新規作成処理
       const profileData = {
+        code: formData.code,
         displayName: formData.name,
         displayNameEng: formData.name, // 英語名がない場合は同じ値を使用
         phone: formData.phone,

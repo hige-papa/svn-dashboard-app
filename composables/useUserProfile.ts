@@ -1,8 +1,9 @@
-import type { Auth, User, UserInfo } from 'firebase/auth';
+import { initializeApp } from 'firebase/app';
+import { createUserWithEmailAndPassword, getAuth, type Auth, type User, type UserInfo } from 'firebase/auth';
 import { where, orderBy, limit, QueryConstraint, Timestamp } from 'firebase/firestore';
 import { useAuth } from '~/composables/firebase/useAuth';
 import { useMaster } from '~/composables/master/useMaster';
-
+import firebaseConfig from '~/firebase.config';
 
 // カラーパレット
 const USER_COLORS = [
@@ -30,8 +31,14 @@ export const useUserProfile = () => {
     profileData: Omit<ExtendedUserProfile, 'uid' | 'email'>
   ): Promise<ExtendedUserProfile | null> => {
     try {
+      const secondaryAppName = 'secondary-auth-app-' + Date.now();
+
+      const secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
+
+      const secondaryAuth = getAuth(secondaryApp);
+
       // Firebase Authenticationでユーザー作成
-      const authUser = await createUserWithEmailAndPasswordAsync(email, password);
+      const authUser = await createUserWithEmailAndPassword(secondaryAuth, email, password);
       
       if (!authUser) {
         throw new Error('Failed to create user with Firebase Authentication');
@@ -45,7 +52,8 @@ export const useUserProfile = () => {
 
       // Firestoreのユーザープロフィール作成
       const userProfile: any = {
-        uid: authUser.uid,
+        uid: authUser.user.uid,
+        code: profileData.code,
         email: email,
         displayName: profileData.displayName,
         displayNameEng: profileData.displayNameEng,
@@ -64,7 +72,7 @@ export const useUserProfile = () => {
       };
 
       // useMasterを使用してFirestoreにユーザープロフィールを保存
-      const savedProfile = await addWithIdAsync(authUser.uid, userProfile);
+      const savedProfile = await addWithIdAsync(authUser.user.uid, userProfile);
 
       if (!savedProfile) {
         throw new Error('Failed to save user profile to Firestore');
@@ -74,6 +82,7 @@ export const useUserProfile = () => {
       
       return {
         uid: savedProfile.uid,
+        code: savedProfile.code,
         displayName: savedProfile.displayName,
         displayNameEng: savedProfile.displayNameEng,
         color: savedProfile.color,

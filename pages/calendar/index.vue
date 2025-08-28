@@ -141,7 +141,7 @@ import type { User } from 'firebase/auth';
 import { padStart } from 'vuetify/lib/util/helpers.mjs';
 import { useDailyOptions } from '~/composables/useDailyOptions'
 
-const user = useState<User>('user')
+const user = useState<ExtendedUserProfile>('userProfile')
 
 const { getAsync, deleteAsync } = useTransaction('events')
 
@@ -241,7 +241,7 @@ const dateString = computed(() => {
 
 const eventListSubtitle = computed(() => {
     if (user.value && user.value.uid != selectedUser.value?.uid) {
-        return `${user.value?.displayName}さんの${dateString.value}の予定一覧`;
+        return `${selectedUser.value?.displayName}さんの${dateString.value}の予定一覧`;
     } else {
         return `${dateString.value}の予定一覧`;
     }
@@ -687,7 +687,7 @@ watch(isLoading, (newValue, oldValue) => {
   background-color: var(--background-white);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
-  padding: 24px;
+  padding: 24px 24px 48px 24px;
   overflow: hidden;
   position: relative;
 }

@@ -85,7 +85,7 @@
                 @click.stop="onEventClick($event, event)">
                 {{ event.startTime }} {{ event.title }}
               </div> -->
-              <div v-for="(event, index) in getVisibleEvents(day.date)" :key="event.id" class="day-event" :style="{ '--event-color': `${eventTypeDetails[event.eventType]?.color}` }">
+              <div v-for="(event, index) in getVisibleEvents(day.date, 2)" :key="event.id" class="day-event" :style="{ '--event-color': `${eventTypeDetails[event.eventType]?.color}` }">
                 {{ event.startTime }} {{ event.title }}
               </div>
 
@@ -277,9 +277,9 @@ const getEventsForDay = (date: Date) => {
 };
 
 // 各日ごとに表示するイベント（最初の2つまで）
-const getVisibleEvents = (date: Date) => {
+const getVisibleEvents = (date: Date, limit?: number) => {
   const events = getEventsForDay(date);
-  return events.slice(0, 2);
+  return limit ? events.slice(0, limit) : events;
 };
 
 // 日付クリック時のイベント
@@ -407,10 +407,11 @@ const onDayClick = (date: Date) => {
 .day-event {
   font-size: 11px;
   padding: 4px 8px;
+  width: 157px;
+  text-overflow: ellipsis;
   margin-bottom: 4px;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
   background-color: color-mix(in srgb, var(--event-color) 15%, #FFF);
   border-left: 3px solid var(--event-color);
   /* color: var(--event-color); */

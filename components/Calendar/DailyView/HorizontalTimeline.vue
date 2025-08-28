@@ -5,7 +5,7 @@
         <div v-for="(time, index) in timeSlots" :key="index" class="time-grid-line" :class="{
           'hour-line': time.endsWith(':00'),
           'half-hour-line': time.endsWith(':30')
-        }" :style="{ left: `${index * 32}px` }"></div>
+        }" :style="{ left: `${index * 96}px` }"></div>
       </div>
 
       <!-- <div v-if="isToday" class="current-time-indicator" :style="{ left: `${currentTimePosition}px` }">
@@ -122,8 +122,8 @@ onBeforeUnmount(() => {
   flex-grow: 1;
   min-height: 85px;
   /* 親の行の高さに合わせる */
-  min-width: 832px;
-  /* 32px * 26 slots */
+  min-width: 1920px;
+  /* 96px * 20 slots */
 }
 
 .time-grid {

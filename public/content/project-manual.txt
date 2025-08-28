@@ -76,7 +76,6 @@
 -   `public/`: 静的アセット（faviconなど）
 -   `services/`: サービス層のロジック（例: `eventService.ts`）
 -   `types/`: TypeScriptの型定義ファイル
--   `utils/`: ユーティリティ関数（例: `dateUtils.js`）
 
 ## 5. 開発環境のセットアップ
 

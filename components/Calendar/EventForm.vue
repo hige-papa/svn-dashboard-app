@@ -562,7 +562,7 @@
       </div>
     </Transition>
 
-    <aw-dialog v-model="isShowEventRelatedParties" :draggable="true" :resize="true" :overlay="false" :fullscreen="mobile">
+    <aw-dialog v-model="isShowEventRelatedParties" :draggable="true" :resize="true" :overlay="false" :initial-width="1200" :fullscreen="mobile">
       <template #header>
         <span class="list-title text-body-1">参加者の予定一覧</span>
       </template>
@@ -590,6 +590,7 @@ import { useDisplay } from 'vuetify'
 
 interface MasterItem {
   id: string;
+  code: string;
   name: string;
   department?: string;
   capacity?: number;
@@ -601,6 +602,7 @@ interface MasterItem {
 
 interface TeamItem {
   id: string;
+  code: string;
   name: string;
   members: string[];
   memberCount: number;
@@ -688,9 +690,9 @@ const facilitiesMaster = ref<MasterItem[]>([])
 const equipmentMaster = ref<MasterItem[]>([])
 const teamsMaster = ref<TeamItem[]>([])
 
-const selectedParticipantsData = computed(() => participantsMaster.value.filter(p => formData.participantIds.includes(p.id)))
-const selectedFacilitiesData = computed(() => facilitiesMaster.value.filter(f => formData.facilityIds.includes(f.id)))
-const selectedEquipmentData = computed(() => equipmentMaster.value.filter(e => formData.equipmentIds.includes(e.id)))
+const selectedParticipantsData = computed(() => participantsMaster.value.filter(p => formData.participantIds.includes(p.id)).sort((a, b) => { if (a.code > b.code) { return 1 } else { return -1 } }))
+const selectedFacilitiesData = computed(() => facilitiesMaster.value.filter(f => formData.facilityIds.includes(f.id)).sort((a, b) => { if (a.code > b.code) { return 1 } else { return -1 } }))
+const selectedEquipmentData = computed(() => equipmentMaster.value.filter(e => formData.equipmentIds.includes(e.id)).sort((a, b) => { if (a.code > b.code) { return 1 } else { return -1 } }))
 
 const filteredItems = computed((): MasterItem[] | TeamItem[] => {
   const query = searchQuery.value.toLowerCase()
@@ -709,7 +711,7 @@ const filteredItems = computed((): MasterItem[] | TeamItem[] => {
   }
 
   if (!query) return items
-  return items.filter(item => item.name.toLowerCase().includes(query))
+  return items.filter(item => item.name.toLowerCase().includes(query)).sort((a, b) => { if (a.code > b.code) { return 1 } else { return -1 } })
 })
 
 const setDefaultValues = (form?: any) => {
@@ -940,12 +942,13 @@ const viewUsageStatus = async (item: MasterItem) => {
 }
 
 const isShowEventRelatedParties = ref<boolean>(false)
+
 const eventRelatedParties = computed(() => {
   return [
-    ...participantsMaster.value.filter(e => formData.participantIds.some(e2 => e2 === e.id)).map(e => { return { id: e.id, type: 'user', name: e.name, avatar: e.avatar } }),
-    ...facilitiesMaster.value.filter(e => formData.facilityIds.some(e2 => e2 === e.id)).map(e => { return { id: e.id, type: 'facility', name: e.name, avatar: e.avatar } }),
-    ...equipmentMaster.value.filter(e => formData.equipmentIds.some(e2 => e2 === e.id)).map(e => { return { id: e.id, type: 'equipment', name: e.name, avatar: e.avatar } }),
-  ]
+    ...participantsMaster.value.filter(e => formData.participantIds.some(e2 => e2 === e.id)).map(e => { return { id: e.id, code: e.code, type: 'user', name: e.name, avatar: e.avatar } }),
+    ...facilitiesMaster.value.filter(e => formData.facilityIds.some(e2 => e2 === e.id)).map(e => { return { id: e.id, code: e.code, type: 'facility', name: e.name, avatar: e.avatar } }),
+    ...equipmentMaster.value.filter(e => formData.equipmentIds.some(e2 => e2 === e.id)).map(e => { return { id: e.id, code: e.code, type: 'equipment', name: e.name, avatar: e.avatar } }),
+  ] as GroupMember[]
 })
 const relatedPartyEvents = ref<EventDisplay[]>([]) // EventDisplay[]
 
@@ -979,6 +982,7 @@ onMounted(() => {
   getUsersAsync().then(users => {
     participantsMaster.value = (users as any[]).map(user => ({
       id: user.uid,
+      code: user.code,
       name: user.displayName || '未設定',
       department: user.department || '',
       avatar: user.avatar,
@@ -989,12 +993,17 @@ onMounted(() => {
       } else if (user.value) {
         formData.participantIds.push(user.value.uid);
       }
+      console.log(`props-participantIds: ${JSON.stringify(props.participantIds)}`)
+      console.log(`participantsMaster: ${JSON.stringify(participantsMaster.value)}`)
       formData.participants = participantsMaster.value.filter(p => formData.participantIds.includes(p.id)).map(p => p.name);
+      console.log(`formData-participantIds: ${JSON.stringify(formData.participantIds)}`)
+      console.log(`formData-participants: ${JSON.stringify(formData.participants)}`)
     }
   })
   getEquipmentsAsync().then(equipments => {
     equipmentMaster.value = (equipments as any[]).map(equipment => ({
       id: equipment.id,
+      code: equipment.code,
       name: equipment.name,
       capacity: equipment.capacity,
       avatar: equipment.imageUrl,
@@ -1003,6 +1012,7 @@ onMounted(() => {
   getFacilitiesAsync().then(facilities => {
     facilitiesMaster.value = (facilities as any[]).map(facility => ({
       id: facility.id,
+      code: facility.code,
       name: facility.name,
       capacity: facility.capacity,
       avatar: facility.imageUrl,
@@ -1011,6 +1021,7 @@ onMounted(() => {
   getTeamsAsync().then(teams => {
     teamsMaster.value = (teams as any[]).map(team => ({
       id: team.id,
+      code: team.code,
       name: team.name,
       members: team.members || [],
       memberCount: team.members?.length || 0
