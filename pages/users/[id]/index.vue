@@ -19,6 +19,14 @@
             <div class="info-grid">
               <div class="info-item">
                 <label class="info-label">
+                  <i class="mdi mdi-numeric icon"></i>
+                  コード
+                </label>
+                <div class="info-value">{{ userProfile.code || '未設定' }}</div>
+              </div>
+
+              <div class="info-item">
+                <label class="info-label">
                   <i class="mdi mdi-account icon"></i>
                   氏名
                 </label>
@@ -283,7 +291,7 @@ const {
 
 // リアクティブデータ
 const userId = computed(() => route.params.id as string)
-const userProfile = ref<any>(null)
+const userProfile = ref<ExtendedUserProfile | null>(null)
 const isLoading = ref(true)
 const showDeleteDialog = ref(false)
 const isDeleting = ref(false)
@@ -386,7 +394,7 @@ const handleBack = () => {
 }
 
 const handleEdit = () => {
-  push(`/users/edit/${userId.value}`)
+  push(`/users/${userId.value}/edit`)
 }
 
 const handleDelete = () => {

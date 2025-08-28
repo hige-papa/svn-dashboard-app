@@ -18,6 +18,7 @@ declare global {
     quantity?: number;
     isConflict?: boolean;
     conflictInfo?: string;
+    avatar?: string;
   }
 
   interface EventFormData {
@@ -230,5 +231,14 @@ declare global {
     id: string;      // 祝日データの一意なID
     date: string;    // 日付 (例: "2025-01-01")
     name: string;    // 祝日名 (例: "元日")
+  }
+
+  export type EventRelatedPartyType = 'user' | 'facility' | 'equipment'
+
+  interface EventRelatedParty {
+    id: string
+    type: EventRelatedPartyType
+    name: string
+    avatar: string
   }
 }

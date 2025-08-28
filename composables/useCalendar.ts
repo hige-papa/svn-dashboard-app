@@ -42,7 +42,13 @@ export const useCalendar = () => {
   const getDayOfWeek = (date: Date): string => ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
   const timeToPixels = (timeStr: string): number => {
     const [hours, minutes] = timeStr.split(':').map(Number);
-    return ((hours - 8) * 60 + minutes) * (32 / 30);
+    return ((hours - 9) * 60 + minutes) * (32 / 30);
+  };
+
+  const timeToPixelsForHorizontal = (timeStr: string): number => {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    // 30分あたりの幅を32pxから96pxに変更
+    return ((hours - 9) * 60 + minutes) * (96 / 30);
   };
 
   // --- Date Range Calculation ---
@@ -147,7 +153,8 @@ export const useCalendar = () => {
   
   const timeSlots = computed(() => {
     const slots: string[] = [];
-    for (let hour = 8; hour <= 20; hour++) {
+    // for (let hour = 8; hour <= 20; hour++) {
+    for (let hour = 9; hour <= 18; hour++) {
       slots.push(`${hour}:00`);
       slots.push(`${hour}:30`);
     }
@@ -195,6 +202,7 @@ export const useCalendar = () => {
     formatDatetime,
     formatShortDate,
     timeToPixels,
+    timeToPixelsForHorizontal,
     toggleUserVisibility,
     generateCalendarDays,
     generateWeekDays,

@@ -108,12 +108,12 @@
                 </template>
               </div>
         
-              <div 
+              <!-- <div 
                 v-if="getUserEventsForDay(user.uid, day).length > 2" 
                 class="more-events"
               >
                 +{{ getUserEventsForDay(user.uid, day).length - 2 }}件
-              </div>
+              </div> -->
           </td>
         </tr>
       </tbody>
@@ -221,7 +221,7 @@ const sortedUser = computed(() => {
 
       // 上記以外（両方とも自分、または両方とも自分でない）の場合
       // → 名前のアルファベット順（昇順）で比較
-      return a.displayName?.localeCompare(b.displayName ?? '');
+      return a.code?.localeCompare(b.code ?? '');
   })  
 })
 
@@ -265,8 +265,8 @@ const getUserEventsForDay = (userId: string, date: Date) => {
 };
 
 // 各日ごとに表示するイベント（最初の2つまで）
-const getVisibleEvents = (events: EventDisplay[]) => {
-  return events.slice(0, 2);
+const getVisibleEvents = (events: EventDisplay[], limit?: number) => {
+  return limit ? events.slice(0, limit) : events;
 };
 
 // イベントクリック時のイベント
@@ -465,6 +465,10 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
   box-shadow: var(--shadow-sm);
   z-index: 10;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.event:last-child {
+  margin-bottom: 5px;
 }
 
 .event:hover {

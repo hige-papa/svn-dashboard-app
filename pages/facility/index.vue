@@ -305,7 +305,7 @@ const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage)
 const endIndex = computed(() => startIndex.value + itemsPerPage)
 
 const paginatedItems = computed(() => {
-  return filteredItems.value.slice(startIndex.value, endIndex.value)
+  return filteredItems.value.slice(startIndex.value, endIndex.value).sort((a, b) => { if (a.code > b.code) { return 1 } else { return -1 } })
 })
 
 // ---ダミーデータとAPIモック---

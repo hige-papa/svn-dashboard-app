@@ -330,19 +330,6 @@ useHead({
   ]
 })
 
-// 型定義
-interface User {
-  id: string
-  name: string
-  email: string
-  department: string
-  role: 'admin' | 'user' | 'viewer'
-  status: 'active' | 'inactive'
-  avatar?: string
-  lastLogin?: string
-  createdAt: string
-}
-
 // useUserProfileを使用
 const {
   getAllUserProfiles,
@@ -352,8 +339,8 @@ const {
 } = useUserProfile()
 
 // リアクティブデータ
-const users = ref<User[]>([])
-const filteredUsers = ref<User[]>([])
+const users = ref<UserView[]>([])
+const filteredUsers = ref<UserView[]>([])
 const searchQuery = ref('')
 const selectedDepartment = ref('')
 const selectedRole = ref('')
@@ -361,7 +348,7 @@ const viewMode = ref<'grid' | 'list'>('grid')
 const currentPage = ref(1)
 const itemsPerPage = 12
 const showDeleteModal = ref(false)
-const selectedUser = ref<User | null>(null)
+const selectedUser = ref<UserView | null>(null)
 
 const notification = reactive({
   show: false,
@@ -381,7 +368,7 @@ const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage)
 const endIndex = computed(() => startIndex.value + itemsPerPage)
 
 const paginatedUsers = computed(() => {
-  return filteredUsers.value.slice(startIndex.value, endIndex.value)
+  return filteredUsers.value.slice(startIndex.value, endIndex.value).sort((a, b) => { if (a.code > b.code) { return 1 } else { return -1 } })
 })
 
 // メソッド
@@ -393,6 +380,7 @@ const loadUsers = async () => {
     // User型に変換
     users.value = userProfiles.map(profile => ({
       id: profile.uid || profile.uid,
+      code: profile.code,
       name: profile.displayName,
       email: profile.email || '',
       department: profile.department || '',
@@ -479,15 +467,15 @@ const navigateToUserForm = () => {
   push('/users/new')
 }
 
-const viewUserDetail = (user: User) => {
+const viewUserDetail = (user: UserView) => {
   push(`/users/${user.id}`)
 }
 
-const editUser = (user: User) => {
+const editUser = (user: UserView) => {
   push(`/users/${user.id}/edit`)
 }
 
-const handleToggleUserStatus = async (user: User) => {
+const handleToggleUserStatus = async (user: UserView) => {
   try {
     // useUserProfileを使用してステータス切り替え
     await toggleUserStatus(user.id)
@@ -510,7 +498,7 @@ const handleToggleUserStatus = async (user: User) => {
   }
 }
 
-const deleteUser = (user: User) => {
+const deleteUser = (user: UserView) => {
   selectedUser.value = user
   showDeleteModal.value = true
 }
