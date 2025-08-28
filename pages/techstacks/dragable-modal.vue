@@ -28,7 +28,7 @@
       :overlay="overlay"
       :fullscreen="fullscreen"
     >
-      <template #header>
+      <template #title>
         <!-- 📄 ドキュメント編集 -->
       </template>
 

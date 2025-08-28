@@ -14,17 +14,26 @@
       </svg>
     </button>
 
-    <aw-dialog v-model="dialog" :draggable="true" :resize="true" :overlay="false" :initial-height="230" :width="mobile ? '100%' : '30%'">
+    <aw-dialog v-model="dialog" :draggable="mobile ? false : true" :resize="mobile ? false : true" :overlay="mobile ? true : false" :initial-height="230" :initial-width="mobile ? 300 : undefined">
+      <template #title>
+        <span class="list-title text-body-1">日付選択</span>
+      </template>
       <v-card flat tile color="transparent">
         <v-card-text>
-          <v-label class="mb-3">日付選択</v-label>
           <v-text-field v-model="date" type="date" variant="outlined" hide-details @keydown.enter="handleSelect"></v-text-field>
         </v-card-text>
-        <v-card-actions>
+        <!-- <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="primary" variant="text" @click="handleSelect">確定</v-btn>
-        </v-card-actions>
+        </v-card-actions> -->
       </v-card>
+      <template #footer>
+        <div class="modal-footer">
+          <button type="button" @click="handleSelect" class="modal-footer-btn btn-primary">
+            確定
+          </button>
+        </div>
+      </template>
     </aw-dialog>
   </div>
 </template>
@@ -115,6 +124,32 @@ const onNext = () => {
   padding: 8px 16px;
   border-radius: var(--radius-sm);
 }
+
+.list-title {
+  font-size: 18px; font-weight: 600; color: #212529; /* --text-primary */
+  margin-left: 20px; display: flex; align-items: center;
+}
+.list-title::before {
+  content: ""; display: inline-block; width: 4px; height: 20px;
+  background-color: #4361ee; /* --primary-color */ margin-right: 10px; border-radius: 2px;
+}
+
+.modal-footer {
+  display: flex; gap: 12px; justify-content: flex-end; height: 65px; padding: 12px;
+  border-top: 1px solid #dee2e6; /* --border-color */
+}
+
+.modal-footer-btn {
+  padding: 14px 28px; border-radius: 6px; /* --radius-sm */ font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s ease-in-out; /* --transition */ border: none; display: flex; align-items: center; gap: 8px;
+}
+
+.btn-primary { background-color: #4361ee; /* --primary-color */ color: white; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* --shadow-sm */ }
+.btn-primary:hover {
+  background-color: #3a53c4; /* --primary-hover */ box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); /* --shadow-md */
+  transform: translateY(-1px);
+}
+.btn-primary:disabled { background-color: #adb5bd; /* --text-light */ cursor: not-allowed; transform: none; }
 
 @media (max-width: 768px) {
   .nav-controls {

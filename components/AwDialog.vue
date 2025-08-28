@@ -6,12 +6,16 @@
                 aria-labelledby="modal-title">
                 <header ref="headerRef" :class="['modal-header', { 'draggable': draggable }]" @pointerdown.prevent="($event) => { if (draggable) { startDrag($event) } }" @dblclick="fullscreen">
                     <h2 id="modal-title" class="modal-title">
-                        <slot name="header"></slot>
+                        <slot name="title"></slot>
                     </h2>
                     <button class="close-button" @click="closeModal" aria-label="モーダルを閉じる">
                         &times;
                     </button>
                 </header>
+
+                <div class="modal-body-top">
+                    <slot name="header"></slot>
+                </div>
 
                 <main class="modal-body">
                     <slot />
@@ -355,6 +359,10 @@ watch(() => props.modelValue, (newValue) => {
 
 .close-button:hover {
     color: var(--dark-color);
+}
+
+.modal-body-top {
+    
 }
 
 /* ボディ: コンテンツエリア */

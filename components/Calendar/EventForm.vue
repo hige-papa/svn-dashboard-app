@@ -466,31 +466,35 @@
     </div>
 
     <aw-dialog v-model="showModal" :draggable="true" :resize="true" :overlay="false" :fullscreen="mobile">
+      <template #header>
+        <div class="modal-header">
+        <div v-if="modalType === 'participant'" class="modal-view-tabs">
+          <button
+            :class="{ active: modalView === 'participants' }"
+            @click="modalView = 'participants'"
+            class="modal-view-tab"
+          >
+            <i class="mdi mdi-account icon"></i>
+            参加者
+          </button>
+          <button
+            :class="{ active: modalView === 'teams' }"
+            @click="modalView = 'teams'"
+            class="modal-view-tab"
+          >
+            <i class="mdi mdi-account-group icon"></i>
+            チーム
+          </button>
+        </div>
+
+        <div class="search-box">
+          <i class="mdi mdi-magnify icon"></i>
+          <input v-model="searchQuery" type="text" class="search-input" :placeholder="getSearchPlaceholder()">
+        </div>
+        </div>
+      </template>
       <div>
         <div class="modal-body">
-          <div v-if="modalType === 'participant'" class="modal-view-tabs">
-            <button
-              :class="{ active: modalView === 'participants' }"
-              @click="modalView = 'participants'"
-              class="modal-view-tab"
-            >
-              <i class="mdi mdi-account icon"></i>
-              参加者
-            </button>
-            <button
-              :class="{ active: modalView === 'teams' }"
-              @click="modalView = 'teams'"
-              class="modal-view-tab"
-            >
-              <i class="mdi mdi-account-group icon"></i>
-              チーム
-            </button>
-          </div>
-
-          <div class="search-box">
-            <i class="mdi mdi-magnify icon"></i>
-            <input v-model="searchQuery" type="text" class="search-input" :placeholder="getSearchPlaceholder()">
-          </div>
 
           <div class="selection-list" v-if="modalView === 'participants'">
             <div v-if="filteredItems.length === 0" class="no-results">検索結果がありません</div>
@@ -548,7 +552,7 @@
     </aw-dialog>
 
     <aw-dialog v-model="dialog" :draggable="true" :resize="true" :overlay="false" :fullscreen="mobile">
-      <template #header>
+      <template #title>
         <span v-if="selected" class="list-title text-body-1">{{ selected?.name }}さんの{{ formData.date }}の予定一覧</span>
       </template>
       <DailyTimeline v-if="date" :events="events" :time-slots="timeSlots" :date="date"
@@ -563,7 +567,7 @@
     </Transition>
 
     <aw-dialog v-model="isShowEventRelatedParties" :draggable="true" :resize="true" :overlay="false" :initial-width="1200" :fullscreen="mobile">
-      <template #header>
+      <template #title>
         <span class="list-title text-body-1">参加者の予定一覧</span>
       </template>
       <v-container>
@@ -1238,7 +1242,8 @@ onMounted(() => {
 .btn-primary:disabled { background-color: #adb5bd; /* --text-light */ cursor: not-allowed; transform: none; }
 .form-error { color: #dc2626; /* --danger-color */ font-size: 13px; margin-top: 4px; }
 .form-group.error .form-input, .form-group.error .form-textarea, .form-group.error .form-select { border-color: #dc2626; /* --danger-color */ }
-.modal-body { padding: 24px; height: 380px; flex: 1; }
+.modal-header { padding: 12px 24px; }
+.modal-body { padding: 24px; flex-grow: 1; }
 .search-box { position: relative; margin-bottom: 20px; }
 .search-box .icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #6c757d; /* --text-secondary */ }
 .search-input {
@@ -1246,7 +1251,7 @@ onMounted(() => {
   border-radius: 6px; /* --radius-sm */ font-size: 14px; transition: all 0.2s ease-in-out; /* --transition */
 }
 .search-input:focus { outline: none; border-color: #4361ee; /* --primary-color */ box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1); }
-.selection-list { display: grid; gap: 8px; max-height: 280px; overflow-y: auto; }
+.selection-list { display: grid; gap: 8px; flex-grow: 1; overflow-y: auto; }
 .no-results { text-align: center; color: #6c757d; /* --text-secondary */ padding: 40px 0; }
 .selection-item {
   display: flex; align-items: flex-start; gap: 12px; padding: 12px;
@@ -1261,7 +1266,7 @@ onMounted(() => {
 .selection-meta { font-size: 13px; color: #6c757d; /* --text-secondary */ margin-top: 2px; }
 .selection-conflict { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #dc2626; /* --danger-color */ margin-top: 4px; }
 .modal-footer {
-  display: flex; gap: 12px; justify-content: flex-end; height: 50px; padding: 12px;
+  display: flex; gap: 12px; justify-content: flex-end; height: 65px; padding: 12px;
   border-top: 1px solid #dee2e6; /* --border-color */
 }
 .notification {
@@ -1337,5 +1342,6 @@ onMounted(() => {
   .conflict-item { grid-template-columns: 1fr; gap: 8px; }
   .form-actions { flex-direction: column-reverse; }
   .btn { justify-content: center; }
+  .selection-list { flex-grow: 1; }
 }
 </style>

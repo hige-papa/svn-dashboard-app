@@ -82,13 +82,15 @@
       <!-- <SelectedDayDetail v-if="selectedDate" :selected-date="selectedDate" :events="selectedDayEvents" @event-click="handleShowEventDetails" /> -->
     </div>
 
+    <!-- 一日のイベントリスト -->
     <div v-if="currentView === 'daily'">
       <h3 class="list-title">{{ eventListSubtitle }}</h3>
       <EventsList class="events-list" :date="currentDate ?? new Date()" :events="myCurrentDayEvents" @event-click="handleShowEventDetails" />
     </div>
 
+    <!-- イベントリスト -->
     <aw-dialog v-model="eventListDialog" :draggable="true" :resize="true" :overlay="false" :width="mobile ? '100%' : '50%'" :fullscreen="mobile">
-      <template #header>
+      <template #title>
         <h3 class="list-title">{{ eventListSubtitle }}</h3>
       </template>
       <v-card flat tile color="transparent">
@@ -105,17 +107,18 @@
       <template #footer>
         <div class="modal-footer">
           <button type="button" @click="openDailyOptionDialog" class="modal-footer-btn btn-primary">
-            日別ステータスを編集する
+            日別ステータス編集
           </button>
           <button type="button" @click="goToRegister()" class="modal-footer-btn btn-primary">
-            予定を登録する
+            予定登録
           </button>
         </div>
       </template>
     </aw-dialog>
 
+    <!-- 日次オプション -->
     <aw-dialog v-model="dailyOptionDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :fullscreen="mobile">
-      <template #header>
+      <template #title>
         <h3>
           <p class="list-title">{{ dailyOptionSubtitle }}</p>
         </h3>
@@ -132,8 +135,9 @@
     <!-- <EventDetail v-if="showDetail" :event="selectedEvent" :visible="showDetail" :position="detailPosition"
       @close="hideEventDetails" /> -->
 
+    <!-- 予定詳細 -->
     <aw-dialog v-model="viewDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :fullscreen="mobile">
-      <template #header>
+      <template #title>
         <p class="list-title">予定の詳細</p>
       </template>
       <EventView v-if="eventDetail" :event-data="eventDetail" @edit="handleEditEvent" @delete="handleDelete" @copy="handleCopy" @back="handleCloseView" />
@@ -842,7 +846,7 @@ watch(isLoading, (newValue, oldValue) => {
 }
 
 .modal-footer {
-  display: flex; gap: 12px; justify-content: flex-end; height: 50px; padding: 12px;
+  display: flex; gap: 12px; justify-content: flex-end; height: 65px; padding: 12px;
   border-top: 1px solid #dee2e6; /* --border-color */
 }
 
