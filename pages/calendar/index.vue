@@ -82,13 +82,15 @@
       <!-- <SelectedDayDetail v-if="selectedDate" :selected-date="selectedDate" :events="selectedDayEvents" @event-click="handleShowEventDetails" /> -->
     </div>
 
+    <!-- 一日のイベントリスト -->
     <div v-if="currentView === 'daily'">
       <h3 class="list-title">{{ eventListSubtitle }}</h3>
       <EventsList class="events-list" :date="currentDate ?? new Date()" :events="myCurrentDayEvents" @event-click="handleShowEventDetails" />
     </div>
 
+    <!-- イベントリスト -->
     <aw-dialog v-model="eventListDialog" :draggable="true" :resize="true" :overlay="false" :width="mobile ? '100%' : '50%'" :fullscreen="mobile">
-      <template #header>
+      <template #title>
         <h3 class="list-title">{{ eventListSubtitle }}</h3>
       </template>
       <v-card flat tile color="transparent">
@@ -96,16 +98,27 @@
           <EventsList v-if="currentView === 'weekly' && selectedDate" :date="selectedDate ?? new Date()" :events="selectedUserDayEvents" @event-click="handleShowEventDetails" :user="selectedUser" />
           <EventsList v-else-if="currentView === 'monthly' && selectedDate" :date="selectedDate ?? new Date()" :events="mySelectedDayEvents" @event-click="handleShowEventDetails" />
         </v-card-text>
-        <v-card-actions>
+        <!-- <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="primary" variant="text" :size="mobile ? 'small' : 'auto'" @click="openDailyOptionDialog">日別ステータスを編集する</v-btn>
           <v-btn color="primary" variant="text" :size="mobile ? 'small' : 'auto'" @click="goToRegister()">予定を登録する</v-btn>
-        </v-card-actions>
+        </v-card-actions> -->
       </v-card>
+      <template #footer>
+        <div class="modal-footer">
+          <button type="button" @click="openDailyOptionDialog" class="modal-footer-btn btn-primary">
+            日別ステータス編集
+          </button>
+          <button type="button" @click="goToRegister()" class="modal-footer-btn btn-primary">
+            予定登録
+          </button>
+        </div>
+      </template>
     </aw-dialog>
 
+    <!-- 日次オプション -->
     <aw-dialog v-model="dailyOptionDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :fullscreen="mobile">
-      <template #header>
+      <template #title>
         <h3>
           <p class="list-title">{{ dailyOptionSubtitle }}</p>
         </h3>
@@ -122,8 +135,9 @@
     <!-- <EventDetail v-if="showDetail" :event="selectedEvent" :visible="showDetail" :position="detailPosition"
       @close="hideEventDetails" /> -->
 
+    <!-- 予定詳細 -->
     <aw-dialog v-model="viewDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :fullscreen="mobile">
-      <template #header>
+      <template #title>
         <p class="list-title">予定の詳細</p>
       </template>
       <EventView v-if="eventDetail" :event-data="eventDetail" @edit="handleEditEvent" @delete="handleDelete" @copy="handleCopy" @back="handleCloseView" />
@@ -830,6 +844,23 @@ watch(isLoading, (newValue, oldValue) => {
   margin-right: 10px;
   border-radius: 2px;
 }
+
+.modal-footer {
+  display: flex; gap: 12px; justify-content: flex-end; height: 65px; padding: 12px;
+  border-top: 1px solid #dee2e6; /* --border-color */
+}
+
+.modal-footer-btn {
+  padding: 14px 28px; border-radius: 6px; /* --radius-sm */ font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s ease-in-out; /* --transition */ border: none; display: flex; align-items: center; gap: 8px;
+}
+
+.btn-primary { background-color: #4361ee; /* --primary-color */ color: white; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* --shadow-sm */ }
+.btn-primary:hover {
+  background-color: #3a53c4; /* --primary-hover */ box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); /* --shadow-md */
+  transform: translateY(-1px);
+}
+.btn-primary:disabled { background-color: #adb5bd; /* --text-light */ cursor: not-allowed; transform: none; }
 
 @media (max-width: 768px) {
   .container {

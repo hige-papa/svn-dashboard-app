@@ -179,7 +179,7 @@
     </div>
     
     <aw-dialog v-model="showModal" :draggable="true" :resize="true" :overlay="false" :fullscreen="false">
-      <template #header>
+      <template #title>
         <h3 class="modal-title">
           <i class="mdi mdi-account-group icon"></i>
           メンバーを選択

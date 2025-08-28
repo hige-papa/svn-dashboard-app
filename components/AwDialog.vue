@@ -6,12 +6,16 @@
                 aria-labelledby="modal-title">
                 <header ref="headerRef" :class="['modal-header', { 'draggable': draggable }]" @pointerdown.prevent="($event) => { if (draggable) { startDrag($event) } }" @dblclick="fullscreen">
                     <h2 id="modal-title" class="modal-title">
-                        <slot name="header"></slot>
+                        <slot name="title"></slot>
                     </h2>
                     <button class="close-button" @click="closeModal" aria-label="モーダルを閉じる">
                         &times;
                     </button>
                 </header>
+
+                <div class="modal-body-top">
+                    <slot name="header"></slot>
+                </div>
 
                 <main class="modal-body">
                     <slot />
@@ -357,11 +361,26 @@ watch(() => props.modelValue, (newValue) => {
     color: var(--dark-color);
 }
 
+.modal-body-top {
+    
+}
+
 /* ボディ: コンテンツエリア */
 .modal-body {
     overflow-y: auto;
-    /* flex-grow: 1; */
+    flex-grow: 1;
     /* コンテンツが少なくても高さを埋める */
+}
+
+.modal-footer {
+    /* ▼ 以下のプロパティは不要なため削除、またはコメントアウトします */
+    /* position: sticky;
+    bottom: 0;
+    left: 0;
+    width: 100%; */
+    background: var(--background-light);
+    z-index: 9;
+    flex-shrink: 0; /* (任意) フッターが縮まないように指定すると、より堅牢になります */
 }
 
 /* トランジションアニメーション */
@@ -455,14 +474,5 @@ watch(() => props.modelValue, (newValue) => {
     width: 12px;
     height: 12px;
     cursor: sw-resize;
-}
-
-.modal-footer {
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: var(--background-light);
-    z-index: 9;
 }
 </style>
