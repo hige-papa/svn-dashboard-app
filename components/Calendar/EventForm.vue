@@ -714,7 +714,7 @@ const filteredItems = computed((): MasterItem[] | TeamItem[] => {
       break
   }
 
-  if (!query) return items
+  if (!query) return items.sort((a, b) => { if (a.code > b.code) { return 1 } else { return -1 } })
   return items.filter(item => item.name.toLowerCase().includes(query)).sort((a, b) => { if (a.code > b.code) { return 1 } else { return -1 } })
 })
 
