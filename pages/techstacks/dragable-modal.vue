@@ -40,6 +40,14 @@
           <v-textarea placeholder="内容を入力..." class="h-100"></v-textarea>
         </v-card-text>
       </v-card>
+
+      <template #footer>
+        <v-list-item>
+          <template #append>
+            <v-btn>push</v-btn>
+          </template>
+        </v-list-item>
+      </template>
       
     </aw-dialog>
   </div>

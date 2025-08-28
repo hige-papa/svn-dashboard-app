@@ -96,12 +96,22 @@
           <EventsList v-if="currentView === 'weekly' && selectedDate" :date="selectedDate ?? new Date()" :events="selectedUserDayEvents" @event-click="handleShowEventDetails" :user="selectedUser" />
           <EventsList v-else-if="currentView === 'monthly' && selectedDate" :date="selectedDate ?? new Date()" :events="mySelectedDayEvents" @event-click="handleShowEventDetails" />
         </v-card-text>
-        <v-card-actions>
+        <!-- <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="primary" variant="text" :size="mobile ? 'small' : 'auto'" @click="openDailyOptionDialog">日別ステータスを編集する</v-btn>
           <v-btn color="primary" variant="text" :size="mobile ? 'small' : 'auto'" @click="goToRegister()">予定を登録する</v-btn>
-        </v-card-actions>
+        </v-card-actions> -->
       </v-card>
+      <template #footer>
+        <div class="modal-footer">
+          <button type="button" @click="openDailyOptionDialog" class="modal-footer-btn btn-primary">
+            日別ステータスを編集する
+          </button>
+          <button type="button" @click="goToRegister()" class="modal-footer-btn btn-primary">
+            予定を登録する
+          </button>
+        </div>
+      </template>
     </aw-dialog>
 
     <aw-dialog v-model="dailyOptionDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :fullscreen="mobile">
@@ -830,6 +840,23 @@ watch(isLoading, (newValue, oldValue) => {
   margin-right: 10px;
   border-radius: 2px;
 }
+
+.modal-footer {
+  display: flex; gap: 12px; justify-content: flex-end; height: 50px; padding: 12px;
+  border-top: 1px solid #dee2e6; /* --border-color */
+}
+
+.modal-footer-btn {
+  padding: 14px 28px; border-radius: 6px; /* --radius-sm */ font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s ease-in-out; /* --transition */ border: none; display: flex; align-items: center; gap: 8px;
+}
+
+.btn-primary { background-color: #4361ee; /* --primary-color */ color: white; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* --shadow-sm */ }
+.btn-primary:hover {
+  background-color: #3a53c4; /* --primary-hover */ box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); /* --shadow-md */
+  transform: translateY(-1px);
+}
+.btn-primary:disabled { background-color: #adb5bd; /* --text-light */ cursor: not-allowed; transform: none; }
 
 @media (max-width: 768px) {
   .container {

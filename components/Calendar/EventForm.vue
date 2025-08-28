@@ -537,10 +537,10 @@
       </div>
       <template #footer>
         <div class="modal-footer">
-          <button type="button" @click="closeModal" class="btn btn-secondary">
+          <button type="button" @click="closeModal" class="modal-footer-btn btn-secondary">
             キャンセル
           </button>
-          <button type="button" @click="confirmSelection" class="btn btn-primary">
+          <button type="button" @click="confirmSelection" class="modal-footer-btn btn-primary">
             選択を確定
           </button>
         </div>
@@ -1221,6 +1221,10 @@ onMounted(() => {
   padding: 14px 28px; border-radius: 6px; /* --radius-sm */ font-size: 14px; font-weight: 600;
   cursor: pointer; transition: all 0.2s ease-in-out; /* --transition */ border: none; display: flex; align-items: center; gap: 8px;
 }
+.modal-footer-btn {
+  padding: 14px 28px; border-radius: 6px; /* --radius-sm */ font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s ease-in-out; /* --transition */ border: none; display: flex; align-items: center; gap: 8px;
+}
 .btn-secondary {
   background-color: #f8f9fa; /* --background-light */ color: #6c757d; /* --text-secondary */
   border: 2px solid #dee2e6; /* --border-color */
@@ -1257,7 +1261,7 @@ onMounted(() => {
 .selection-meta { font-size: 13px; color: #6c757d; /* --text-secondary */ margin-top: 2px; }
 .selection-conflict { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #dc2626; /* --danger-color */ margin-top: 4px; }
 .modal-footer {
-  display: flex; gap: 12px; justify-content: flex-end; height: 100px; padding: 24px;
+  display: flex; gap: 12px; justify-content: flex-end; height: 50px; padding: 12px;
   border-top: 1px solid #dee2e6; /* --border-color */
 }
 .notification {

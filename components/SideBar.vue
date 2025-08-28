@@ -1,5 +1,5 @@
 <template>
-  <v-navigation-drawer v-model="state.drawer" :rail="state.rail" :permanent="!mobile">
+  <v-navigation-drawer v-model="state.drawer" :rail="state.rail" :permanent="!mobile" class="drawer-area">
 
     <v-list>
       <v-list-item :title="user?.displayName ?? 'ユーザー'" :subtitle="user?.role ?? undefined" @click="navigateTo('/profile')">
@@ -44,9 +44,14 @@
 
     <v-divider></v-divider>
 
-    <v-list>
+    <v-list bg-color="white" class="open-close-btn-area pa-0 ma-0">
       <v-list-item :class="[{'d-flex flex-row-reverse' : !state.rail}]">
-        <v-icon :icon="state.rail ? 'mdi-chevron-right' : 'mdi-chevron-left'" variant="text" @click.stop="state.rail = !state.rail"></v-icon>
+        <template #prepend>
+          <v-icon v-if="state.rail" icon="mdi-chevron-right" variant="text" @click.stop="state.rail = !state.rail"></v-icon>
+        </template>
+        <template #append>
+          <v-icon v-if="!state.rail" icon="mdi-chevron-left" variant="text" @click.stop="state.rail = !state.rail"></v-icon>
+        </template>
       </v-list-item>
     </v-list>
   </v-navigation-drawer>
@@ -74,6 +79,16 @@ const checkRole = (menu: any) => {
 }
 </script>
 
-<style lang="css" scoped>
+<style scoped>
+.drawer-area {
+  position: relative;
+}
 
+.open-close-btn-area {
+  position: sticky;
+  width: 100%;
+  left: 0;
+  bottom: 0;
+  z-index: 1;
+}
 </style>

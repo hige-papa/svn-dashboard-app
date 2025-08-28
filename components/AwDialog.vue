@@ -360,8 +360,19 @@ watch(() => props.modelValue, (newValue) => {
 /* ボディ: コンテンツエリア */
 .modal-body {
     overflow-y: auto;
-    /* flex-grow: 1; */
+    flex-grow: 1;
     /* コンテンツが少なくても高さを埋める */
+}
+
+.modal-footer {
+    /* ▼ 以下のプロパティは不要なため削除、またはコメントアウトします */
+    /* position: sticky;
+    bottom: 0;
+    left: 0;
+    width: 100%; */
+    background: var(--background-light);
+    z-index: 9;
+    flex-shrink: 0; /* (任意) フッターが縮まないように指定すると、より堅牢になります */
 }
 
 /* トランジションアニメーション */
@@ -455,14 +466,5 @@ watch(() => props.modelValue, (newValue) => {
     width: 12px;
     height: 12px;
     cursor: sw-resize;
-}
-
-.modal-footer {
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: var(--background-light);
-    z-index: 9;
 }
 </style>
