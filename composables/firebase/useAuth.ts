@@ -44,6 +44,7 @@ export const useAuth = () => {
     };
 
     const loginWithEmailAndPasswordAsync = async (email: string, password: string) => {
+        console.log('Attempting login with email:', email);
         return await signInWithEmailAndPassword(auth.value, email, password)
             .then(response => {
                 console.log(`success login with firebase authentication`);
@@ -51,12 +52,11 @@ export const useAuth = () => {
             })
             .catch(error => {
                 console.error("failed login with firebase authentication", error);
-                if (error.code.indexOf("user-not-found") > -1) {
-                    alert('存在しないユーザです');
-                } else if (error.code.indexOf("wrong-password") > -1) {
-                    alert('パスワードが一致しません');
-                }
-                return undefined;
+                console.log("Error code:", error?.code);
+                console.log("Error message:", error?.message);
+                console.log("Error details:", error);
+                // エラーを再スローして、呼び出し元でキャッチできるようにする
+                throw error;
             });
     };
 
