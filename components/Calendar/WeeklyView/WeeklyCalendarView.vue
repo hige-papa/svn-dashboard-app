@@ -25,7 +25,20 @@
             >
               {{ getDayOfWeek(day) }}曜日
             </div>
-            <div class="day-date">{{ formatShortDate(day) }}</div>
+            <!-- 日付の横に出社人数を表示 -->
+            <div class="d-flex align-center justify-center gap-3">
+              <div class="day-date">{{ formatShortDate(day) }}</div>
+              <v-chip 
+                v-if="getOfficeCount(day) > 0"
+                size="small" 
+                color="primary"
+                variant="outlined"
+                class="office-count-chip"
+              >
+                <v-icon icon="mdi-office-building" size="x-small" class="mr-1"></v-icon>
+                {{ getOfficeCount(day) }}人
+              </v-chip>
+            </div>
           </td>
         </tr>
       </thead>
@@ -199,6 +212,14 @@ const getLunchParticipation = (uid: string, date: Date) => {
 const getDinnerParticipation = (uid: string, date: Date) => {
   const dinnerParticipation = getDailyOptions(uid, date)?.dinnerParticipation;
   return participationDinnerStatusDetails[dinnerParticipation ?? 'pending'];
+}
+
+// 指定日の出社人数を集計
+const getOfficeCount = (date: Date) => {
+  return visibleUsers.value.filter(user => {
+    const workStyle = getDailyOptions(user.uid, date)?.workStyle;
+    return workStyle === 'office';
+  }).length;
 }
 
 // 表示するユーザー（visible=trueのもののみ）
