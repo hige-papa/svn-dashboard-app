@@ -16,10 +16,8 @@ const signin = async () => {
     await loginWithEmailAndPasswordAsync(id.value, password.value).then(_ => {
         navigateTo('/')
     }).catch(error => {
-        if (error.code.indexOf("user-not-found") > -1) {
-            message.value = '存在しないユーザです'
-        } else if (error.code.indexOf("wrong-password") > -1) {
-            message.value = 'パスワードが一致しません'
+        if (error.code.indexOf("auth/invalid-credential") >= 0) {
+            message.value = 'メールアドレスまたはパスワードが間違っています'
         }
     })
 }
