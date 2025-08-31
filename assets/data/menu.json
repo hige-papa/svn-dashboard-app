@@ -18,6 +18,13 @@
         "path": "/calendar"
       },
       {
+        "id": "wiki",
+        "label": "wiki",
+        "icon": "mdi-calendar",
+        "isActive": false,
+        "path": "/wiki"
+      },
+      {
         "id": "team",
         "label": "チーム",
         "icon": "mdi-account-group",
