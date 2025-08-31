@@ -4,7 +4,8 @@
             <div v-if="overlay" class="modal-overlay" @click.self="closeModal"></div>
             <div ref="modalRef" class="modal-content" :style="modalStyle" role="dialog" aria-modal="true"
                 aria-labelledby="modal-title">
-                <header ref="headerRef" :class="['modal-header', { 'draggable': draggable }]" @pointerdown.prevent="($event) => { if (draggable) { startDrag($event) } }" @dblclick="fullscreen">
+                <header ref="headerRef" :class="['modal-header', { 'draggable': draggable }]"
+                    @pointerdown.prevent="($event) => { if (draggable) { startDrag($event) } }" @dblclick="fullscreen">
                     <h2 id="modal-title" class="modal-title">
                         <slot name="title"></slot>
                     </h2>
@@ -23,7 +24,7 @@
 
                 <div v-if="resize" v-for="dir in ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw']" :key="dir"
                     :class="['resize-handle', dir]" @pointerdown.prevent="startResize($event, dir)"></div>
-                    
+
                 <footer class="modal-footer">
                     <slot name="footer"></slot>
                 </footer>
@@ -80,6 +81,7 @@ const size = ref({
     width: props.fullscreen ? window.innerWidth : props.initialWidth,
     height: props.fullscreen ? window.innerHeight : props.initialHeight
 });
+
 // ▼ リサイズ方向と開始時のモーダル位置を保持する変数を追加 ▼
 const resizeDirection = ref('');
 const startResizeInfo = { mouseX: 0, mouseY: 0, modalWidth: 0, modalHeight: 0, modalX: 0, modalY: 0 };
@@ -232,7 +234,8 @@ const fullscreen = () => {
             const height = size.value.height;
             position.value = {
                 x: (window.innerWidth - width) / 2,
-                y: ((window.innerHeight - height) / 2) - 30,
+                // ▼ 修正点1: Y座標の計算から `- 30` を削除 ▼
+                y: (window.innerHeight - height) / 2,
             };
         });
     } else {
@@ -281,7 +284,8 @@ watch(() => props.modelValue, (newValue) => {
             const height = size.value.height;
             position.value = {
                 x: props.fullscreen ? 0 : (window.innerWidth - width) / 2,
-                y: props.fullscreen ? 0 : ((window.innerHeight - height) / 2) - 30,
+                // ▼ 修正点2: Y座標の計算から `- 30` を削除 ▼
+                y: props.fullscreen ? 0 : (window.innerHeight - height) / 2,
             };
         });
     }
@@ -361,9 +365,7 @@ watch(() => props.modelValue, (newValue) => {
     color: var(--dark-color);
 }
 
-.modal-body-top {
-    
-}
+.modal-body-top {}
 
 /* ボディ: コンテンツエリア */
 .modal-body {
@@ -380,7 +382,8 @@ watch(() => props.modelValue, (newValue) => {
     width: 100%; */
     background: var(--background-light);
     z-index: 9;
-    flex-shrink: 0; /* (任意) フッターが縮まないように指定すると、より堅牢になります */
+    flex-shrink: 0;
+    /* (任意) フッターが縮まないように指定すると、より堅牢になります */
 }
 
 /* トランジションアニメーション */

@@ -465,7 +465,7 @@
       </div>
     </div>
 
-    <aw-dialog v-model="showModal" :draggable="true" :resize="true" :overlay="false" :fullscreen="mobile">
+    <aw-dialog v-model="showModal" :initial-height="550" :draggable="true" :resize="true" :overlay="false" :fullscreen="mobile">
       <template #header>
         <div class="modal-header">
           <div v-if="modalType === 'participant'" class="modal-view-tabs">
@@ -547,7 +547,7 @@
       </template>
     </aw-dialog>
 
-    <aw-dialog v-model="dialog" :draggable="true" :resize="true" :overlay="false" :fullscreen="mobile">
+    <aw-dialog v-model="dialog" :initial-height="550" :draggable="true" :resize="true" :overlay="false" :fullscreen="mobile">
       <template #title>
         <span v-if="selected" class="list-title text-body-1">{{ selected?.name }}さんの{{ formData.date }}の予定一覧</span>
       </template>
@@ -562,7 +562,7 @@
       </div>
     </Transition>
 
-    <aw-dialog v-model="isShowEventRelatedParties" :draggable="true" :resize="true" :overlay="false"
+    <aw-dialog v-model="isShowEventRelatedParties" :initial-height="550" :draggable="true" :resize="true" :overlay="false"
       :initial-width="1200" :fullscreen="mobile">
       <template #title>
         <span class="list-title text-body-1">参加者の予定一覧</span>
