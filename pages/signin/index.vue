@@ -15,8 +15,12 @@ const signin = async () => {
     message.value = ''
     await loginWithEmailAndPasswordAsync(id.value, password.value).then(_ => {
         navigateTo('/')
-    }).catch(err => {
-        message.value = 'idまたはパスワードが違います'
+    }).catch(error => {
+        if (error.code.indexOf("user-not-found") > -1) {
+            message.value = '存在しないユーザです'
+        } else if (error.code.indexOf("wrong-password") > -1) {
+            message.value = 'パスワードが一致しません'
+        }
     })
 }
 

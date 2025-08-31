@@ -59,7 +59,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
 import { useCalendar } from '~/composables/useCalendar';
 import type { User } from 'firebase/auth';
 

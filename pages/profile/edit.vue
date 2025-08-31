@@ -262,7 +262,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
 import { useUserProfile } from '~/composables/useUserProfile'
 import { useSection } from '~/composables/useSection'
 import type { User } from 'firebase/auth'

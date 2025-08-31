@@ -59,13 +59,6 @@ import { useCalendar } from '~/composables/useCalendar'
 
 const user = useState<User>('user');
 
-interface GroupMember {
-    id: string
-    type: 'user' | 'facility' | 'equipment'
-    name: string
-    avatar?: string
-}
-
 const props = defineProps({
   users: {
     type: Array as () => GroupMember[],
@@ -91,7 +84,7 @@ const sortedUsers = computed(() => {
   return [...visibleUsers.value].sort((a, b) => {
     if (a.id === user.value.uid && b.id !== user.value.uid) return -1;
     if (b.id === user.value.uid && a.id !== user.value.uid) return 1;
-    return a.name.localeCompare(b.name);
+    return a.code.localeCompare(b.code);
   });
 });
 

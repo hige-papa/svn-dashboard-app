@@ -45,19 +45,19 @@ export const useAuth = () => {
 
     const loginWithEmailAndPasswordAsync = async (email: string, password: string) => {
         return await signInWithEmailAndPassword(auth.value, email, password)
-            .then(response => {
-                console.log(`success login with firebase authentication`);
-                return response;
-            })
-            .catch(error => {
-                console.error("failed login with firebase authentication", error);
-                if (error.code.indexOf("user-not-found") > -1) {
-                    alert('存在しないユーザです');
-                } else if (error.code.indexOf("wrong-password") > -1) {
-                    alert('パスワードが一致しません');
-                }
-                return undefined;
-            });
+            // .then(response => {
+            //     console.log(`success login with firebase authentication`);
+            //     return response;
+            // })
+            // .catch(error => {
+            //     console.error("failed login with firebase authentication", error);
+            //     if (error.code.indexOf("user-not-found") > -1) {
+            //         alert('存在しないユーザです');
+            //     } else if (error.code.indexOf("wrong-password") > -1) {
+            //         alert('パスワードが一致しません');
+            //     }
+            //     return undefined;
+            // });
     };
 
     const logoutAsync = async () => {
