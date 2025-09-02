@@ -1,43 +1,33 @@
 <template>
     <article class="article-card">
         <div class="article-meta">
-            <v-icon v-if="props.icon" :icon="props.icon"></v-icon>
-            <div v-else class="author-avatar">{{ props.userName[0] }}</div>
+            <v-icon v-if="props.article.image" :icon="props.article.image"></v-icon>
+            <div v-else class="author-avatar">{{ props.article.author[0] }}</div>
             <div class="article-info">
-                <div>{{ props.userName }} • {{ props.userSection }}</div>
-                <div>{{ displayDate }}</div>
+                <div>{{ props.article.author }} • {{ props.article.department }}</div>
+                <div>{{ props.article.created_date }}</div>
             </div>
         </div>
-        <h2 class="article-title">{{ title }}</h2>
+        <h2 class="article-title">{{ props.article.title }}</h2>
         <p class="article-excerpt">
-            {{ props.article }}
+            {{ props.article.summary }}
         </p>
-        <a href="#" class="read-more">続きを読む →</a>
+        <a class="read-more" @click.stop="handleClickReadMore">続きを読む →</a>
     </article>
 </template>
 
 <script setup lang="ts">
 interface Props {
-    icon?: string
-    userName: string
-    userSection: string
-    title: string
-    article: string
-    createdAt: Date
+    article: WikiArticle
 }
 
-const props = withDefaults(defineProps<Props>(), {
-    title: '',
-    subtitle: '',
-})
+const props = defineProps<Props>()
 
-const displayDate = computed(() => {
-    const year = props.createdAt.getFullYear()
-    const month = props.createdAt.getMonth() + 1
-    const day = props.createdAt.getDate()
+const emit = defineEmits(['readMore'])
 
-    return `${year}年${month}月${day}日`
-})
+const handleClickReadMore = () => {
+    emit('readMore', props.article)
+}
 </script>
 
 <style scoped>
