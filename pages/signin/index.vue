@@ -11,6 +11,16 @@ const password = ref<string>('')
 
 const message = ref<string>('')
 
+// Tascal ロゴのデータURL
+const tascalLogoDataUrl = ref<string>('')
+
+// コンポーネントマウント時にデータURLを設定
+onMounted(() => {
+    // ここにbase64ファイルの内容（データURL）を設定してください
+    // 例: tascalLogoDataUrl.value = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...'
+    // 実際のデータURLを添付ファイルから取得して設定してください
+})
+
 const signin = async () => {
     message.value = ''
     await loginWithEmailAndPasswordAsync(id.value, password.value).then(_ => {
@@ -31,7 +41,18 @@ definePageMeta({
     <v-container class="d-flex align-center justify-center" :fluid="mobile">
         <v-card :width="mobile ? '100%' : '50%'">
             <v-sheet color="grey-lighten-1" height="250px" class="d-flex align-center justify-center">
-                <p>ロゴイメージ等</p>
+                <v-img 
+                    v-if="tascalLogoDataUrl"
+                    :src="tascalLogoDataUrl"
+                    alt="Tascal Logo"
+                    max-width="200"
+                    max-height="150"
+                    contain
+                ></v-img>
+                <div v-else class="text-center">
+                    <v-icon size="48" class="mb-2">mdi-domain</v-icon>
+                    <p class="text-h6">Tascal</p>
+                </div>
             </v-sheet>
             <v-container>
                 <v-list>

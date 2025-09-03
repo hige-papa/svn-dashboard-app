@@ -44,6 +44,13 @@
         "icon": "mdi-tools",
         "isActive": false,
         "path": "/equipment"
+      },
+      {
+        "id": "lunch",
+        "label": "ランチ会",
+        "icon": "mdi-food",
+        "isActive": false,
+        "path": "/lunch"
       }
     ]
   },
