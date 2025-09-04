@@ -4,6 +4,9 @@ import {
     signInWithEmailAndPassword,
     signOut,
     updateProfile,
+    sendPasswordResetEmail,
+    verifyPasswordResetCode,
+    confirmPasswordReset,
     updatePassword,
     updatePhoneNumber,
     PhoneAuthProvider,
@@ -15,11 +18,12 @@ import {
 export const useAuth = () => {
     const auth = useState<Auth>('auth');
 
-    const createUserWithEmailAndPasswordAsync = async (email: string, password: string) => {
+    const createUserWithEmailAndPasswordAsync = async (email: string, password: string, verify?: boolean) => {
+        verify = verify ? verify : false
         return await createUserWithEmailAndPassword(auth.value, email, password)
             .then(async (response) => {
                 console.log(`success create user with firebase authentication`);
-                await sendEmailVerificationAsync(response.user);
+                if (verify) await sendEmailVerificationAsync(response.user);
                 return response.user;
             })
             .catch(error => {
@@ -43,22 +47,8 @@ export const useAuth = () => {
         }
     };
 
-    const loginWithEmailAndPasswordAsync = async (email: string, password: string) => {
-        console.log('Attempting login with email:', email);
-        return await signInWithEmailAndPassword(auth.value, email, password)
-            // .then(response => {
-            //     console.log(`success login with firebase authentication`);
-            //     return response;
-            // })
-            // .catch(error => {
-            //     console.error("failed login with firebase authentication", error);
-            //     if (error.code.indexOf("user-not-found") > -1) {
-            //         alert('存在しないユーザです');
-            //     } else if (error.code.indexOf("wrong-password") > -1) {
-            //         alert('パスワードが一致しません');
-            //     }
-            //     return undefined;
-            // });
+    const loginWithEmailAndPasswordAsync = (email: string, password: string) => {
+        return signInWithEmailAndPassword(auth.value, email, password);
     };
 
     const logoutAsync = async () => {
@@ -96,10 +86,35 @@ export const useAuth = () => {
         }
     }
 
+    const sendPasswordResetEmailAsync = async (email: string) => {
+        return await sendPasswordResetEmail(auth.value, email)
+    }
+
+    const verifyPasswordResetCodeAsync = async (code: string) => {
+        return await verifyPasswordResetCode(auth.value, code)
+    }
+
+    const confirmPasswordResetAsync = async (code: string, newPassword: string) => {
+        return await confirmPasswordReset(auth.value, code, newPassword)
+    }
+
+    const updatePasswordAsync = async (newPassword: string) => {
+        const user = auth.value.currentUser
+        if (user) {
+            return await updatePassword(user, newPassword)
+        } else {
+            throw new Error('user is null')
+        }
+    }
+
     return {
         createUserWithEmailAndPasswordAsync,
         loginWithEmailAndPasswordAsync,
         logoutAsync,
         updateUserAsync,
+        sendPasswordResetEmailAsync,
+        verifyPasswordResetCodeAsync,
+        confirmPasswordResetAsync,
+        updatePasswordAsync,
     };
 };

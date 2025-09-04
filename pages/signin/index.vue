@@ -5,74 +5,25 @@ import { useDisplay } from 'vuetify'
 const { mobile } = useDisplay()
 const { loginWithEmailAndPasswordAsync } = useAuth()
 
-const id = ref<string>('')
+const email = ref<string>('')
+
 const password = ref<string>('')
-const message = ref<string>('')
+
 const showPassword = ref<boolean>(false)
-const isLoading = ref<boolean>(false)
 
-// 半角英数字のみを許可する入力制御
-const filterAlphanumeric = (value: string): string => {
-    return value.replace(/[^a-zA-Z0-9@._-]/g, '')
-}
+const message = ref<string>('')
 
-// IDの入力制御（メールアドレス用の記号も許可）
-const onIdInput = (event: Event) => {
-    const target = event.target as HTMLInputElement
-    const filtered = target.value.replace(/[^a-zA-Z0-9@._-]/g, '')
-    id.value = filtered
-    target.value = filtered
-}
-
-// パスワードの入力制御
-const onPasswordInput = (event: Event) => {
-    const target = event.target as HTMLInputElement
-    const filtered = target.value.replace(/[^a-zA-Z0-9]/g, '')
-    password.value = filtered
-    target.value = filtered
-}
-
-// バリデーション関数
-const validateInput = (): boolean => {
-    message.value = ''
-    
-    // 必須チェック
-    if (!id.value.trim()) {
-        message.value = 'IDを入力してください。'
-        return false
-    }
-    
-    if (!password.value.trim()) {
-        message.value = 'パスワードを入力してください。'
-        return false
-    }
-    
-    // メールアドレス形式チェック
-    if (!id.value.includes('@')) {
-        message.value = 'メールアドレスを入力してください。'
-        return false
-    }
-    
-    return true
-}
-
-const showForgotPasswordMessage = () => {
-    alert('実装中')
-}
+const loadging = ref<boolean>(false)
 
 const signin = async () => {
-    if (!validateInput()) {
-        return
-    }
-    
-    isLoading.value = true
     message.value = ''
-    await loginWithEmailAndPasswordAsync(id.value, password.value).then(_ => {
+    loadging.value = true
+    await loginWithEmailAndPasswordAsync(email.value, password.value).then(_ => {
         navigateTo('/')
-    }).catch(error => {
-        if (error.code.indexOf("auth/invalid-credential") >= 0) {
-            message.value = 'メールアドレスまたはパスワードが間違っています'
-        }
+    }).catch(err => {
+        message.value = 'idまたはパスワードが違います'
+    }).finally(() => {
+        loadging.value = false
     })
 }
 
@@ -83,59 +34,47 @@ definePageMeta({
 
 <template>
     <v-container class="d-flex align-center justify-center" :fluid="mobile">
-        <v-card :width="mobile ? '100%' : '50%'">
-            <v-sheet color="grey-lighten-1" height="250px" class="d-flex align-center justify-center">
-                <p>ロゴイメージ等</p>
+        <v-card :width="mobile ? '100%' : '50%'" @keydown.enter="signin">
+            <!-- <v-img class="w-100" src="/public/img/logo-001.png" height="150px"></v-img> -->
+            <v-sheet height="200" class="d-flex align-center justify-center">
+                <v-img class="w-100" src="/public/img/logo-001.png" height="200px"></v-img>
             </v-sheet>
-            <v-container>
+            <v-card-text>
                 <v-list>
                     <v-list-item class="pa-1">
-                        <div v-if="message" class="text-red-darken-2 text-body-2 mb-2 pa-2 bg-red-lighten-5 rounded">
-                            {{ message }}
-                        </div>
+                        <p v-if="message" class="text-red text-body-2">{{ message }}</p>
                     </v-list-item>
                     <v-list-item class="pa-1">
-                        <v-text-field 
-                            v-model="id" 
-                            label="id" 
-                            variant="outlined" 
-                            class="mt-2"
-                            @input="onIdInput"
-                            placeholder="メールアドレスを入力"
-                        ></v-text-field>
+                        <v-text-field
+                            v-model="email"
+                            label="email"
+                            variant="outlined"
+                            prepend-icon="mdi-email"
+                            class="mt-2" />
                     </v-list-item>
                     <v-list-item class="pa-1">
-                        <v-text-field 
-                            v-model="password" 
-                            label="password" 
+                        <v-text-field
+                            label="パスワード"
+                            v-model="password"
                             :type="showPassword ? 'text' : 'password'" 
-                            variant="outlined" 
-                            class="mt-2" 
-                            @keydown.enter="signin"
-                            @input="onPasswordInput"
-                            placeholder="パスワードを入力"
-                        ></v-text-field>
+                            variant="outlined"
+                            prepend-icon="mdi-lock"
+                            :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                            @click:append-inner="showPassword = !showPassword"
+                            class="mt-2" />
                     </v-list-item>
                     <v-list-item class="pa-1">
-                        <v-checkbox v-model="showPassword" label="パスワードを表示する" color="primary" hide-details></v-checkbox>
-                    </v-list-item>
-                    <v-list-item class="pa-1 text-right">
-                        <a href="#" @click.prevent="showForgotPasswordMessage" class="text-primary text-decoration-none">パスワードをお忘れの方 ></a>
+                        <v-btn @click="signin" class="mt-2 w-100" variant="elevated" color="primary" :loading="loadging">ログイン</v-btn>
                     </v-list-item>
                     <v-list-item class="pa-1">
-                        <v-btn 
-                            @click="signin" 
-                            :loading="isLoading"
-                            :disabled="isLoading"
-                            class="mt-2 w-100" 
-                            variant="elevated" 
-                            color="primary"
-                        >
-                            ログイン
-                        </v-btn>
+                        <template #append>
+                            <v-btn color="primary" variant="text" @click.stop="navigateTo('/auth/password/reset')">
+                                パスワードを忘れた方はこちら
+                            </v-btn>
+                        </template>
                     </v-list-item>
                 </v-list>
-            </v-container>
+            </v-card-text>
         </v-card>
     </v-container>
 </template>
