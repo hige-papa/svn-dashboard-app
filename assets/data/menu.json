@@ -51,6 +51,13 @@
         "icon": "mdi-tools",
         "isActive": false,
         "path": "/equipment"
+      },
+      {
+        "id": "connection-test",
+        "label": "接続テスト",
+        "icon": "mdi-database-check",
+        "isActive": false,
+        "path": "/connection-test"
       }
     ]
   },
