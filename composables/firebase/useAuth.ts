@@ -44,6 +44,7 @@ export const useAuth = () => {
     };
 
     const loginWithEmailAndPasswordAsync = async (email: string, password: string) => {
+        console.log('Attempting login with email:', email);
         return await signInWithEmailAndPassword(auth.value, email, password)
             // .then(response => {
             //     console.log(`success login with firebase authentication`);
