@@ -57,6 +57,16 @@ export const useDocumentRoot = () => {
       return `team/${id}`;
     },
   };
+  
+  
+  const wikiArticleDocRoot = {
+    collection: () => {
+      return `wikiArticles`;
+    },
+    document: (id: string) => {
+      return `wikiArticles/${id}`;
+    },
+  };
 
   return {
     userProfileRoot,
@@ -65,5 +75,6 @@ export const useDocumentRoot = () => {
     equipmentDocRoot,
     sectionDocRoot,
     teamDocRoot,
+    wikiArticleDocRoot,
   };
 };
