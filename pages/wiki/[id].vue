@@ -10,15 +10,21 @@
 </template>
 
 <script setup lang="ts">
-import { wikiArticles } from '~/services/wikiService'
+import { useFirestoreGeneral } from '~/composables/firestoreGeneral/useFirestoreGeneral'
+
+const { getAsync: getWikiArticle } = useFirestoreGeneral('wikiArticles')
+
+// import { wikiArticles } from '~/services/wikiService'
 
 const { params } = useRoute()
 
 const id = computed(() => {
-    return Number(params.id)
+    return params.id as string
 })
 
-const article = computed(() => {
-    return wikiArticles.find(e => e.id === id.value)
-})
+// const article = computed(() => {
+//     return wikiArticles.find(e => e.id === id.value)
+// })
+
+const article = ref<WikiArticle | null>(await getWikiArticle(id.value))
 </script>

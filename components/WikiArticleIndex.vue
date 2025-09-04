@@ -2,10 +2,11 @@
     <article class="article-card">
         <div class="article-meta">
             <v-icon v-if="props.article.image" :icon="props.article.image"></v-icon>
-            <div v-else class="author-avatar">{{ props.article.author[0] }}</div>
+            <div v-else-if="props.article.author" class="author-avatar">{{ props.article.author[0] }}</div>
+            <v-icon v-else>mdi-account</v-icon>
             <div class="article-info">
                 <div>{{ props.article.author }} • {{ props.article.department }}</div>
-                <div>{{ props.article.created_date }}</div>
+                <div>{{ props.article.createdAt?.toDate()?.toLocaleDateString() }}</div>
             </div>
         </div>
         <h2 class="article-title">{{ props.article.title }}</h2>

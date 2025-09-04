@@ -1,15 +1,18 @@
-interface WikiArticle {
-    id: number
+interface WikiArticleForm {
     title: string
     category: string
     summary: string
     content: string
+    tags: string[]
+    image?: string
     author: string
     department: string
-    created_date: string
-    updated_date: string
-    tags: string[]
+}
+
+interface WikiArticle extends WikiArticleForm {
+    id: string
+    createdAt: string
+    updatedAt: string
     status: 'published' | 'draft' | 'archived'
     views: number
-    image?: string
 }

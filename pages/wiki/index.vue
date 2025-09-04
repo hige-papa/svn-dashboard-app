@@ -16,6 +16,9 @@
             </v-col>
         </v-row>
         <v-row>
+            <!-- <v-col>
+                {{articles}}
+            </v-col> -->
             <v-col cols="12" sm="7">
                 <v-list>
                     <v-list-item v-for="(article, index) in articles" :key="`article-${index}`">
@@ -40,11 +43,21 @@
 </template>
 
 <script setup lang="ts">
-import { wikiArticles } from '~/services/wikiService'
+import { useFirestoreGeneral } from '~/composables/firestoreGeneral/useFirestoreGeneral'
+import { useDocumentRoot } from '~/composables/firebase/useDocumentRoot'
 
-const articles = computed<WikiArticle[]>(() => {
-    return wikiArticles
-})
+const { wikiArticleDocRoot } = useDocumentRoot()
+
+const { getListAsync: getWikiArticles } = useFirestoreGeneral(wikiArticleDocRoot.collection())
+
+// import { wikiArticles } from '~/services/wikiService'
+
+// const articles = computed<WikiArticle[]>(() => {
+//     return wikiArticles
+// })
+
+const articles = ref<WikiArticle[]>(await getWikiArticles())
+
 const hero = ref<any>({
     title: 'チームの知見を共有しよう',
     subtitle: '社内の最新情報、技術ノウハウ、プロジェクト事例をみんなで共有するブログです',
