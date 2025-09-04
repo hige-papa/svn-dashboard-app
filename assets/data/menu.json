@@ -18,6 +18,13 @@
         "path": "/calendar"
       },
       {
+        "id": "lunch",
+        "label": "ランチ会",
+        "icon": "mdi-food",
+        "isActive": false,
+        "path": "/lunch"
+      },
+      {
         "id": "wiki",
         "label": "wiki",
         "icon": "mdi-calendar",
