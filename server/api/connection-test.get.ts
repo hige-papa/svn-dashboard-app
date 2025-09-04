@@ -31,6 +31,17 @@ export default defineEventHandler(async (event) => {
   });
 
   try {
+    // クエリパラメータを取得
+    const query = getQuery(event);
+    const page = parseInt(query.page as string) || 1;
+    const limit = parseInt(query.limit as string) || 100;
+    const offset = (page - 1) * limit;
+    const dataSource = (query.dataSource as string) || 'table';
+    const minValue = query.minValue ? parseInt(query.minValue as string) : null;
+    const maxValue = query.maxValue ? parseInt(query.maxValue as string) : null;
+
+    console.log('リクエストパラメータ:', { page, limit, offset, dataSource, minValue, maxValue });
+
     // データベースに接続
     console.log('接続設定:', {
       server: config.server,
@@ -43,23 +54,72 @@ export default defineEventHandler(async (event) => {
     const pool = await sql.connect(config);
     console.log('SQL Server接続成功');
     
-    // パラメータ化クエリでデータを取得（指定カラムのみ）
-    const result = await pool.request()
-      .query(`
-        SELECT TOP (100) 
-          [請求NO],
-          [名前],
-          [ふり],
-          [性],
-          [郵便],
-          [住所01],
-          [住所02],
-          [TEL]
-        FROM [dbo].[DB基本情報] 
-        ORDER BY [請求NO] ASC
-      `);
+    let result;
+    let totalCount = 0;
     
-    console.log(`データ取得成功: ${result.recordset.length}件`);
+    // データソースに応じて処理を分岐
+    if (dataSource === 'sp') {
+      // ストアドプロシージャを実行
+      console.log('ストアドプロシージャ実行:', { minValue, maxValue });
+      
+      const spResult = await pool.request()
+        .input('請求NOmin', sql.Int, minValue)
+        .input('請求NOmax', sql.Int, maxValue)
+        .execute('[dbo].[SP基本情報]');
+      
+      // 全結果から指定カラムのみ抽出
+      const allData = spResult.recordset.map((row: any) => ({
+        '請求NO': row['請求NO'],
+        '名前': row['名前'],
+        'ふり': row['ふり'],
+        '性': row['性'],
+        '郵便': row['郵便'],
+        '住所01': row['住所01'],
+        '住所02': row['住所02'],
+        'TEL': row['TEL']
+      }));
+      
+      totalCount = allData.length;
+      
+      // ページネーション適用
+      const startIndex = offset;
+      const endIndex = startIndex + limit;
+      const paginatedData = allData.slice(startIndex, endIndex);
+      
+      result = { recordset: paginatedData };
+      
+    } else {
+      // Table または View の場合
+      const tableName = dataSource === 'view' ? 'VW基本情報' : 'DB基本情報';
+      console.log('テーブル/ビュー クエリ実行:', tableName);
+      
+      // 総件数を取得
+      const countResult = await pool.request()
+        .query(`SELECT COUNT(*) as total FROM [dbo].[${tableName}]`);
+      totalCount = countResult.recordset[0].total;
+
+      // パラメータ化クエリでデータを取得（指定カラムのみ、ページネーション対応）
+      result = await pool.request()
+        .input('offset', sql.Int, offset)
+        .input('limit', sql.Int, limit)
+        .query(`
+          SELECT 
+            [請求NO],
+            [名前],
+            [ふり],
+            [性],
+            [郵便],
+            [住所01],
+            [住所02],
+            [TEL]
+          FROM [dbo].[${tableName}] 
+          ORDER BY [請求NO] ASC
+          OFFSET @offset ROWS
+          FETCH NEXT @limit ROWS ONLY
+        `);
+    }
+    
+    console.log(`データ取得成功: ${result.recordset.length}件 (${page}ページ目, 総件数: ${totalCount}件, データソース: ${dataSource})`);
     
     // カラム名を確認
     if (result.recordset.length > 0) {
@@ -72,14 +132,20 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       data: result.recordset,
-      count: result.recordset.length
+      count: result.recordset.length,
+      totalCount: totalCount,
+      page: page,
+      limit: limit,
+      hasMore: (page * limit) < totalCount,
+      dataSource: dataSource
     };
   } catch (error: any) {
     console.error('SQL Server接続エラー詳細:', {
       message: error?.message,
       code: error?.code,
       serverName: error?.serverName,
-      name: error?.name
+      name: error?.name,
+      stack: error?.stack
     });
     
     // エラーメッセージを詳細化
@@ -93,8 +159,11 @@ export default defineEventHandler(async (event) => {
       userMessage = 'データベースへのログインに失敗しました';
       troubleshooting = 'SQL認証ユーザー(svn)の存在とパスワードを確認してください';
     } else if (error?.message?.includes('Invalid object name')) {
-      userMessage = 'テーブルが見つかりません';
-      troubleshooting = 'テーブル名[DB基本情報]の存在を確認してください';
+      userMessage = 'テーブル・ビュー・ストアドプロシージャが見つかりません';
+      troubleshooting = 'データソースの存在を確認してください';
+    } else if (error?.message?.includes('Could not find stored procedure')) {
+      userMessage = 'ストアドプロシージャが存在しません';
+      troubleshooting = 'SP基本情報ストアドプロシージャの存在を確認してください';
     }
     
     throw createError({
@@ -106,7 +175,9 @@ export default defineEventHandler(async (event) => {
         detailId: Date.now().toString(),
         serverAttempted: config.server,
         database: config.database,
-        user: config.user
+        user: config.user,
+        errorStack: error?.stack,
+        dataSource: (getQuery(event).dataSource as string) || 'table'
       }
     });
   }
