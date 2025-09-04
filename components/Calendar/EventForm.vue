@@ -711,7 +711,7 @@ const filteredItems = computed((): MasterItem[] | TeamItem[] => {
   }
 
   const filtered = query
-    ? sourceItems.filter(item => item.name.toLowerCase().includes(query))
+    ? sourceItems.filter(item => item.name.toLowerCase().includes(query) || (item as MasterItem).department?.toLowerCase().includes(query))
     : sourceItems;
 
   // ★★★★★

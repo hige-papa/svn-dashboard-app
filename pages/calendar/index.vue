@@ -254,7 +254,7 @@ const dateString = computed(() => {
 });
 
 const eventListSubtitle = computed(() => {
-    if (user.value && user.value.uid != selectedUser.value?.uid) {
+    if (user.value && selectedUser.value && user.value.uid != selectedUser.value?.uid) {
         return `${selectedUser.value?.displayName}さんの${dateString.value}の予定一覧`;
     } else {
         return `${dateString.value}の予定一覧`;
