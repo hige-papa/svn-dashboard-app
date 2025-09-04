@@ -4,6 +4,7 @@
             <div class="popular-post">
                 <div class="popular-title">{{ props.article.title }}</div>
                 <div class="popular-meta">{{ props.article.author }} • {{ props.article.created_date }}</div>
+                <a class="read-more" @click.stop="handleClickReadMore">続きを読む →</a>
             </div>
             <!-- <span>{{ props.article.title }}</span> -->
         </v-card-text>
@@ -16,6 +17,12 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const emit = defineEmits(['readMore'])
+
+const handleClickReadMore = () => {
+    emit('readMore', props.article)
+}
 </script>
 
 <style scoped>
@@ -36,5 +43,16 @@ const props = defineProps<Props>()
 .popular-meta {
     font-size: 0.8rem;
     color: #666;
+}
+
+.read-more {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.read-more:hover {
+    color: #764ba2;
 }
 </style>

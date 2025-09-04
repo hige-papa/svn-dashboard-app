@@ -3,7 +3,8 @@
         <v-list-item v-for="(article, index) in props.articles" :key="`pop-article-${index}`">
             <!-- <span>人気記事-{{ n }}</span> -->
              <!-- <div>{{ article }}</div> -->
-            <PopularArticleIndex :article="article" class="ma-2"></PopularArticleIndex>
+            <PopularArticleIndex :article="article" class="ma-2"
+                            @read-more="handleClickReadMore"></PopularArticleIndex>           
         </v-list-item>
     </v-list>
 </template>
@@ -14,6 +15,11 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const handleClickReadMore = (e: WikiArticle) => {
+    // alert(JSON.stringify(e))
+    navigateTo(`/wiki/${e.id}`)
+}
 </script>
 
 <style scoped>
