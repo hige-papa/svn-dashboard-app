@@ -19,11 +19,12 @@
                 'day-name', 
                 { 
                   'sunday': day.getDay() === 0,
-                  'saturday': day.getDay() === 6
+                  'saturday': day.getDay() === 6,
+                  'holiday': getHolidayName(day)
                 }
               ]"
             >
-              {{ getDayOfWeek(day) }}曜日
+              {{ getDayOfWeek(day) }}曜日<span v-if="getHolidayName(day)" class="holiday-indicator">（祝）</span>
             </div>
             <!-- 日付の横に出社人数を表示 -->
             <div class="d-flex align-center justify-center gap-3">
@@ -177,7 +178,8 @@ const {
 
 const { 
   getDayOfWeek, 
-  formatShortDate
+  formatShortDate,
+  getHolidayName
 } = useCalendar();
 
 const dateString = (date: Date) => {
@@ -419,6 +421,14 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
 
 .saturday {
   color: var(--primary-color);
+}
+
+.holiday {
+  color: var(--accent-color);
+}
+
+.holiday-indicator {
+  color: var(--accent-color);
 }
 
 .today-header {
