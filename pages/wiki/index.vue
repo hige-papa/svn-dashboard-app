@@ -1,5 +1,10 @@
 <template>
     <v-container>
+        <v-list-item>
+            <template v-slot:append>
+                <v-btn color="primary" variant="text" @click.stop="navigateTo('/wiki/new')">新しい記事を作成</v-btn>
+            </template>
+        </v-list-item>
         <v-row>
             <v-col>
                 <WikiHeroSection

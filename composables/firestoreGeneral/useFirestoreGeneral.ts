@@ -108,12 +108,12 @@ export const useFirestoreGeneral = (key: string) => {
 
     const updateAsync = async (id: string, m: any) => {
         const ref = getDocRef(generalDocRoot.document(key, id))
-        return await updateDocWithRefAsync(ref, m);
+        return await updateDocWithRefAsync(ref, m)
     };
 
     const deleteAsync = async (id: string) => {
         const ref = getDocRef(generalDocRoot.document(key, id))
-        return await deleteDocWithRefAsync(ref);
+        return await deleteDocWithRefAsync(ref)
     };
 
     return {

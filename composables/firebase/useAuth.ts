@@ -7,6 +7,7 @@ import {
     sendPasswordResetEmail,
     verifyPasswordResetCode,
     confirmPasswordReset,
+    updateEmail,
     updatePassword,
     updatePhoneNumber,
     PhoneAuthProvider,
@@ -107,6 +108,15 @@ export const useAuth = () => {
         }
     }
 
+    const updateEmailAsync = async (email: string) => {
+        const user = auth.value.currentUser
+        if (user) {
+            return await updateEmail(user, email)
+        } else {
+            throw new Error('user is null')
+        }
+    }
+
     return {
         createUserWithEmailAndPasswordAsync,
         loginWithEmailAndPasswordAsync,
@@ -116,5 +126,6 @@ export const useAuth = () => {
         verifyPasswordResetCodeAsync,
         confirmPasswordResetAsync,
         updatePasswordAsync,
+        updateEmailAsync,
     };
 };
