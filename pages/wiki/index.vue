@@ -1,6 +1,7 @@
 <template>
     <v-container>
-        <v-list-item>
+        {{ user?.role }}:{{ editable }}
+        <v-list-item v-if="editable">
             <template v-slot:append>
                 <v-btn color="primary" variant="text" @click.stop="navigateTo('/wiki/new')">新しい記事を作成</v-btn>
             </template>
@@ -48,12 +49,16 @@
 </template>
 
 <script setup lang="ts">
-import { useFirestoreGeneral } from '~/composables/firestoreGeneral/useFirestoreGeneral'
-import { useDocumentRoot } from '~/composables/firebase/useDocumentRoot'
+import { useWiki } from '~/composables/useWiki'
+import { type QueryConstraint, where } from 'firebase/firestore'
 
-const { wikiArticleDocRoot } = useDocumentRoot()
+const user = useState<ExtendedUserProfile>('userProfile')
 
-const { getListAsync: getWikiArticles } = useFirestoreGeneral(wikiArticleDocRoot.collection())
+const editable = computed(() => {
+    return user.value?.role === 'admin'
+})
+
+const { getListAsync: getWikiArticles } = useWiki()
 
 // import { wikiArticles } from '~/services/wikiService'
 
@@ -70,8 +75,25 @@ const hero = ref<any>({
     searchPlaceHolder: '記事を検索...'
 })
 
-const handleClickSearch = (e: any) => {
-    alert(e)
+// 前方一致検索用クエリ生成
+const getPrefixQuery = (searchTerm: string) => {
+    const end = searchTerm.replace(/.$/, c => 
+        String.fromCharCode(c.charCodeAt(0) + 1)
+    )
+    return [searchTerm, end]
+}
+
+const handleClickSearch = async (e: any) => {
+    // alert(e)
+    if (e) {
+        const query: QueryConstraint[] = []
+        const [start, end] = getPrefixQuery(e)
+        query.push(where('title', '>=', start))
+        query.push(where('title', '<', end))
+        articles.value = await getWikiArticles(...query)
+    } else {
+        articles.value = await getWikiArticles()
+    }
 }
 
 const handleClickReadMore = (e: WikiArticle) => {

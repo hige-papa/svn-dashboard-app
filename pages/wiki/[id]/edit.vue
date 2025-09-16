@@ -65,9 +65,9 @@
 </template>
 
 <script setup lang="ts">
-import { useFirestoreGeneral } from '~/composables/firestoreGeneral/useFirestoreGeneral'
+import { useWiki } from '~/composables/useWiki'
 
-const { getAsync: getWikiArticle, updateAsync: updateWikiArticle } = useFirestoreGeneral('wikiArticles')
+const { getAsync: getWikiArticle, updateAsync: updateWikiArticle } = useWiki()
 
 const user = useState<ExtendedUserProfile>('userProfile')
 

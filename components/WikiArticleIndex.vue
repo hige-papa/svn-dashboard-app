@@ -6,7 +6,7 @@
             <v-icon v-else>mdi-account</v-icon>
             <div class="article-info">
                 <div>{{ props.article.author }} • {{ props.article.department }}</div>
-                <div>{{ props.article.createdAt?.toDate()?.toLocaleDateString() }}</div>
+                <div>{{ props.article.createdAt }}</div>
             </div>
         </div>
         <h2 class="article-title">{{ props.article.title }}</h2>

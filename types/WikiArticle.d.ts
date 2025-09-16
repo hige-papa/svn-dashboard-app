@@ -15,4 +15,12 @@ interface WikiArticle extends WikiArticleForm {
     updatedAt: string
     status: 'published' | 'draft' | 'archived'
     views: number
+    version: number
+}
+
+interface WikiArticleHistory {
+    snapshot: WikiArticle
+    version: number
+    createdAt: string
+    updatedAt: string
 }

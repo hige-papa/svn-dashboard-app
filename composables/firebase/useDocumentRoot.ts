@@ -58,13 +58,21 @@ export const useDocumentRoot = () => {
     },
   };
   
-  
   const wikiArticleDocRoot = {
     collection: () => {
       return `wikiArticles`;
     },
     document: (id: string) => {
       return `wikiArticles/${id}`;
+    },
+  };
+  
+  const wikiArticleHistoryDocRoot = {
+    collection: (aid: string) => {
+      return `wikiArticles/${aid}/histories`;
+    },
+    document: (aid: string, hid: string) => {
+      return `wikiArticles/${aid}/histories/${hid}`;
     },
   };
 
@@ -76,5 +84,6 @@ export const useDocumentRoot = () => {
     sectionDocRoot,
     teamDocRoot,
     wikiArticleDocRoot,
+    wikiArticleHistoryDocRoot,
   };
 };
