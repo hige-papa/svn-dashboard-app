@@ -212,7 +212,7 @@
               <div class="metadata-info">
                 <div v-if="eventData.createdAt" class="metadata-item">
                   <span class="metadata-label">作成日時:</span>
-                  <span class="metadata-value">{{ formatDateTime(eventData.createdAt.toDate()) }}</span>
+                  <span class="metadata-value">{{ formatDateTime(eventData.createdAt) }}</span>
                 </div>
                 <div v-if="eventData.createdBy" class="metadata-item">
                   <span class="metadata-label">作成者:</span>
@@ -220,7 +220,7 @@
                 </div>
                 <div v-if="eventData.updatedAt" class="metadata-item">
                   <span class="metadata-label">最終更新:</span>
-                  <span class="metadata-value">{{ formatDateTime(eventData.updatedAt.toDate()) }}</span>
+                  <span class="metadata-value">{{ formatDateTime(eventData.updatedAt) }}</span>
                 </div>
                 <div v-if="eventData.updatedBy" class="metadata-item">
                   <span class="metadata-label">最終更新者:</span>

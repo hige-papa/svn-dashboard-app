@@ -65,11 +65,15 @@
 </template>
 
 <script setup lang="ts">
-import { useFirestoreGeneral } from '~/composables/firestoreGeneral/useFirestoreGeneral'
+import { useWiki } from '~/composables/useWiki'
 
-const { addAsync: addWikiArticle } = useFirestoreGeneral('wikiArticles')
+const { addAsync: addWikiArticle } = useWiki()
 
 const user = useState<ExtendedUserProfile>('userProfile')
+
+const editable = computed(() => {
+    return user.value?.role === 'admin'
+})
 
 const categories = ref<any[]>(['カテゴリ1','カテゴリ2','カテゴリ3'])
 
@@ -98,4 +102,11 @@ const handleSubmit = async () => {
         console.error('記事の投稿に失敗しました:', error)
     })
 }
+
+onMounted(() => {
+    if(!editable.value){
+        alert('記事の作成権限がありません。')
+        navigateTo('/wiki')
+    }
+})
 </script>

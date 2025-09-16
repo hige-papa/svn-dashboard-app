@@ -387,8 +387,8 @@ const loadUsers = async () => {
       role: profile.role || 'user',
       status: profile.status || 'active',
       avatar: profile.avatar,
-      lastLogin: profile.lastLogin?.toDate(),
-      createdAt: profile.createdAt?.toDate() || new Date().toISOString()
+      lastLogin: profile.lastLogin,
+      createdAt: profile.createdAt || new Date().toISOString()
     }))
     
     filteredUsers.value = [...users.value]
