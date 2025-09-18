@@ -420,7 +420,7 @@ const onDayClick = (date: Date) => {
 }
 
 .day-event .event-time-range {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   line-height: 1.2;
   white-space: nowrap;

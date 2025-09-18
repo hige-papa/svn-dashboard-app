@@ -515,7 +515,7 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
 }
 
 .event-time-range {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   line-height: 1.2;
   white-space: nowrap;
