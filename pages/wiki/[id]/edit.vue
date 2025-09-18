@@ -1,13 +1,13 @@
 <template>
     <v-container>
         <v-list-item>
-            <v-btn icon @click.stop="navigateTo('/wiki')">
+            <v-btn icon @click.stop="navigateTo(`/wiki/${id}`)">
                 <v-icon>mdi-arrow-left</v-icon>
             </v-btn>
         </v-list-item>
         <v-card>
             <v-card-title>
-                新しい記事を作成
+                記事を更新
             </v-card-title>
             <v-card-text>
                 <v-form>
@@ -57,7 +57,7 @@
         <template #footer>
             <v-list-item>
                 <template #append>
-                    <v-btn text @click="preview = false" @click.stop="handleSubmit">投稿する</v-btn>
+                    <v-btn text @click="preview = false" @click.stop="handleSubmit">更新する</v-btn>
                 </template>
             </v-list-item>
         </template>
@@ -67,12 +67,14 @@
 <script setup lang="ts">
 import { useWiki } from '~/composables/useWiki'
 
-const { addAsync: addWikiArticle } = useWiki()
+const { getAsync: getWikiArticle, updateAsync: updateWikiArticle } = useWiki()
 
 const user = useState<ExtendedUserProfile>('userProfile')
 
-const editable = computed(() => {
-    return user.value?.role === 'admin'
+const { params } = useRoute()
+
+const id = computed(() => {
+    return params.id as string
 })
 
 const categories = ref<any[]>(['カテゴリ1','カテゴリ2','カテゴリ3'])
@@ -88,6 +90,17 @@ const form = ref<WikiArticleForm>({
     department: user.value?.department || '未設定',
 })
 
+// ローカルストレージに編集状況を記録
+import { useLocalStorage } from '~/composables/common/useLocalStorage'
+
+const localStorageKey = `wiki-article-edit-${id.value}`
+
+const { getItem, setItem } = useLocalStorage(localStorageKey)
+
+watch(form, (newVal) => {
+    setItem(localStorageKey, JSON.stringify(newVal))
+}, { deep: true })
+
 const preview = ref<boolean>(false)
 
 const handleShowPreview = () =>{
@@ -95,18 +108,24 @@ const handleShowPreview = () =>{
 }
 
 const handleSubmit = async () => {
-    // ここでフォームの内容をサーバーに送信する処理を実装
-    await addWikiArticle(form.value).then(_ => {
-        console.log('記事が投稿されました！')
-    }).catch(error => {
-        console.error('記事の投稿に失敗しました:', error)
+    if(!form.value.title || !form.value.content || !form.value.summary) return
+    await updateWikiArticle(id.value, form.value).then(_ => {
+        localStorage.removeItem(localStorageKey)
+        navigateTo(`/wiki/${id.value}`)
     })
 }
 
-onMounted(() => {
-    if(!editable.value){
-        alert('記事の作成権限がありません。')
-        navigateTo('/wiki')
+onMounted(async () => {
+    const updating = getItem(localStorageKey)
+    if (updating) {
+        form.value = JSON.parse(updating) as WikiArticleForm
+    } else {
+        const article = await getWikiArticle(id.value)
+        if (article) {
+            form.value = article as WikiArticleForm
+        } else {
+            navigateTo('/wiki')
+        }
     }
 })
 </script>

@@ -86,7 +86,8 @@
                 {{ event.startTime }} {{ event.title }}
               </div> -->
               <div v-for="(event, index) in getVisibleEvents(day.date, 2)" :key="event.id" class="day-event" :style="{ '--event-color': `${eventTypeDetails[event.eventType]?.color}` }">
-                {{ event.startTime }} {{ event.title }}
+                <div class="event-time-range">{{ event.startTime }}-{{ event.endTime }}</div>
+                <div class="event-title">{{ event.title }}</div>
               </div>
 
               <div v-if="getEventsForDay(day.date).length > 2" class="more-events">
@@ -408,10 +409,7 @@ const onDayClick = (date: Date) => {
   font-size: 11px;
   padding: 4px 8px;
   width: 157px;
-  text-overflow: ellipsis;
   margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
   background-color: color-mix(in srgb, var(--event-color) 15%, #FFF);
   border-left: 3px solid var(--event-color);
   /* color: var(--event-color); */
@@ -419,6 +417,24 @@ const onDayClick = (date: Date) => {
   border-radius: 4px;
   transition: var(--transition);
   cursor: pointer;
+}
+
+.day-event .event-time-range {
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.day-event .event-title {
+  font-size: 11px;
+  line-height: 1.2;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .day-event:hover {

@@ -110,15 +110,15 @@
                 v-for="(event, index) in getVisibleEvents(getUserEventsForDay(user.uid, day))" 
                 :key="event.id"
                 :class="['event', 'event-type']"
-                :style="{ top: `${10 + (index * 28)}px`, '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey' }"
+                :style="{ top: `${10 + (index * 50)}px`, '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey' }"
               >
                 <template v-if="isViewable(event)">
-                  <span class="event-time">{{ event.startTime }}</span>
-                  <span class="event-title">{{ event.title }}</span>
+                  <div class="event-time-range">{{ event.startTime }}-{{ event.endTime }}</div>
+                  <div class="event-title">{{ event.title }}</div>
                 </template>
                 <template v-else>
-                  <span class="event-time">{{ event.startTime }}</span>
-                  <span class="event-title">予定あり</span>
+                  <div class="event-time-range">{{ event.startTime }}-{{ event.endTime }}</div>
+                  <div class="event-title">予定あり</div>
                 </template>
               </div>
         
@@ -514,10 +514,22 @@ const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
   font-weight: 500;
 }
 
-.event-title {
-  flex-grow: 1;
+.event-time-range {
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.event-title {
+  font-size: 11px;
+  line-height: 1.2;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 日次・月次ビューと統一したイベントスタイル */
