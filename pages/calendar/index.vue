@@ -273,16 +273,50 @@ const dailyOptionSubtitle = computed(() => {
 const currentDayEvents = ref<EventDisplay[]>([]);
 const selectedDayEvents = ref<EventDisplay[]>([]);
 
+// イベントの重複チェック
+const checkEventConflict = (event: EventDisplay) => {
+  const eventStart = new Date(`${event.date} ${event.startTime}`);
+  const eventEnd = new Date(`${event.date} ${event.endTime}`);
+
+  for (const otherEvent of events.value) {
+    if (otherEvent.id === event.id) continue; // 同じイベントはスキップ
+
+    const otherStart = new Date(`${otherEvent.date} ${otherEvent.startTime}`);
+    const otherEnd = new Date(`${otherEvent.date} ${otherEvent.endTime}`);
+
+    // 時間が重複しているかチェック
+    if (eventStart < otherEnd && eventEnd > otherStart) {
+      return true; // 重複あり
+    }
+  }
+  return false; // 重複なし
+};
+
 const myCurrentDayEvents = computed(() => {
-  return currentDayEvents.value.filter(e => { return e.participantIds?.includes(user.value?.uid) })
+  const result = JSON.parse(JSON.stringify(currentDayEvents.value.filter(e => { return e.participantIds?.includes(user.value?.uid) }))) as EventDisplay[]
+  // 重複チェックを実行
+  result.forEach(event => {
+    event.conflicted = checkEventConflict(event);
+  });
+  return result
 })
 
 const myEvents = computed(() => {
-  return events.value.filter(e => { return e.participantIds?.includes(user.value?.uid) })
+  const result = JSON.parse(JSON.stringify(events.value.filter(e => { return e.participantIds?.includes(user.value?.uid) }))) as EventDisplay[]
+  // 重複チェックを実行
+  result.forEach(event => {
+    event.conflicted = checkEventConflict(event);
+  });
+  return result
 })
 
 const mySelectedDayEvents = computed(() => {
-  return selectedDayEvents.value.filter(e => { return e.participantIds?.includes(user.value?.uid) })
+  const result = JSON.parse(JSON.stringify(selectedDayEvents.value.filter(e => { return e.participantIds?.includes(user.value?.uid) }))) as EventDisplay[]
+  // 重複チェックを実行
+  result.forEach(event => {
+    event.conflicted = checkEventConflict(event);
+  });
+  return result
 })
 
 // タブ状態を保存する関数

@@ -1,5 +1,6 @@
 <template>
   <div class="page-container">
+    {{conflicts}}
     <div class="container">
       <div class="header">
         <p class="page-subtitle">{{ initialData ? '予定を更新' : '新しい予定を登録' }}</p>
@@ -77,7 +78,7 @@
                 <span class="required">*</span>
               </label>
               <input id="eventDate" v-model="formData.date" type="date" class="form-input"
-                @blur="validateField('eventDate')" @input="clearError('eventDate')" @change="checkConflicts">
+                @blur="validateField('eventDate')" @input="clearError('eventDate')">
               <div v-if="errors.eventDate" class="form-error">{{ errors.eventDate }}</div>
             </div>
 
@@ -89,10 +90,10 @@
               </label>
               <div class="time-inputs">
                 <input id="startTime" v-model="formData.startTime" type="time" class="form-input"
-                  @blur="validateTimeFields" @input="clearError('time')" @change="checkConflicts">
+                  @blur="validateTimeFields" @input="clearError('time')">
                 <span class="time-separator">〜</span>
                 <input id="endTime" v-model="formData.endTime" type="time" class="form-input" @blur="validateTimeFields"
-                  @input="clearError('time')" @change="checkConflicts">
+                  @input="clearError('time')">
               </div>
               <div v-if="errors.time" class="form-error">{{ errors.time }}</div>
             </div>
@@ -107,7 +108,7 @@
                   <span class="required">*</span>
                 </label>
                 <input id="startDate" v-model="formData.startDate" type="date" class="form-input"
-                  @blur="validateField('startDate')" @input="clearError('startDate')" @change="checkConflicts">
+                  @blur="validateField('startDate')" @input="clearError('startDate')">
                 <div v-if="errors.startDate" class="form-error">{{ errors.startDate }}</div>
               </div>
 
@@ -118,7 +119,7 @@
                   <span class="required">*</span>
                 </label>
                 <input id="endDate" v-model="formData.endDate" type="date" class="form-input" :min="formData.startDate"
-                  @blur="validateField('endDate')" @input="clearError('endDate')" @change="checkConflicts">
+                  @blur="validateField('endDate')" @input="clearError('endDate')">
                 <div v-if="errors.endDate" class="form-error">{{ errors.endDate }}</div>
               </div>
             </div>
@@ -131,10 +132,10 @@
               </label>
               <div class="time-inputs">
                 <input v-model="formData.startTime" type="time" class="form-input" @blur="validateTimeFields"
-                  @input="clearError('time')" @change="checkConflicts">
+                  @input="clearError('time')">
                 <span class="time-separator">〜</span>
                 <input v-model="formData.endTime" type="time" class="form-input" @blur="validateTimeFields"
-                  @input="clearError('time')" @change="checkConflicts">
+                  @input="clearError('time')">
               </div>
               <div v-if="errors.time" class="form-error">{{ errors.time }}</div>
             </div>
@@ -149,8 +150,7 @@
                   <span class="required">*</span>
                 </label>
                 <input id="recurringStartDate" v-model="formData.recurringStartDate" type="date" class="form-input"
-                  @blur="validateField('recurringStartDate')" @input="clearError('recurringStartDate')"
-                  @change="checkConflicts">
+                  @blur="validateField('recurringStartDate')" @input="clearError('recurringStartDate')">
                 <div v-if="errors.recurringStartDate" class="form-error">{{ errors.recurringStartDate }}</div>
               </div>
 
@@ -162,10 +162,10 @@
                 </label>
                 <div class="time-inputs">
                   <input v-model="formData.startTime" type="time" class="form-input" @blur="validateTimeFields"
-                    @input="clearError('time')" @change="checkConflicts">
+                    @input="clearError('time')">
                   <span class="time-separator">〜</span>
                   <input v-model="formData.endTime" type="time" class="form-input" @blur="validateTimeFields"
-                    @input="clearError('time')" @change="checkConflicts">
+                    @input="clearError('time')">
                 </div>
                 <div v-if="errors.time" class="form-error">{{ errors.time }}</div>
               </div>
@@ -177,7 +177,7 @@
                 繰り返しパターン
                 <span class="required">*</span>
               </label>
-              <select v-model="formData.recurringPattern" class="form-select" @change="checkConflicts">
+              <select v-model="formData.recurringPattern" class="form-select">
                 <option value="daily">毎日</option>
                 <option value="weekly">毎週</option>
                 <option value="monthly">毎月</option>
@@ -196,7 +196,7 @@
               <div class="weekday-options">
                 <div v-for="(day, index) in weekDays" :key="index" class="weekday-option">
                   <input :id="`weekday-${index}`" v-model="formData.selectedWeekdays" type="checkbox" :value="index"
-                    class="weekday-checkbox" @change="checkConflicts">
+                    class="weekday-checkbox">
                   <label :for="`weekday-${index}`" class="weekday-label">
                     {{ day }}
                   </label>
@@ -212,21 +212,19 @@
               <div class="monthly-options">
                 <div class="monthly-option">
                   <input id="monthlyDate" v-model="formData.monthlyType" type="radio" name="monthlyType" value="date"
-                    class="monthly-radio" @change="checkConflicts">
+                    class="monthly-radio">
                   <label for="monthlyDate" class="monthly-label">
                     <input v-model.number="formData.monthlyDate" type="number" min="1" max="31"
-                      class="form-input monthly-input" :disabled="formData.monthlyType !== 'date'"
-                      @change="checkConflicts">
+                      class="form-input monthly-input" :disabled="formData.monthlyType !== 'date'">
                     日
                   </label>
                 </div>
                 <div class="monthly-option">
-                  <input id="monthlyWeek" v-model="formData.monthlyType" type="radio" name="monthlyType" value="weekday"
-                    class="monthly-radio" @change="checkConflicts">
+                  <input id="monthlyWeek" v-model="formData.monthlyType" type="radio" name="monthlyType" value="weekday">
                   <label for="monthlyWeek" class="monthly-label">
                     第
                     <select v-model="formData.monthlyWeek" class="form-select monthly-select"
-                      :disabled="formData.monthlyType !== 'weekday'" @change="checkConflicts">
+                      :disabled="formData.monthlyType !== 'weekday'">
                       <option value="1">1</option>
                       <option value="2">2</option>
                       <option value="3">3</option>
@@ -234,7 +232,7 @@
                       <option value="-1">最終</option>
                     </select>
                     <select v-model.number="formData.monthlyWeekday" class="form-select monthly-select"
-                      :disabled="formData.monthlyType !== 'weekday'" @change="checkConflicts">
+                      :disabled="formData.monthlyType !== 'weekday'">
                       <option v-for="(day, index) in weekDays" :key="index" :value="index">
                         {{ day }}
                       </option>
@@ -252,29 +250,27 @@
               <div class="end-condition-options">
                 <div class="end-condition-option">
                   <input id="endNever" v-model="formData.recurringEndType" type="radio" name="recurringEndType"
-                    value="never" class="end-condition-radio" @change="checkConflicts">
+                    value="never" class="end-condition-radio">
                   <label for="endNever" class="end-condition-label">
                     終了日なし
                   </label>
                 </div>
                 <div class="end-condition-option">
                   <input id="endDateOption" v-model="formData.recurringEndType" type="radio" name="recurringEndType"
-                    value="date" class="end-condition-radio" @change="checkConflicts">
+                    value="date" class="end-condition-radio">
                   <label for="endDateOption" class="end-condition-label">
                     終了日:
                     <input v-model="formData.recurringEndDate" type="date" class="form-input end-date-input"
-                      :min="formData.recurringStartDate" :disabled="formData.recurringEndType !== 'date'"
-                      @change="checkConflicts">
+                      :min="formData.recurringStartDate" :disabled="formData.recurringEndType !== 'date'">
                   </label>
                 </div>
                 <div class="end-condition-option">
                   <input id="endCount" v-model="formData.recurringEndType" type="radio" name="recurringEndType"
-                    value="count" class="end-condition-radio" @change="checkConflicts">
+                    value="count" class="end-condition-radio">
                   <label for="endCount" class="end-condition-label">
                     回数:
                     <input v-model.number="formData.recurringCount" type="number" min="1" max="999"
-                      class="form-input count-input" :disabled="formData.recurringEndType !== 'count'"
-                      @change="checkConflicts">
+                      class="form-input count-input" :disabled="formData.recurringEndType !== 'count'">
                     回
                   </label>
                 </div>
@@ -491,9 +487,8 @@
 
           <div class="selection-list" v-if="modalView === 'participants'">
             <div v-if="filteredItems.length === 0" class="no-results">検索結果がありません</div>
-            <label v-for="item in (filteredItems as MasterItem[])" :key="item.id" class="selection-item"
-              :class="{ disabled: item.isConflict }">
-              <input type="checkbox" :value="item.id" :checked="isItemSelected(item.id)" :disabled="item.isConflict"
+            <label v-for="item in (filteredItems as MasterItem[])" :key="item.id" class="selection-item">
+              <input type="checkbox" :value="item.id" :checked="isItemSelected(item.id)"
                 @change="toggleItem(item.id)" class="selection-checkbox">
               <div class="selection-info">
                 <div class="selection-name">{{ item.name }}</div>
@@ -619,7 +614,7 @@ const { getListAsync: getUsersAsync } = useMaster('users')
 const { getListAsync: getFacilitiesAsync } = useFacility()
 const { getListAsync: getEquipmentsAsync } = useEquipment()
 const { getListAsync: getTeamsAsync } = useTeam()
-const { timeToPixels, timeSlots } = useCalendar();
+const { timeToPixels, timeSlots,  } = useCalendar();
 const { getEventsByParticipantInRange, getEventsByEquipmentInRange, getEventsByFacilityInRange } = useEventService();
 
 interface Props {
@@ -824,7 +819,6 @@ const confirmSelection = () => {
       formData.equipments = equipmentMaster.value.filter(e => tempSelection.value.includes(e.id)).map(e => e.name);
       break
   }
-  checkConflicts()
   closeModal()
 }
 
@@ -849,7 +843,6 @@ const addTeamMembers = (teamId: string) => {
   }
 }
 
-
 const isItemSelected = (id: string) => tempSelection.value.includes(id)
 
 const toggleItem = (id: string) => {
@@ -858,9 +851,9 @@ const toggleItem = (id: string) => {
   else tempSelection.value.push(id)
 }
 
-const removeParticipant = (id: string) => { const i = formData.participantIds.indexOf(id); if (i > -1) { formData.participantIds.splice(i, 1); checkConflicts() } }
-const removeFacility = (id: string) => { const i = formData.facilityIds.indexOf(id); if (i > -1) { formData.facilityIds.splice(i, 1); checkConflicts() } }
-const removeEquipment = (id: string) => { const i = formData.equipmentIds.indexOf(id); if (i > -1) { formData.equipmentIds.splice(i, 1); checkConflicts() } }
+const removeParticipant = (id: string) => { const i = formData.participantIds.indexOf(id); if (i > -1) { formData.participantIds.splice(i, 1); } }
+const removeFacility = (id: string) => { const i = formData.facilityIds.indexOf(id); if (i > -1) { formData.facilityIds.splice(i, 1); } }
+const removeEquipment = (id: string) => { const i = formData.equipmentIds.indexOf(id); if (i > -1) { formData.equipmentIds.splice(i, 1); } }
 
 const getModalIcon = () => { /* ... */ }
 const getModalTitle = () => { /* ... */ }
@@ -877,8 +870,124 @@ const getSearchPlaceholder = () => {
   }
 }
 
-const checkConflicts = async () => { /* Mock */ }
-const updateMasterConflicts = () => { /* Mock */ }
+const checkConflicts = async () => {
+  if(isLoading.value) return
+  conflicts.value = []
+  if (!formData.date || !formData.startTime || !formData.endTime) {
+    updateMasterConflicts()
+    return
+  }
+
+  try {
+    isLoading.value = true
+    const results = await Promise.all([
+      ...formData.participantIds.map(id => getEventsByParticipantInRange(id, formData.date, formData.date)),
+      ...formData.facilityIds.map(id => getEventsByFacilityInRange(id, formData.date, formData.date)),
+      ...formData.equipmentIds.map(id => getEventsByEquipmentInRange(id, formData.date, formData.date)),
+    ])
+
+    const allEvents = results.flat()
+    
+    // --- 変更点 1: 取得した予定の重複をIDベースで排除 ---
+    const uniqueEventsMap = new Map()
+    allEvents.forEach(event => {
+      if (event && event.id) { // eventオブジェクトとidの存在を確認
+        uniqueEventsMap.set(event.id, event)
+      }
+    })
+    const uniqueEvents = Array.from(uniqueEventsMap.values()) as EventDisplay[]
+    // ----------------------------------------------------
+
+    const startDateTime = new Date(`${formData.date}T${formData.startTime}:00`)
+    const endDateTime = new Date(`${formData.date}T${formData.endTime}:00`)
+
+    // --- 変更点 2: 重複排除後のユニークな予定リストに対して一度だけループ処理を行う ---
+    uniqueEvents.forEach(event => {
+      const eventStart = new Date(`${event.date}T${event.startTime}:00`)
+      const eventEnd = new Date(`${event.date}T${event.endTime}:00`)
+
+      // 時間の重複があるかチェック
+      if ((startDateTime < eventEnd) && (endDateTime > eventStart)) {
+        
+        // 参加者のチェック
+        const conflictingPids = event.participantIds?.filter(pid => formData.participantIds.includes(pid)) || []
+        conflictingPids.forEach(pid => {
+          const user = participantsMaster.value.find(u => u.id === pid)
+          conflicts.value.push({
+            id: pid,
+            type: 'participant',
+            name: user ? user.name : '不明な参加者',
+            date: event.date,
+            startTime: event.startTime,
+            endTime: event.endTime,
+            eventTitle: event.title
+          })
+        })
+
+        // 施設のチェック
+        const conflictingFids = event.facilityIds?.filter(fid => formData.facilityIds.includes(fid)) || []
+        conflictingFids.forEach(fid => {
+          const facility = facilitiesMaster.value.find(f => f.id === fid)
+          conflicts.value.push({
+            id: fid,
+            type: 'facility',
+            name: facility ? facility.name : '不明な施設',
+            date: event.date,
+            startTime: event.startTime,
+            endTime: event.endTime,
+            eventTitle: event.title
+          })
+        })
+
+        // 備品のチェック
+        const conflictingEids = event.equipmentIds?.filter(eid => formData.equipmentIds.includes(eid)) || []
+        conflictingEids.forEach(eid => {
+          const equipment = equipmentMaster.value.find(e => e.id === eid)
+          conflicts.value.push({
+            id: eid,
+            type: 'equipment',
+            name: equipment ? equipment.name : '不明な備品',
+            date: event.date,
+            startTime: event.startTime,
+            endTime: event.endTime,
+            eventTitle: event.title
+          })
+        })
+      }
+    })
+    // ----------------------------------------------------------------------
+    
+  } catch (error) {
+    console.error('重複チェックエラー:', error)
+    showNotification('重複チェックに失敗しました', 'error')
+  } finally {
+    isLoading.value = false
+    updateMasterConflicts()
+  }
+}
+
+// フォームの変更をキャッチして重複チェックを実行
+watch(() => [formData.date, formData.startTime, formData.endTime, formData.participantIds, formData.facilityIds, formData.equipmentIds], () => {
+  checkConflicts()
+})
+
+const updateMasterConflicts = () => {
+  const markConflicts = (items: MasterItem[], type: 'participant' | 'facility' | 'equipment') => {
+    return items.map(item => {
+      const conflict = conflicts.value.find(c => c.id === item.id && c.type === type)
+      if (conflict) {
+        return { ...item, isConflict: true, conflictInfo: `${conflict.date} ${conflict.startTime}-${conflict.endTime} に「${conflict.eventTitle}」と重複` }
+      } else {
+        return { ...item, isConflict: false, conflictInfo: '' }
+      }
+    })
+  }
+
+  participantsMaster.value = markConflicts(participantsMaster.value, 'participant')
+  facilitiesMaster.value = markConflicts(facilitiesMaster.value, 'facility')
+  equipmentMaster.value = markConflicts(equipmentMaster.value, 'equipment')
+}
+
 const clearConflicts = () => { conflicts.value = []; updateMasterConflicts() }
 
 const getConflictIcon = (type: string) => { /* ... */ }
@@ -1009,6 +1118,7 @@ onMounted(() => {
       formData.participants = participantsMaster.value.filter(p => formData.participantIds.includes(p.id)).map(p => p.name);
       console.log(`formData-participantIds: ${JSON.stringify(formData.participantIds)}`)
       console.log(`formData-participants: ${JSON.stringify(formData.participants)}`)
+      checkConflicts()
     }
   })
   getEquipmentsAsync().then(equipments => {
@@ -1039,6 +1149,33 @@ onMounted(() => {
     }))
   })
 })
+
+// ユーザー、施設、備品の予定重複チェック
+// const isConflicted = (id: string, event: EventDisplay, events: EventDisplay[]) => {
+//   const result = events.some(e => {
+//     if (e.id === event.id) return false; // 同じイベントは無視
+//     if (e.participantIds?.includes(id) ||
+//       e.facilityIds?.includes(id) ||
+//       e.equipmentIds?.includes(id)) {
+//       // 日付が同じで時間が重複しているかチェック
+//       if (e.date === event.date) {
+//         const [eStartHour, eStartMinute] = e.startTime.split(':').map(Number);
+//         const [eEndHour, eEndMinute] = e.endTime.split(':').map(Number);
+//         const [eventStartHour, eventStartMinute] = event.startTime.split(':').map(Number);
+//         const [eventEndHour, eventEndMinute] = event.endTime.split(':').map(Number);
+
+//         const eStart = eStartHour * 60 + eStartMinute;
+//         const eEnd = eEndHour * 60 + eEndMinute;
+//         const eventStart = eventStartHour * 60 + eventStartMinute;
+//         const eventEnd = eventEndHour * 60 + eventEndMinute;
+
+//         return (eventStart < eEnd && eventEnd > eStart); // 時間が重複している場合
+//       }
+//     }
+//     return false;
+//   });
+//   return result;
+// }
 </script>
 
 <style scoped>

@@ -3,6 +3,12 @@
     class="event-card event-type" 
     :style="{ '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey' }"
     @click="onEventClick">
+    <div v-if="event.conflicted" class="pa-0 ma-0 d-flex align-center">
+      <v-icon icon="mdi-alert-circle" size="default" color="warning"
+        class="mr-1"></v-icon>
+      <span class="text-warning" style="font-size: 14px;">重複予定あり</span>
+    </div>
+    <!-- <div>conflicted:{{ event.conflicted }}</div> -->
     <div class="event-card-header">
       <div class="event-card-title">{{ isViewable(event) ? event.title : '予定あり' }}</div>
       <div class="event-card-time">{{ event.startTime }} - {{ event.endTime }}</div>

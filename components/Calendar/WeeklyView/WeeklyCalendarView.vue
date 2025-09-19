@@ -7,34 +7,24 @@
       <thead>
         <tr>
           <td class="day-header sticky corner">メンバー</td>
-          <td
-            v-for="day in weekDays" 
-            :key="`${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`"
-            :class="[
+          <td v-for="day in weekDays" :key="`${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`" :class="[
               'day-header', 
               { 'today-header': isToday(day) }
             ]">
-            <div 
-              :class="[
+            <div :class="[
                 'day-name', 
                 { 
                   'sunday': day.getDay() === 0,
                   'saturday': day.getDay() === 6
                 }
-              ]"
-            >
+              ]">
               {{ getDayOfWeek(day) }}曜日
             </div>
             <!-- 日付の横に出社人数を表示 -->
             <div class="d-flex align-center justify-center gap-3">
               <div class="day-date">{{ formatShortDate(day) }}</div>
-              <v-chip 
-                v-if="getOfficeCount(day) > 0"
-                size="small" 
-                color="primary"
-                variant="outlined"
-                class="office-count-chip"
-              >
+              <v-chip v-if="getOfficeCount(day) > 0" size="small" color="primary" variant="outlined"
+                class="office-count-chip">
                 <v-icon icon="mdi-office-building" size="x-small" class="mr-1"></v-icon>
                 {{ getOfficeCount(day) }}人
               </v-chip>
@@ -43,11 +33,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr
-          v-for="user in sortedUser" 
-          :key="user.uid"
-          class="schedule-row"
-        >
+        <tr v-for="user in sortedUser" :key="user.uid" class="schedule-row">
           <td class="user-cell sticky">
             <div class="d-flex align-center justify-center mb-2">
               <v-avatar color="grey">
@@ -57,71 +43,60 @@
             </div>
             <div class="user-name">{{ user.displayName }}</div>
           </td>
-          <td
-            v-for="day in weekDays" 
-            :key="`${user.uid}-${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`"
+          <td v-for="day in weekDays" :key="`${user.uid}-${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`"
             :class="['day-cell', { 'today-cell': isToday(day) }]" @click="handleSelectDay(user, day)">
-              <!-- <div 
+            <!-- <div 
                 v-for="(event, index) in getVisibleEvents(getUserEventsForDay(user.uid, day))" 
                 :key="event.id"
                 :class="['event', 'event-type']"
                 :style="{ top: `${10 + (index * 28)}px`, '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey' }"
                 @click.stop="($event) => { if (isViewable(event)) { onEventClick($event, event) } }"
               > -->
-              <div class="mt-1">
-                <v-tooltip text="勤務形態" location="top">
-                  <template v-slot:activator="{ props }">
-                    <v-icon
-                      v-bind="props"
-                      :icon="getWorkStyle(user.uid, day).icon"
-                      :color="getWorkStyle(user.uid, day).color"
-                      :size="getWorkStyle(user.uid, day).size"
-                      >
-                    </v-icon>
-                  </template>
-                </v-tooltip>
-                <v-tooltip text="ランチ" location="top">
-                  <template v-slot:activator="{ props }">
-                    <v-icon
-                      v-bind="props"
-                      :icon="getLunchParticipation(user.uid, day).icon"
-                      :color="getLunchParticipation(user.uid, day).color"
-                      :size="getLunchParticipation(user.uid, day).size"
-                      class="ml-2"
-                      >
-                    </v-icon>
-                  </template>
-                </v-tooltip>
-                <v-tooltip text="ディナー" location="top">
-                  <template v-slot:activator="{ props }">
-                    <v-icon
-                      v-bind="props"
-                      :icon="getDinnerParticipation(user.uid, day).icon"
-                      :color="getDinnerParticipation(user.uid, day).color"
-                      :size="getDinnerParticipation(user.uid, day).size"
-                      class="ml-2"
-                      >
-                    </v-icon>
-                  </template>
-                </v-tooltip>
-              </div>
-              <div 
-                v-for="(event, index) in getVisibleEvents(getUserEventsForDay(user.uid, day))" 
-                :key="event.id"
-                :class="['event', 'event-type']"
-                :style="{ top: `${10 + (index * 50)}px`, '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey' }"
-              >
-                <template v-if="isViewable(event)">
-                  <div class="event-time-range">{{ event.startTime }}-{{ event.endTime }}</div>
-                  <div class="event-title">{{ event.title }}</div>
+            <div class="mt-1">
+              <v-tooltip text="勤務形態" location="top">
+                <template v-slot:activator="{ props }">
+                  <v-icon v-bind="props" :icon="getWorkStyle(user.uid, day).icon"
+                    :color="getWorkStyle(user.uid, day).color" :size="getWorkStyle(user.uid, day).size">
+                  </v-icon>
                 </template>
-                <template v-else>
-                  <div class="event-time-range">{{ event.startTime }}-{{ event.endTime }}</div>
-                  <div class="event-title">予定あり</div>
+              </v-tooltip>
+              <v-tooltip text="ランチ" location="top">
+                <template v-slot:activator="{ props }">
+                  <v-icon v-bind="props" :icon="getLunchParticipation(user.uid, day).icon"
+                    :color="getLunchParticipation(user.uid, day).color"
+                    :size="getLunchParticipation(user.uid, day).size" class="ml-2">
+                  </v-icon>
                 </template>
-              </div>
-        
-              <!-- <div 
+              </v-tooltip>
+              <v-tooltip text="ディナー" location="top">
+                <template v-slot:activator="{ props }">
+                  <v-icon v-bind="props" :icon="getDinnerParticipation(user.uid, day).icon"
+                    :color="getDinnerParticipation(user.uid, day).color"
+                    :size="getDinnerParticipation(user.uid, day).size" class="ml-2">
+                  </v-icon>
+                </template>
+              </v-tooltip>
+            </div>
+            <div v-for="(event, index) in getVisibleEvents(getUserEventsForDay(user.uid, day))" :key="event.id"
+              :class="['event', 'event-type']"
+              :style="{ top: `${10 + (index * 50)}px`, '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey' }">
+              <template v-if="isViewable(event)">
+                <div v-if="isConflicted(user.uid, event)" class="pa-0 ma-0 d-flex align-center">
+                  <v-icon icon="mdi-alert-circle" size="small" color="warning"
+                    class="mr-1"></v-icon>
+                  <span class="text-warning" style="font-size: 10px;">重複予定あり</span>
+                </div>
+                <!-- <div>conflicted:{{ isConflicted(user.uid, event) }}</div> -->
+                <div class="event-time-range">{{ event.startTime }}-{{ event.endTime }}</div>
+                <div class="event-title">{{ event.title }}</div>
+              </template>
+              <template v-else>
+                <div class="event-time-range">{{ event.startTime }}-{{ event.endTime }}</div>
+                <div class="event-title">予定あり</div>
+              </template>
+            </div>
+
+            <!-- <div 
                 v-if="getUserEventsForDay(user.uid, day).length > 2" 
                 class="more-events"
               >
@@ -297,6 +272,33 @@ const getVisibleEvents = (events: EventDisplay[], limit?: number) => {
 
 const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
   emit('dayClick', { user: user, date: date })
+}
+
+// ユーザー、施設、備品の予定重複チェック
+const isConflicted = (id: string, event: EventDisplay) => {
+  const result = props.events.some(e => {
+    if (e.id === event.id) return false; // 同じイベントは無視
+    if (e.participantIds?.includes(id) ||
+      e.facilityIds?.includes(id) ||
+      e.equipmentIds?.includes(id)) {
+      // 日付が同じで時間が重複しているかチェック
+      if (e.date === event.date) {
+        const [eStartHour, eStartMinute] = e.startTime.split(':').map(Number);
+        const [eEndHour, eEndMinute] = e.endTime.split(':').map(Number);
+        const [eventStartHour, eventStartMinute] = event.startTime.split(':').map(Number);
+        const [eventEndHour, eventEndMinute] = event.endTime.split(':').map(Number);
+
+        const eStart = eStartHour * 60 + eStartMinute;
+        const eEnd = eEndHour * 60 + eEndMinute;
+        const eventStart = eventStartHour * 60 + eventStartMinute;
+        const eventEnd = eventEndHour * 60 + eventEndMinute;
+
+        return (eventStart < eEnd && eventEnd > eStart); // 時間が重複している場合
+      }
+    }
+    return false;
+  });
+  return result;
 }
 </script>
 
