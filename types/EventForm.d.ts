@@ -165,6 +165,10 @@ declare global {
      * プライベート
      */
     private: boolean;
+    /**
+     * 他のイベントと時間が重複しているかどうか
+     */
+    conflicted: boolean;
   }
 
   interface RecurrenceRule {

@@ -86,6 +86,12 @@
                 {{ event.startTime }} {{ event.title }}
               </div> -->
               <div v-for="(event, index) in getVisibleEvents(day.date, 2)" :key="event.id" class="day-event" :style="{ '--event-color': `${eventTypeDetails[event.eventType]?.color}` }">
+                <div v-if="event.conflicted" class="pa-0 ma-0 d-flex align-center">
+                  <v-icon icon="mdi-alert-circle" size="small" color="warning"
+                    class="mr-1"></v-icon>
+                  <span class="text-warning" style="font-size: 10px;">重複予定あり</span>
+                </div>
+                <!-- <div>conflicted:{{ event.conflicted }}</div> -->
                 <div class="event-time-range">{{ event.startTime }}-{{ event.endTime }}</div>
                 <div class="event-title">{{ event.title }}</div>
               </div>
