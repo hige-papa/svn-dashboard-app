@@ -1,6 +1,6 @@
 <template>
   <div class="page-container">
-    {{conflicts}}
+    <!-- {{conflicts}} -->
     <div class="container">
       <div class="header">
         <p class="page-subtitle">{{ initialData ? '予定を更新' : '新しい予定を登録' }}</p>
