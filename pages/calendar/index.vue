@@ -275,30 +275,38 @@ const dailyOptionSubtitle = computed(() => {
 const currentDayEvents = ref<EventDisplay[]>([]);
 const selectedDayEvents = ref<EventDisplay[]>([]);
 
-// イベントの重複チェック
-const checkEventConflict = (event: EventDisplay) => {
-  const eventStart = new Date(`${event.date} ${event.startTime}`);
-  const eventEnd = new Date(`${event.date} ${event.endTime}`);
+// ユーザー、施設、備品の予定重複チェック
+const isConflicted = (id: string, event: EventDisplay, events: EventDisplay[]) => {
+  const result = events.some(e => {
+    if (e.id === event.id) return false; // 同じイベントは無視
+    if (e.participantIds?.includes(id) ||
+      e.facilityIds?.includes(id) ||
+      e.equipmentIds?.includes(id)) {
+      // 日付が同じで時間が重複しているかチェック
+      if (e.date === event.date) {
+        const [eStartHour, eStartMinute] = e.startTime.split(':').map(Number);
+        const [eEndHour, eEndMinute] = e.endTime.split(':').map(Number);
+        const [eventStartHour, eventStartMinute] = event.startTime.split(':').map(Number);
+        const [eventEndHour, eventEndMinute] = event.endTime.split(':').map(Number);
 
-  for (const otherEvent of events.value) {
-    if (otherEvent.id === event.id) continue; // 同じイベントはスキップ
+        const eStart = eStartHour * 60 + eStartMinute;
+        const eEnd = eEndHour * 60 + eEndMinute;
+        const eventStart = eventStartHour * 60 + eventStartMinute;
+        const eventEnd = eventEndHour * 60 + eventEndMinute;
 
-    const otherStart = new Date(`${otherEvent.date} ${otherEvent.startTime}`);
-    const otherEnd = new Date(`${otherEvent.date} ${otherEvent.endTime}`);
-
-    // 時間が重複しているかチェック
-    if (eventStart < otherEnd && eventEnd > otherStart) {
-      return true; // 重複あり
+        return (eventStart < eEnd && eventEnd > eStart); // 時間が重複している場合
+      }
     }
-  }
-  return false; // 重複なし
-};
+    return false;
+  });
+  return result;
+}
 
 const myCurrentDayEvents = computed(() => {
   const result = JSON.parse(JSON.stringify(currentDayEvents.value.filter(e => { return e.participantIds?.includes(user.value?.uid) }))) as EventDisplay[]
   // 重複チェックを実行
   result.forEach(event => {
-    event.conflicted = checkEventConflict(event);
+    event.conflicted = isConflicted(user.value.uid, event, currentDayEvents.value);
   });
   return result
 })
@@ -307,7 +315,7 @@ const myEvents = computed(() => {
   const result = JSON.parse(JSON.stringify(events.value.filter(e => { return e.participantIds?.includes(user.value?.uid) }))) as EventDisplay[]
   // 重複チェックを実行
   result.forEach(event => {
-    event.conflicted = checkEventConflict(event);
+    event.conflicted = isConflicted(user.value.uid, event, events.value);
   });
   return result
 })
@@ -316,7 +324,7 @@ const mySelectedDayEvents = computed(() => {
   const result = JSON.parse(JSON.stringify(selectedDayEvents.value.filter(e => { return e.participantIds?.includes(user.value?.uid) }))) as EventDisplay[]
   // 重複チェックを実行
   result.forEach(event => {
-    event.conflicted = checkEventConflict(event);
+    event.conflicted = isConflicted(user.value.uid, event, selectedDayEvents.value);
   });
   return result
 })
