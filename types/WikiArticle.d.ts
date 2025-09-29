@@ -3,7 +3,7 @@ interface WikiArticleForm {
     category: string
     summary: string
     content: string
-    tags: string[]
+    tags: Tag[]
     image?: string
     author: string
     department: string
