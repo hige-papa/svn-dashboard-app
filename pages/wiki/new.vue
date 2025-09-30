@@ -43,11 +43,14 @@
                         chips
                         return-object>
                     </v-autocomplete>
-                    <v-text-field
+                    <v-select
                         v-model="form.category"
+                        :items="categories"
+                        item-title="text"
                         label="カテゴリー"
                         variant="outlined"
-                    ></v-text-field>
+                        return-object>
+                    </v-select>
                     <v-text-field
                         v-model="form.image"
                         label="画像URL"
@@ -81,6 +84,8 @@
 import { useWiki } from '~/composables/useWiki'
 import { useMaster } from '~/composables/master/useMaster'
 
+const { addAsync: addCategoryAsync, getListAsync: getCategoriesAsync, deleteAsync: deleteCategoryAsync } = useMaster('categories')
+
 const { addAsync: addTagAsync, getListAsync: getTagsAsync, deleteAsync: deleteTagAsync } = useMaster('tags')
 
 const { addAsync: addWikiArticle } = useWiki()
@@ -89,18 +94,20 @@ const user = useState<ExtendedUserProfile>('userProfile')
 
 const tags = ref<Tag[]>([])
 
+const categories = ref<Tag[]>([])
+
 const editable = computed(() => {
     return user.value?.role === 'admin'
 })
 
-const categories = ref<any[]>(['カテゴリ1','カテゴリ2','カテゴリ3'])
+// const categories = ref<any[]>(['カテゴリ1','カテゴリ2','カテゴリ3'])
 
 const form = ref<WikiArticleForm>({
     title: '',
     content: '',
     summary: '',
     tags: [],
-    category: '',
+    category: undefined,
     image: '',
     author: user.value?.displayName || '匿名',
     department: user.value?.department || '未設定',
@@ -128,6 +135,9 @@ onMounted(() => {
     }
     getTagsAsync().then(response => {
         tags.value = response
+    })
+    getCategoriesAsync().then(response => {
+        categories.value = response
     })
 })
 </script>

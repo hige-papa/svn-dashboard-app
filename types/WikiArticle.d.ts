@@ -1,6 +1,6 @@
 interface WikiArticleForm {
     title: string
-    category: string
+    category?: Tag
     summary: string
     content: string
     tags: Tag[]
