@@ -11,7 +11,29 @@ const USER_COLORS = [
   '#0891B2', '#EA580C', '#BE185D', '#059669', '#7C2D12'
 ];
 
-export const useUserProfile = () => {
+export const useUserProfile = (): {
+  createUserProfile: (
+    email: string,
+    password: string,
+    profileData: Omit<ExtendedUserProfile, 'uid' | 'email'>
+  ) => Promise<ExtendedUserProfile | null>;
+  getUserProfile: (uid: string) => Promise<ExtendedUserProfile | null>;
+  updateUserProfile: (
+    uid: string,
+    updates: Partial<Omit<ExtendedUserProfile, 'uid' | 'createdAt'>>
+  ) => Promise<void>;
+  deleteUserProfile: (uid: string) => Promise<void>;
+  getAllUserProfiles: (limitCount?: number) => Promise<ExtendedUserProfile[]>;
+  getActiveUserProfiles: () => Promise<ExtendedUserProfile[]>;
+  getUserProfilesByDepartment: (department: string) => Promise<ExtendedUserProfile[]>;
+  getUserProfilesByRole: (role: 'admin' | 'user' | 'viewer') => Promise<ExtendedUserProfile[]>;
+  searchUserProfiles: (searchTerm: string) => Promise<ExtendedUserProfile[]>;
+  getUserProfilesBatch: (uids: string[]) => Promise<ExtendedUserProfile[]>;
+  toggleUserStatus: (uid: string) => Promise<void>;
+  getDepartmentStats: () => Promise<{ department: string; count: number }[]>;
+  toBasicUserProfile: (extendedProfile: ExtendedUserProfile) => UserProfile;
+  getRandomColor: () => string;
+} => {
   const { createUserWithEmailAndPasswordAsync, updateUserAsync } = useAuth();
   const { addAsync, addWithIdAsync, getAsync, getListAsync, updateAsync, deleteAsync } = useMaster('users');
 

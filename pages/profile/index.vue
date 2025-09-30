@@ -180,6 +180,15 @@
             <button 
               v-if="canEdit" 
               type="button" 
+              @click="handleUpdateMailAddress" 
+              class="btn btn-primary"
+            >
+              <i class="mdi mdi-pencil icon"></i>
+              メールアドレス変更
+            </button>
+            <button 
+              v-if="canEdit" 
+              type="button" 
               @click="handleEdit" 
               class="btn btn-primary"
             >
@@ -224,7 +233,6 @@
 
 <script setup lang="ts">
 import type { User } from 'firebase/auth'
-import { ref, reactive, onMounted, computed } from 'vue'
 import { useUserProfile } from '~/composables/useUserProfile'
 
 const user = useState<User>('user')
@@ -335,6 +343,10 @@ const handleBack = () => {
 
 const handleEdit = () => {
   push(`/profile/edit`)
+}
+
+const handleUpdateMailAddress = () => {
+  push(`/auth/email/reset`)
 }
 
 // 通知表示

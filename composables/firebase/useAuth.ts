@@ -5,6 +5,7 @@ import {
     signOut,
     updateProfile,
     sendPasswordResetEmail,
+    verifyBeforeUpdateEmail,
     verifyPasswordResetCode,
     confirmPasswordReset,
     updateEmail,
@@ -12,8 +13,11 @@ import {
     updatePhoneNumber,
     PhoneAuthProvider,
     RecaptchaVerifier,
+    reauthenticateWithCredential,
     type Auth,
     type UserInfo,
+    EmailAuthProvider,
+    type ActionCodeSettings,
 } from 'firebase/auth';
 
 export const useAuth = () => {
@@ -87,8 +91,19 @@ export const useAuth = () => {
         }
     }
 
+    const reauthenticateWithCredentialAsync = async (email: string, password: string) => {
+        if (!auth.value?.currentUser) return
+        const credential = EmailAuthProvider.credential(email, password)
+        return await reauthenticateWithCredential(auth.value.currentUser, credential)
+    }
+
     const sendPasswordResetEmailAsync = async (email: string) => {
         return await sendPasswordResetEmail(auth.value, email)
+    }
+
+    const verifyBeforeUpdateEmailAsync = async (code: string) => {
+        if (!auth.value?.currentUser) return
+        return await verifyBeforeUpdateEmail(auth.value.currentUser, code)
     }
 
     const verifyPasswordResetCodeAsync = async (code: string) => {
@@ -117,15 +132,52 @@ export const useAuth = () => {
         }
     }
 
+    /**
+     * 安全な方法でユーザーのメールアドレスを更新し、確認メールを送信します。
+     * @param newEmail 更新したい新しいメールアドレス
+     */
+    const updateEmailWithVerification = async (newEmail: string): Promise<void> => {
+        const user = auth.value.currentUser;
+
+        if (!user) {
+            throw new Error("ユーザーがログインしていません。");
+        }
+
+        // ユーザーをアプリにリダイレクトさせるための設定
+        const actionCodeSettings = {
+            url: 'https://tascal-app-a344b.firebaseapp.com/', // 更新完了後にリダイレクトさせたいURL
+            handleCodeInApp: true,
+        } as ActionCodeSettings;
+
+        try {
+            // updateEmail の代わりに verifyBeforeUpdateEmail を使用する
+            await verifyBeforeUpdateEmail(user, newEmail, actionCodeSettings);
+
+            // この時点でUIにメッセージを表示する
+            // 例: 「新しいメールアドレスに確認メールを送信しました。メール内のリンクをクリックして変更を完了してください。」
+            console.log("確認メールを送信しました。");
+
+        } catch (error) {
+            console.error("メールアドレス更新（確認メール送信）中にエラーが発生しました:", error);
+            // ここで再認証が必要なエラーなどもハンドルする
+            if ((error as any).code === 'auth/requires-recent-login') {
+                // 再認証ロジック...
+            }
+            throw error; // エラーを呼び出し元に再度スローする
+        }
+    }
+
     return {
         createUserWithEmailAndPasswordAsync,
         loginWithEmailAndPasswordAsync,
         logoutAsync,
         updateUserAsync,
         sendPasswordResetEmailAsync,
+        verifyBeforeUpdateEmailAsync,
         verifyPasswordResetCodeAsync,
         confirmPasswordResetAsync,
         updatePasswordAsync,
         updateEmailAsync,
+        updateEmailWithVerification,
     };
 };

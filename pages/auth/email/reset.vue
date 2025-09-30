@@ -1,19 +1,30 @@
 <template>
-  <div class="password-reset-form-container">
-    <h2 class="form-title">パスワードのリセット</h2>
+  <div class="email-change-form-container">
+    <h2 class="form-title">メールアドレスの変更</h2>
     <p class="form-description">
-      アカウントに登録されているメールアドレスを入力してください。パスワード再設定用のリンクを送信します。
+      新しいメールアドレスと現在のパスワードを入力してください。
     </p>
-    <form @submit.prevent="handlePasswordReset" class="form">
+    <form @submit.prevent="handleChangeEmail" class="form">
       <div class="form-group">
-        <label for="email" class="form-label">メールアドレス</label>
+        <label for="new-email" class="form-label">新しいメールアドレス</label>
         <input
-          id="email"
-          v-model="email"
+          id="new-email"
+          v-model="newEmail"
           type="email"
           required
           class="form-input"
-          placeholder="your-email@example.com"
+          placeholder="new-email@example.com"
+        />
+      </div>
+      <div class="form-group">
+        <label for="current-password" class="form-label">現在のパスワード</label>
+        <input
+          id="current-password"
+          v-model="currentPassword"
+          type="password"
+          required
+          class="form-input"
+          placeholder="現在のパスワード"
         />
       </div>
 
@@ -25,8 +36,8 @@
       </div>
 
       <button type="submit" :disabled="loading" class="submit-button">
-        <span v-if="loading">送信中...</span>
-        <span v-else>リセットメールを送信</span>
+        <span v-if="loading">処理中...</span>
+        <span v-else>確認メールを送信</span>
       </button>
     </form>
   </div>
@@ -36,52 +47,78 @@
 import { ref } from 'vue';
 import {
   getAuth,
-  sendPasswordResetEmail,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  verifyBeforeUpdateEmail,
   type AuthError,
   type ActionCodeSettings,
 } from 'firebase/auth';
 
 // リアクティブな状態変数
-const email = ref('');
+const newEmail = ref('');
+const currentPassword = ref('');
 const loading = ref(false);
 const errorMessage = ref<string | null>(null);
 const successMessage = ref<string | null>(null);
 
-// パスワードリセット処理
-const handlePasswordReset = async () => {
+// メールアドレス変更処理
+const handleChangeEmail = async () => {
   loading.value = true;
   errorMessage.value = null;
   successMessage.value = null;
 
   try {
     const auth = getAuth();
+    const user = auth.currentUser;
+
+    // ユーザーが存在しない場合はエラー
+    if (!user || !user.email) {
+      throw new Error('ユーザーがログインしていません。');
+    }
+
+    // --- 1. ユーザーの再認証 ---
+    // 重要な操作の前に、ユーザーが本人であることを確認します。
+    const credential = EmailAuthProvider.credential(user.email, currentPassword.value);
+    await reauthenticateWithCredential(user, credential);
     
     // パスワードリセット完了後にリダイレクトさせたいページのURLを指定します。
     // 一般的にはログインページが良いでしょう。
     const actionCodeSettings: ActionCodeSettings = {
-      url: `${window.location.origin}/signin?password_reset=true`, // リダイレクト先URL
+      url: `${window.location.origin}/signin?email_reset=true`, // リダイレクト先URL
       handleCodeInApp: false,
     };
-    
-    // パスワードリセットメールを送信
-    await sendPasswordResetEmail(auth, email.value, actionCodeSettings);
+
+    // --- 2. 新しいメールアドレスの確認メールを送信 ---
+    // この関数は、ユーザーが新しいメールアドレスのリンクをクリックするまで、
+    // 実際のメールアドレス変更を保留します。
+    await verifyBeforeUpdateEmail(user, newEmail.value, actionCodeSettings);
 
     successMessage.value =
-      'パスワード再設定用のメールを送信しました。受信箱をご確認ください。';
+      '確認メールを送信しました。新しいメールアドレスの受信箱を確認し、変更を完了してください。';
+    
+    // フォームをリセット
+    newEmail.value = '';
+    currentPassword.value = '';
 
   } catch (error) {
     // Firebaseからのエラーをハンドリング
     const authError = error as AuthError;
     switch (authError.code) {
-      case 'auth/user-not-found':
-        errorMessage.value = '指定されたメールアドレスのアカウントが見つかりません。';
+      case 'auth/wrong-password':
+        errorMessage.value = '現在のパスワードが間違っています。';
         break;
       case 'auth/invalid-email':
-        errorMessage.value = 'メールアドレスの形式が正しくありません。';
+        errorMessage.value = '新しいメールアドレスの形式が正しくありません。';
+        break;
+      case 'auth/email-already-in-use':
+        errorMessage.value = 'このメールアドレスは既に使用されています。';
+        break;
+      case 'auth/requires-recent-login':
+        errorMessage.value = 'セキュリティのため、再ログインが必要です。一度ログアウトしてから再度お試しください。';
         break;
       default:
         errorMessage.value = 'エラーが発生しました。もう一度お試しください。';
-        console.error('Password reset error:', authError);
+        console.error('Email change error:', authError);
     }
   } finally {
     loading.value = false;
@@ -90,7 +127,7 @@ const handlePasswordReset = async () => {
 </script>
 
 <style scoped>
-.password-reset-form-container {
+.email-change-form-container {
   max-width: 420px;
   margin: 2rem auto;
   padding: 2rem;
