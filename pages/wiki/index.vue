@@ -1,9 +1,11 @@
 <template>
     <v-container>
-        {{ user?.role }}:{{ editable }}
+        <!-- {{ user?.role }}:{{ editable }} -->
         <v-list-item v-if="editable">
             <template v-slot:append>
                 <v-btn color="primary" variant="text" @click.stop="navigateTo('/wiki/new')">新しい記事を作成</v-btn>
+                <v-btn v-if="editable" color="primary" variant="text" @click.stop="navigateTo('/wiki/category')">カテゴリーメンテナンス</v-btn>
+                <v-btn v-if="editable" color="primary" variant="text" @click.stop="navigateTo('/wiki/tag')">タグメンテナンス</v-btn>
             </template>
         </v-list-item>
         <v-row>
