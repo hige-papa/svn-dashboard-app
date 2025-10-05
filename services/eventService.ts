@@ -174,7 +174,12 @@ export const useEventService = () => {
   
   const generateMissingRecurringEvents = async (startDate: string, endDate: string, preliminaryEvents: EventDisplay[]): Promise<void> => {
     const allRules = await rulesService.getListAsync() as RecurrenceRule[];
-    const recurringMasterEvents = await eventsService.getListAsync(where('dateType', '==', 'recurring')) as EventData[];
+    // const recurringMasterEvents = await eventsService.getListAsync(where('dateType', '==', 'recurring')) as EventData[];
+    const recurringMasterEvents = await eventsService.getListAsync(
+        where('dateType', '==', 'recurring'),
+        // イベント自体の開始日が表示終了日より後のものは除外
+        where('startDate', '<=', endDate) 
+    ) as EventData[];
     const masterEventsMap = new Map(recurringMasterEvents.map(e => [e.id!, e]));
     for (const rule of allRules) {
       const masterEvent = masterEventsMap.get(rule.masterId);
