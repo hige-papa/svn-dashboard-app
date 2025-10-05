@@ -27,6 +27,72 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "event_instances",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "instanceDate",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "facilityIds",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "dateType",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "equipmentIds",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "dateType",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "participantIds",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "dateType",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dateType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startDate",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []
