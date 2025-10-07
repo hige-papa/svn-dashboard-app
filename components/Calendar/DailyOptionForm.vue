@@ -213,7 +213,7 @@ const handleCancel = () => {
 }
 
 .header {
-  background: linear-gradient(135deg, var(--primary-color), var(--success-color));
+  background: linear-gradient(135deg, var(--brand-color-1), var(--success-color));
   color: white;
   padding: 24px 32px;
   text-align: center;

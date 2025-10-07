@@ -324,7 +324,7 @@ onMounted(async () => {
   overflow: hidden;
 }
 .header {
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  background: linear-gradient(135deg, var(--brand-color-1), var(--brand-color-2), var(--brand-color-3));
   color: white;
   padding: 32px 40px;
   text-align: center;
