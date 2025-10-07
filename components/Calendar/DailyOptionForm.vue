@@ -180,7 +180,7 @@ watchEffect(() => {
     formData.date = props.date || getDateString(new Date());
     formData.workStyle = 'office';
     formData.lunchParticipation = 'impossible';
-    formData.dinnerParticipation = 'impossible';
+    formData.dinnerParticipation = 'pending';
   }
 });
 

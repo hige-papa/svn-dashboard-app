@@ -102,4 +102,10 @@ const handleClickReadMore = (e: WikiArticle) => {
     // alert(JSON.stringify(e))
     navigateTo(`/wiki/${e.id}`)
 }
+
+// head設定
+useHead({
+  title: 'TASCAL - Wikiページ'
+});
+
 </script>
