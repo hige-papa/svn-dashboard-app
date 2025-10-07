@@ -143,6 +143,23 @@
                 >
               </div>
               
+              <div class="form-group">
+                <label class="form-label" for="userExtension">
+                  <i class="mdi mdi-phone-in-talk icon"></i>
+                  内線番号
+                </label>
+                <input 
+                  id="userExtension"
+                  v-model="formData.extension"
+                  type="text" 
+                  class="form-input" 
+                  placeholder="例：0334"
+                  maxlength="10"
+                >
+              </div>
+            </div>
+            
+            <div class="form-group row">
               <div class="form-group" :class="{ error: errors.department }">
                 <label class="form-label" for="userDepartment">
                   <i class="mdi mdi-office-building icon"></i>
@@ -162,6 +179,21 @@
                   </option>
                 </select>
                 <div v-if="errors.department" class="form-error">{{ errors.department }}</div>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="userSortOrder">
+                  <i class="mdi mdi-sort-numeric-variant icon"></i>
+                  並び順
+                </label>
+                <input 
+                  id="userSortOrder"
+                  v-model="formData.sortOrder"
+                  type="text" 
+                  class="form-input" 
+                  placeholder="例：01"
+                  maxlength="6"
+                >
               </div>
             </div>
             
@@ -474,6 +506,8 @@ const formData = reactive<UserFormData>({
   status: 'active',
   bio: '',
   avatar: '',
+  extension: '',
+  sortOrder: '',
   notifications: {
     email: true,
     calendar: true,
@@ -515,6 +549,8 @@ const loadUser = async () => {
         status: userProfile.status || 'active',
         bio: userProfile.bio || '',
         avatar: userProfile.avatar || '',
+        extension: userProfile.extension || '',
+        sortOrder: userProfile.sortOrder || '',
         notifications: userProfile.notifications || {
           email: true,
           calendar: true,
