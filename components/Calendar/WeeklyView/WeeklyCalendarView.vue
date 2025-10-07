@@ -44,6 +44,7 @@
               </v-avatar>
             </div>
             <div class="user-name">{{ user.displayName }}</div>
+            <div v-if="user.extension" class="user-extension">内線：{{ user.extension }}</div>
           </td>
           <td v-for="day in weekDays" :key="`${user.uid}-${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`"
             :class="['day-cell', { 'today-cell': isToday(day) }]" @click="handleSelectDay(user, day)">
@@ -372,6 +373,13 @@ const isConflicted = (id: string, event: EventDisplay) => {
   white-space: nowrap;
 }
 
+.user-extension {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 2px;
+}
+
 .calendar-grid-wrapper {
   flex-grow: 1;
   display: flex;
@@ -603,6 +611,13 @@ const isConflicted = (id: string, event: EventDisplay) => {
   
   .user-name {
     font-size: 12px;
+  }
+
+  .user-extension {
+    font-size: 10px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 2px;
   }
 
   .day-cell {
