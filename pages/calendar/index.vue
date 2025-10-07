@@ -735,6 +735,12 @@ watch(isLoading, (newValue, oldValue) => {
     console.log('データの読み込みが完了しました');
   }
 });
+
+// head設定
+useHead({
+  title: 'TASCAL - カレンダー'
+});
+
 </script>
 
 <style scoped>
