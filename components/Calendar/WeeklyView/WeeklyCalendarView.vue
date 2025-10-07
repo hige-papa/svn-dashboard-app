@@ -206,23 +206,34 @@ const visibleUsers = computed(() => {
   return props.users.filter(u => u.visible);
 });
 
-// ユーザーを並び替え ※本人が先頭、後は名前順
+// ユーザーを並び替え ※本人が先頭、後は新しいルールで並び替え
 const sortedUser = computed(() => {
   return visibleUsers.value.sort((a, b) => {
-    // aが自分で、bが自分でない場合 → aを優先して前に
-      if (a.uid === user.value.uid && b.uid !== user.value.uid) {
-        return -1;
-      }
-
-      // bが自分で、aが自分でない場合 → bを優先して前に
-      if (b.uid === user.value.uid && a.uid !== user.value.uid) {
-        return 1;
-      }
-
-      // 上記以外（両方とも自分、または両方とも自分でない）の場合
-      // → 名前のアルファベット順（昇順）で比較
-      return a.code?.localeCompare(b.code ?? '');
-  })  
+    // ログインユーザーを常に先頭に
+    if (a.uid === user.value.uid && b.uid !== user.value.uid) return -1;
+    if (b.uid === user.value.uid && a.uid !== user.value.uid) return 1;
+    
+    // ログインユーザー以外は新しいルールでソート
+    // 1. sortOrder で比較（昇順）
+    const sortOrderA = a.sortOrder || '';
+    const sortOrderB = b.sortOrder || '';
+    if (sortOrderA !== sortOrderB) {
+      return sortOrderA.localeCompare(sortOrderB);
+    }
+    
+    // 2. department でグループ化
+    const group1Departments = ['営業部', 'システム部', '総務部'];
+    const isGroup1A = group1Departments.includes(a.department || '');
+    const isGroup1B = group1Departments.includes(b.department || '');
+    
+    if (isGroup1A && !isGroup1B) return -1;
+    if (!isGroup1A && isGroup1B) return 1;
+    
+    // 3. code で比較（昇順）
+    const codeA = a.code || '';
+    const codeB = b.code || '';
+    return codeA.localeCompare(codeB);
+  });
 })
 
 // 今日かどうかを判定
