@@ -43,7 +43,7 @@ const goTo = (path: string) => {
 
 .card {
     color: white;
-    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    background: linear-gradient(135deg, var(--brand-color-1), var(--brand-color-2), var(--brand-color-3));
 }
 
 @media (max-width: 768px) {

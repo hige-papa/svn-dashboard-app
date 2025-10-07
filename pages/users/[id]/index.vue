@@ -56,6 +56,14 @@
                 </label>
                 <div class="info-value">{{ userProfile.department || '未設定' }}</div>
               </div>
+              
+              <div class="info-item">
+                <label class="info-label">
+                  <i class="mdi mdi-phone-in-talk icon"></i>
+                  内線番号
+                </label>
+                <div class="info-value">{{ userProfile.extension || '未設定' }}</div>
+              </div>
             </div>
             
             <div v-if="userProfile.bio" class="info-item full-width">
@@ -461,7 +469,7 @@ onMounted(async () => {
 }
 
 .header {
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  background: linear-gradient(135deg, var(--brand-color-1), var(--brand-color-2), var(--brand-color-3));
   color: white;
   padding: 32px 40px;
   text-align: center;

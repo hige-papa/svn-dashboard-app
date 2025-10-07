@@ -23,6 +23,8 @@ interface ExtendedUserProfile extends UserProfile {
   lastLogin?: string | Date | Timestamp;
   createdAt?: string | Date | Timestamp;
   updatedAt?: string | Date | Timestamp;
+  extension?: string;
+  sortOrder?: string;
 
   // 貸与備品を追加する ※複数を想定
 
@@ -40,6 +42,8 @@ interface UserFormData {
   status: 'active' | 'inactive';
   bio: string;
   avatar: string;
+  extension: string;
+  sortOrder: string;
   notifications: {
     email: boolean;
     calendar: boolean;
