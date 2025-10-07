@@ -419,7 +419,7 @@ const showNotification = (message: string, type: 'success' | 'error' = 'success'
 .holiday-list { display: flex; flex-direction: column; gap: 12px; }
 .holiday-item { display: grid; grid-template-columns: 180px 1fr 60px; gap: 16px; align-items: center; transition: var(--transition); padding: 4px; border-radius: var(--radius-sm); border: 1px solid transparent; }
 .holiday-item.header { border-bottom: 2px solid var(--border-color); padding-bottom: 8px; margin-bottom: 8px; }
-.holiday-item.header .form-label { margin-bottom: 0; }
+.holiday-item.header .form-label { margin-bottom: 0; color: #fff; }
 .holiday-item .form-group { margin-bottom: 0; }
 .holiday-item.error { background-color: var(--danger-light); border-color: var(--danger-color); }
 
