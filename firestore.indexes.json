@@ -11,6 +11,10 @@
         {
           "fieldPath": "instanceDate",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
         }
       ]
     },
@@ -25,15 +29,9 @@
         {
           "fieldPath": "displayName",
           "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "event_instances",
-      "queryScope": "COLLECTION",
-      "fields": [
+        },
         {
-          "fieldPath": "instanceDate",
+          "fieldPath": "__name__",
           "order": "ASCENDING"
         }
       ]
