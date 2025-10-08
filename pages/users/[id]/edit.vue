@@ -716,6 +716,8 @@ const handleSubmit = async () => {
         status: formData.status,
         bio: formData.bio,
         avatar: previewImage.value || formData.avatar,
+        extension: formData.extension,
+        sortOrder: formData.sortOrder,
         notifications: formData.notifications
       }
       
