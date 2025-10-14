@@ -49,11 +49,12 @@
         }"
         @click="onEventClick($event, event)"
       >
-        <div v-if="event.conflicted" class="pa-0 ma-0 d-flex align-center">
+        <!-- 暫定処置：重複予定ありの表示を非表示 -->
+        <!-- <div v-if="event.conflicted" class="pa-0 ma-0 d-flex align-center">
           <v-icon icon="mdi-alert-circle" size="small" color="warning"
             class="mr-1"></v-icon>
           <span class="text-warning" style="font-size: 10px;">重複予定あり</span>
-        </div>
+        </div> -->
         <!-- <div>conflicted:{{ event.conflicted }}</div> -->
         <div class="event-title">{{ isViewable(event) ? event.title : '予定あり' }}</div>
         <div class="event-time">

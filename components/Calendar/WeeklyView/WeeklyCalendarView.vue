@@ -84,11 +84,12 @@
               :class="['event', 'event-type']"
               :style="{ top: `${10 + (index * 50)}px`, '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey' }">
               <template v-if="isViewable(event)">
-                <div v-if="isConflicted(user.uid, event)" class="pa-0 ma-0 d-flex align-center">
+                <!-- 暫定処置：重複予定ありの表示を非表示 -->
+                <!-- <div v-if="isConflicted(user.uid, event)" class="pa-0 ma-0 d-flex align-center">
                   <v-icon icon="mdi-alert-circle" size="small" color="warning"
                     class="mr-1"></v-icon>
                   <span class="text-warning" style="font-size: 10px;">重複予定あり</span>
-                </div>
+                </div> -->
                 <!-- <div>conflicted:{{ isConflicted(user.uid, event) }}</div> -->
                 <div class="event-time-range">{{ event.startTime }}-{{ event.endTime }}</div>
                 <div class="event-title">{{ event.title }}</div>
@@ -275,7 +276,7 @@ const getUserEventsForDay = (userId: string, date: Date) => {
   });
 };
 
-// 各日ごとに表示するイベント（最初の2つまで）
+// 各日ごとに表示するイベントを制限
 const getVisibleEvents = (events: EventDisplay[], limit?: number) => {
   return limit ? events.slice(0, limit) : events;
 };
