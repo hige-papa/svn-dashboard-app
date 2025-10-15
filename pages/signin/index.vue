@@ -2,6 +2,11 @@
 import { useAuth } from '~/composables/firebase/useAuth'
 import { useDisplay } from 'vuetify'
 
+// head設定
+useHead({
+  title: 'TASCAL - ログイン'
+});
+
 const { mobile } = useDisplay()
 const { loginWithEmailAndPasswordAsync } = useAuth()
 

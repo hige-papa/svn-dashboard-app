@@ -155,6 +155,11 @@ import type { User } from 'firebase/auth';
 import { padStart } from 'vuetify/lib/util/helpers.mjs';
 import { useDailyOptions } from '~/composables/useDailyOptions'
 
+// head設定
+useHead({
+  title: 'TASCAL - カレンダー'
+});
+
 const user = useState<ExtendedUserProfile>('userProfile')
 
 const { getAsync, deleteAsync } = useTransaction('events')

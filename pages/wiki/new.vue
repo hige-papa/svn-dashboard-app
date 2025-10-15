@@ -84,6 +84,11 @@
 import { useWiki } from '~/composables/useWiki'
 import { useMaster } from '~/composables/master/useMaster'
 
+// head設定
+useHead({
+  title: 'TASCAL - wiki新規登録'
+});
+
 const { addAsync: addCategoryAsync, getListAsync: getCategoriesAsync, deleteAsync: deleteCategoryAsync } = useMaster('categories')
 
 const { addAsync: addTagAsync, getListAsync: getTagsAsync, deleteAsync: deleteTagAsync } = useMaster('tags')

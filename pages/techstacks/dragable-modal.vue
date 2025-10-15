@@ -54,6 +54,11 @@
 </template>
 
 <script setup lang="ts">
+// head設定
+useHead({
+  title: 'TASCAL - 技術共有(ドラッグモーダル)'
+});
+
 const isModalOpen = ref(false);
 
 const draggable = ref<boolean>(false);

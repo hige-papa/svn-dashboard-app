@@ -235,6 +235,11 @@
 import type { User } from 'firebase/auth'
 import { useUserProfile } from '~/composables/useUserProfile'
 
+// head設定
+useHead({
+  title: 'TASCAL - ユーザープロフィール'
+});
+
 const user = useState<User>('user')
 
 const { back, push } = useRouter()

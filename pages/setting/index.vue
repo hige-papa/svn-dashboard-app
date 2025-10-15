@@ -1,4 +1,8 @@
 <script setup lang="ts">
+// head設定
+useHead({
+  title: 'TASCAL - 設定'
+});
 </script>
 
 <template>

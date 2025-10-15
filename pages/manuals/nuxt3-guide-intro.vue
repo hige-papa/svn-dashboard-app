@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import textFile from '~/public/content/nuxt3-guide-intro.txt'
 
+// head設定
+useHead({
+  title: 'TASCAL - イントロダクション'
+});
+
 const { back } = useRouter();
 
 const content = ref<string>()

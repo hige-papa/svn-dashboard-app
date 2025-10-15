@@ -471,7 +471,7 @@ const route = useRoute()
 
 // SEOメタタグ設定
 useHead({
-  title: 'TASCAL - ユーザー登録',
+  title: 'TASCAL - ユーザー編集',
   meta: [
     { name: 'description', content: 'TASCALシステムでユーザーを登録・編集できます' }
   ],

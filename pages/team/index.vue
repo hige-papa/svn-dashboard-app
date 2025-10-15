@@ -246,6 +246,11 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useTeam } from '~/composables/useTeam'
 
+// head設定
+useHead({
+  title: 'TASCAL - チーム'
+});
+
 // Nuxt3の場合
 const { push } = useRouter()
 

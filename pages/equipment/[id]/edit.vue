@@ -195,9 +195,9 @@ const { getAsync, addAsync, updateAsync } = useEquipment()
 
 // SEOメタタグ設定
 useHead({
-  title: 'TASCAL - 備品登録・編集',
+  title: 'TASCAL - 備品編集',
   meta: [
-    { name: 'description', content: 'TASCALシステムで備品を登録・編集できます' }
+    { name: 'description', content: 'TASCALシステムで備品を編集できます' }
   ],
   link: [
     { rel: 'stylesheet', href: 'https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/7.2.96/css/materialdesignicons.min.css' }

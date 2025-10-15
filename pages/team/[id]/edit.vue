@@ -245,7 +245,7 @@ interface MasterItem {
 
 // SEOメタタグ設定
 useHead({
-  title: 'TASCAL - チーム登録・編集',
+  title: 'TASCAL - チーム編集',
   meta: [
     { name: 'description', content: 'TASCALシステムでチームを登録・編集できます' }
   ],

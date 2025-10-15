@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import textFile from '~/public/content/developer-guide.txt'
 
+// head設定
+useHead({
+  title: 'TASCAL - 開発ガイド'
+});
+
 const { back } = useRouter();
 
 const content = ref<string>()

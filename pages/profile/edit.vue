@@ -266,6 +266,11 @@ import { useUserProfile } from '~/composables/useUserProfile'
 import { useSection } from '~/composables/useSection'
 import type { User } from 'firebase/auth'
 
+// head設定
+useHead({
+  title: 'TASCAL - ユーザープロフィール編集'
+});
+
 const user = useState<User>('user')
 
 const { back, push } = useRouter()

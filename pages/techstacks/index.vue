@@ -16,6 +16,11 @@
 </template>
 
 <script setup lang="ts">
+// head設定
+useHead({
+  title: 'TASCAL - 技術共有'
+});
+
 const menu = [
     {
         id: 'dragable-modal',

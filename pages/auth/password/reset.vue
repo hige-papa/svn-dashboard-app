@@ -41,6 +41,11 @@ import {
   type ActionCodeSettings,
 } from 'firebase/auth';
 
+// head設定
+useHead({
+  title: 'TASCAL - パスワード再設定'
+});
+
 // リアクティブな状態変数
 const email = ref('');
 const loading = ref(false);

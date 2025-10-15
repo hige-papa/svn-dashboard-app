@@ -54,6 +54,11 @@
 import { useWiki } from '~/composables/useWiki'
 import { type QueryConstraint, where } from 'firebase/firestore'
 
+// head設定
+useHead({
+  title: 'TASCAL - wiki'
+});
+
 const user = useState<ExtendedUserProfile>('userProfile')
 
 const editable = computed(() => {
