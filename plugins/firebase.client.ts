@@ -9,6 +9,7 @@ import firebaseConfig from '~/firebase.config';
 import { getVertexAI, getGenerativeModel, type ModelParams } from "firebase/vertexai";
 // import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
 import { useUserProfile } from '~/composables/useUserProfile'
+import { useAuth } from '~/composables/firebase/useAuth'
 
 export default defineNuxtPlugin(async () => {
     // Initialize Firebase
@@ -53,10 +54,17 @@ export default defineNuxtPlugin(async () => {
 
     user.value = await getUserAsync();
 
+    const { logoutAsync } = useAuth();
+
     onAuthStateChanged(auth, async () => {
         if (auth.currentUser) {
             user.value = auth.currentUser;
             userProfile.value = await getUserProfile(auth.currentUser.uid);
+            if (!userProfile.value?.status || userProfile.value?.status === 'inactive') {
+                console.log('this account is inactive')
+                logoutAsync()
+                return
+            }
             console.log('user logged in');
         } else {
             user.value = undefined;

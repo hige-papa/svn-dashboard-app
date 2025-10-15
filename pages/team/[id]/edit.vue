@@ -464,7 +464,7 @@ onMounted(async () => {
   await Promise.all([
     loadCategories(),
     getUsersAsync().then(users => {
-      membersMaster.value = (users as ExtendedUserProfile[]).map(user => ({
+      membersMaster.value = (users as ExtendedUserProfile[]).filter(user => user.status === 'active').map(user => ({
         id: user.uid,
         name: user.displayName || '未設定',
         department: user.department || '',

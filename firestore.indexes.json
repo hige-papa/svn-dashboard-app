@@ -29,16 +29,6 @@
       ]
     },
     {
-      "collectionGroup": "event_instances",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "instanceDate",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "events",
       "queryScope": "COLLECTION",
       "fields": [
