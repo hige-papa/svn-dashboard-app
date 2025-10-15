@@ -5,6 +5,11 @@
 <script setup lang="ts">
 import { useTransaction } from '~/composables/transaction/useTransaction'
 
+// head設定
+useHead({
+  title: 'TASCAL - 予定詳細'
+});
+
 const { getAsync, deleteAsync } = useTransaction('events')
 
 const { params } = useRoute()

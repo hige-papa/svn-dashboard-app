@@ -177,9 +177,9 @@ const { getAsync, addAsync, updateAsync } = useSection()
 
 // SEOメタタグ設定
 useHead({
-  title: 'TASCAL - 部課登録・編集',
+  title: 'TASCAL - 部課新規登録',
   meta: [
-    { name: 'description', content: 'TASCALシステムで部課を登録・編集できます' }
+    { name: 'description', content: 'TASCALシステムで部課を新規登録できます' }
   ],
   link: [
     { rel: 'stylesheet', href: 'https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/7.2.96/css/materialdesignicons.min.css' }

@@ -5,6 +5,11 @@
 <script setup lang="ts">
 import { useEventService } from '~/services/eventService';
 
+// head設定
+useHead({
+  title: 'TASCAL - 予定新規登録'
+});
+
 // useTransaction の代わりに useEventService を使用
 const { createEvent } = useEventService();
 

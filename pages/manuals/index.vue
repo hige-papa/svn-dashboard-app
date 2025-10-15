@@ -16,6 +16,11 @@
 </template>
 
 <script setup lang="ts">
+// head設定
+useHead({
+  title: 'TASCAL - マニュアルメニュー'
+});
+
 const menu = [
     {
         id: 'user-help',

@@ -1,4 +1,8 @@
 <script setup lang="ts">
+// head設定
+useHead({
+  title: 'TASCAL - 売上管理'
+});
 </script>
 
 <template>

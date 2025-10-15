@@ -54,6 +54,11 @@
 <script setup lang="ts">
 import { useWiki } from '~/composables/useWiki'
 
+// head設定
+useHead({
+  title: 'TASCAL - wiki詳細'
+});
+
 const { getAsync: getWikiArticle, deleteAsync: deleteWikiArticle, updateAsync: updateWikiArticle, getHistoriesAsync: getArticleHistories } = useWiki()
 
 const user = useState<ExtendedUserProfile>('userProfile')

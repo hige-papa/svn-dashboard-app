@@ -77,6 +77,11 @@
 <script setup lang="ts">
 import { useMaster } from '~/composables/master/useMaster'
 
+// head設定
+useHead({
+  title: 'TASCAL - wikiタグメンテンナンス'
+});
+
 const { addAsync: addTagAsync, getListAsync: getTagsAsync, deleteAsync: deleteTagAsync } = useMaster('tags')
 
 const tags = ref<Tag[]>([])

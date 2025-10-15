@@ -177,7 +177,7 @@ const { getAsync, addAsync, updateAsync } = useSection()
 
 // SEOメタタグ設定
 useHead({
-  title: 'TASCAL - 部課登録・編集',
+  title: 'TASCAL - 部課編集',
   meta: [
     { name: 'description', content: 'TASCALシステムで部課を登録・編集できます' }
   ],
