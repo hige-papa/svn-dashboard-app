@@ -12,6 +12,7 @@ declare global {
 
   interface MasterItem {
     id: string;
+    code: string;
     name: string;
     department?: string;
     capacity?: number;

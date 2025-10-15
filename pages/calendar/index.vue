@@ -56,7 +56,7 @@
       <h2 class="view-title">グループスケジュール</h2>
 
       <div>
-        <WeeklyCalendarView :users="visibleUsers" :week-days="weekDays" :events="events" :daily-options="dailyOptions"
+        <WeeklyCalendarView :users="visibleUsers" :company="company" :facilities="sortedFacilities" :equipments="sortedEquipments" :week-days="weekDays" :events="events" :daily-options="dailyOptions"
           :get-user-schedules-for-day="getUserSchedulesForDay" @day-click="handleDayClickForWeekly" />
       </div>
       <!-- WeeklyCalendarViewコンポーネントを使用 -->
@@ -154,6 +154,9 @@ import { useTransaction } from '~/composables/transaction/useTransaction'
 import type { User } from 'firebase/auth';
 import { padStart } from 'vuetify/lib/util/helpers.mjs';
 import { useDailyOptions } from '~/composables/useDailyOptions'
+import { useFacility } from '~/composables/useFacility'
+import { useEquipment } from '~/composables/useEquipment'
+import { useMasterData } from '~/composables/useMasterData';
 
 // head設定
 useHead({
@@ -163,6 +166,8 @@ useHead({
 const user = useState<ExtendedUserProfile>('userProfile')
 
 const { getAsync, deleteAsync } = useTransaction('events')
+const { getListAsync: getFacilitiesAsync } = useFacility()
+const { getListAsync: getEquipmentsAsync } = useEquipment()
 
 const { mobile } = useDisplay()
 
@@ -233,6 +238,32 @@ const {
 
 const visibleUsers = computed(() => {
   return users.value?.filter(u => { return u.status === 'active' })
+})
+
+const { data: companies } = useMasterData<OwnCompany>('own-company')
+
+const company = computed(() => {
+  return companies.value?.map(company => {
+      return {
+        id: company.id,
+        code: company.code,
+        name: company.displayName || '未設定',
+        department: '',
+        avatar: company.avatar,
+      }
+    })?.[0]
+})
+
+const facilitiesMaster = ref<MasterItem[]>([])
+
+const sortedFacilities = computed(() => {
+  return facilitiesMaster.value.sort((a, b) => { if (a.code > b.code) { return 1 } else { return -1 } })
+})
+
+const equipmentMaster = ref<MasterItem[]>([])
+
+const sortedEquipments = computed(() => {
+  return equipmentMaster.value.sort((a, b) => { if (a.code > b.code) { return 1 } else { return -1 } })
 })
 
 const myDailyOptions = computed(() => {
@@ -371,6 +402,26 @@ onMounted(async () => {
   if (savedView !== currentView.value) {
     await setView(savedView);
   }
+
+  
+  getEquipmentsAsync().then(equipments => {
+    equipmentMaster.value = (equipments as any[]).map(equipment => ({
+      id: equipment.id,
+      code: equipment.code,
+      name: equipment.name,
+      capacity: equipment.capacity,
+      avatar: equipment.imageUrl,
+    }))
+  })
+  getFacilitiesAsync().then(facilities => {
+    facilitiesMaster.value = (facilities as any[]).map(facility => ({
+      id: facility.id,
+      code: facility.code,
+      name: facility.name,
+      capacity: facility.capacity,
+      avatar: facility.imageUrl,
+    }))
+  })
 
   // 初期表示時にデータを読み込む
   await loadData();
