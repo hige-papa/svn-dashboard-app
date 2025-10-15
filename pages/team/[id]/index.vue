@@ -234,7 +234,7 @@ const loadItem = async () => {
     if (fetchedItem && fetchedItem.members && fetchedItem.members.length > 0) {
       const allUsers = await getUsersAsync() as any[];
       members.value = allUsers
-        .filter(user => fetchedItem.members.includes(user.uid))
+        .filter(user => user.status === 'active' && fetchedItem.members.includes(user.uid))
         .map(user => ({
           id: user.uid,
           name: user.displayName || '未設定',

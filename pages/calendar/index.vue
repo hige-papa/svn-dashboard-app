@@ -28,7 +28,7 @@
         <!-- 週間ビュー用のユーザーフィルター -->
         <!-- <UserFilter 
           v-if="currentView === 'weekly'"
-          :users="users"
+          :users="visibleUsers"
           @toggle-user="toggleUserVisibility"
         /> -->
       </div>
@@ -56,11 +56,11 @@
       <h2 class="view-title">グループスケジュール</h2>
 
       <div>
-        <WeeklyCalendarView :users="users" :week-days="weekDays" :events="events" :daily-options="dailyOptions"
+        <WeeklyCalendarView :users="visibleUsers" :week-days="weekDays" :events="events" :daily-options="dailyOptions"
           :get-user-schedules-for-day="getUserSchedulesForDay" @day-click="handleDayClickForWeekly" />
       </div>
       <!-- WeeklyCalendarViewコンポーネントを使用 -->
-      <!-- <WeeklyCalendarView :users="users" :week-days="weekDays" :events="events"
+      <!-- <WeeklyCalendarView :users="visibleUsers" :week-days="weekDays" :events="events"
         :get-user-schedules-for-day="getUserSchedulesForDay" @event-click="handleShowEventDetails" @day-click="handleDayClickForWeekly" /> -->
     </div>
 
@@ -225,6 +225,10 @@ const {
   loadDailyOptions,
   setDailyOption,
 } = useDailyOptions(currentDate, currentView);
+
+const visibleUsers = computed(() => {
+  return users.value?.filter(u => { return u.status === 'active' })
+})
 
 const myDailyOptions = computed(() => {
   return dailyOptions.value.filter(e => { return e.uid === user.value.uid });
