@@ -581,6 +581,7 @@ import { useTeam } from '~/composables/useTeam'
 import { useCalendar } from '~/composables/useCalendar';
 import { useEventService } from '~/services/eventService'
 import { useConstants } from '~/composables/common/useConstants'
+import { useMasterData } from '~/composables/useMasterData'
 import { useDisplay } from 'vuetify'
 
 interface MasterItem {
@@ -604,6 +605,8 @@ interface TeamItem {
 }
 
 const { eventTypeDetails } = useConstants()
+
+const { data: ownCompanies } = useMasterData<OwnCompany>('own-company')
 
 const user = useState<User>('user')
 
@@ -680,7 +683,21 @@ const modalView = ref<'participants' | 'teams'>('participants')
 const searchQuery = ref('')
 const tempSelection = ref<string[]>([])
 
-const participantsMaster = ref<MasterItem[]>([])
+const participants = ref<MasterItem[]>([])
+const participantsMaster = computed(() => {
+  return [
+    ...participants.value,
+    ...(ownCompanies.value?.map(company => {
+      return {
+        id: company.id,
+        code: company.code,
+        name: company.displayName || '未設定',
+        department: '',
+        avatar: company.avatar,
+      }
+    }) ?? [])
+  ]
+})
 const facilitiesMaster = ref<MasterItem[]>([])
 const equipmentMaster = ref<MasterItem[]>([])
 const teamsMaster = ref<TeamItem[]>([])
@@ -983,7 +1000,7 @@ const updateMasterConflicts = () => {
     })
   }
 
-  participantsMaster.value = markConflicts(participantsMaster.value, 'participant')
+  participants.value = markConflicts(participantsMaster.value, 'participant')
   facilitiesMaster.value = markConflicts(facilitiesMaster.value, 'facility')
   equipmentMaster.value = markConflicts(equipmentMaster.value, 'equipment')
 }
@@ -1099,14 +1116,17 @@ const showEventRelatedParties = async () => {
 
 onMounted(() => {
   setDefaultValues(props.initialData)
+  console.log('own-companies:', ownCompanies.value)
   getUsersAsync().then(users => {
-    participantsMaster.value = (users as any[]).map(user => ({
-      id: user.uid,
-      code: user.code,
-      name: user.displayName || '未設定',
-      department: user.department || '',
-      avatar: user.avatar,
-    }))
+    participants.value = [
+      ...(users as any[]).map(user => ({
+        id: user.uid,
+        code: user.code,
+        name: user.displayName || '未設定',
+        department: user.department || '',
+        avatar: user.avatar,
+      })),
+    ]
     if (!props.initialData) {
       if (props.participantIds) {
         formData.participantIds = [...formData.participantIds, ...props.participantIds];
