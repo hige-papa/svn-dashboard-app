@@ -6,10 +6,11 @@
             <v-icon v-else>mdi-account</v-icon>
             <div class="article-info">
                 <div>{{ props.article.author }} • {{ props.article.department }}</div>
-                <div>{{ props.article.createdAt }}</div>
+                <div>{{ formatDate(props.article.createdAt) }}</div>
             </div>
         </div>
         <!-- <p class="article-category">{{ props.article.category?.text }}</p> -->
+         <!-- {{props.article}} -->
         <v-chip
             :color="props.article.category?.color"
             class="ma-1">
@@ -37,6 +38,14 @@ const emit = defineEmits(['readMore'])
 
 const handleClickReadMore = () => {
     emit('readMore', props.article)
+}
+
+const formatDate = (date: any) => {
+    try {
+        return date?.toDate()?.toLocaleString()
+    } catch (error) {
+        return undefined
+    }
 }
 </script>
 

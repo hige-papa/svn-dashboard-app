@@ -24,8 +24,9 @@
                 <v-chip
                     v-for="(category, index) in categories"
                     :key="`category-${index}`"
-                    :color="category.color"
-                    class="ma-1">
+                    :color="category.isActive ? 'blue' : 'grey'"
+                    class="ma-1"
+                    @click.stop=toggleTagActive(category)>
                     {{ category.text }}
                 </v-chip>
             </v-col>
@@ -36,7 +37,7 @@
             </v-col> -->
             <v-col cols="12" sm="7">
                 <v-list>
-                    <v-list-item v-for="(article, index) in articles" :key="`article-${index}`">
+                    <v-list-item v-for="(article, index) in filteredArticles" :key="`article-${index}`">
                         <WikiArticleIndex
                             :user-name="article.author"
                             :article="article"
@@ -64,7 +65,12 @@ import { useMaster } from '~/composables/master/useMaster'
 
 const { getListAsync: getCategoriesAsync } = useMaster('categories')
 
-const categories = ref<Tag[]>([])
+const categories = ref<any[]>([])
+
+const toggleTagActive = (tag: any) => {
+    const target = categories.value.find(t => t.id === tag.id) as any
+    if (target) target.isActive = !(target.isActive ?? false)
+}
 
 onMounted(() => {
     getCategoriesAsync().then(response => {
@@ -103,17 +109,41 @@ const getPrefixQuery = (searchTerm: string) => {
     return [searchTerm, end]
 }
 
+const keyword = ref<string>('')
+
+const selectedTags = ref<any[]>([])
+
+watch(categories, (newValue) => {
+    selectedTags.value = [...(newValue.filter(c => { return c.isActive }) ?? [])]
+}, { deep: true })
+
+const filteredArticles = computed(() => {
+    const tags = [...selectedTags.value]
+    if (!keyword.value && !tags.length) return articles.value
+    return [...articles.value].filter(a => {
+        const titleMatch = a.title.indexOf(keyword.value) >= 0
+        const summaryMatch = a.summary.indexOf(keyword.value) >= 0
+        const contentMatch = a.content.indexOf(keyword.value) >= 0
+
+        // const activetags = categories.value?.filter(c => { return c.isActive }) ?? []
+        const tagMatch = tags?.length ? (a.category && tags.some(t => t.id === a.category?.id)) : true
+
+        return (titleMatch || summaryMatch || contentMatch) && tagMatch
+    })
+})
+
 const handleClickSearch = async (e: any) => {
-    // alert(e)
-    if (e) {
-        const query: QueryConstraint[] = []
-        const [start, end] = getPrefixQuery(e)
-        query.push(where('title', '>=', start))
-        query.push(where('title', '<', end))
-        articles.value = await getWikiArticles(...query)
-    } else {
-        articles.value = await getWikiArticles()
-    }
+    keyword.value = e
+    // // alert(e)
+    // if (e) {
+    //     const query: QueryConstraint[] = []
+    //     const [start, end] = getPrefixQuery(e)
+    //     query.push(where('title', '>=', start))
+    //     query.push(where('title', '<', end))
+    //     articles.value = await getWikiArticles(...query)
+    // } else {
+    //     articles.value = await getWikiArticles()
+    // }
 }
 
 const handleClickReadMore = (e: WikiArticle) => {
