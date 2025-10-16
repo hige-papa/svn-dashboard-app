@@ -20,7 +20,14 @@
         </v-row>
         <v-row>
             <v-col>
-                <v-chip v-for="n of 5" :key="`tag-${n}`" class="mr-2">tag-{{ n }}</v-chip>
+                <!-- <v-chip v-for="n of 5" :key="`tag-${n}`" class="mr-2">tag-{{ n }}</v-chip> -->
+                <v-chip
+                    v-for="(category, index) in categories"
+                    :key="`category-${index}`"
+                    :color="category.color"
+                    class="ma-1">
+                    {{ category.text }}
+                </v-chip>
             </v-col>
         </v-row>
         <v-row>
@@ -53,6 +60,17 @@
 <script setup lang="ts">
 import { useWiki } from '~/composables/useWiki'
 import { type QueryConstraint, where } from 'firebase/firestore'
+import { useMaster } from '~/composables/master/useMaster'
+
+const { getListAsync: getCategoriesAsync } = useMaster('categories')
+
+const categories = ref<Tag[]>([])
+
+onMounted(() => {
+    getCategoriesAsync().then(response => {
+        categories.value = response
+    })
+})
 
 const user = useState<ExtendedUserProfile>('userProfile')
 

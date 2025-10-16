@@ -33,6 +33,14 @@
                         variant="outlined"
                         required
                     ></v-textarea>
+                    <v-select
+                        v-model="form.category"
+                        :items="categories"
+                        item-title="text"
+                        label="カテゴリー"
+                        variant="outlined"
+                        return-object>
+                    </v-select>                    
                     <v-autocomplete
                         v-model="form.tags"
                         :items="tags"
@@ -43,14 +51,6 @@
                         chips
                         return-object>
                     </v-autocomplete>
-                    <v-select
-                        v-model="form.category"
-                        :items="categories"
-                        item-title="text"
-                        label="カテゴリー"
-                        variant="outlined"
-                        return-object>
-                    </v-select>
                     <v-text-field
                         v-model="form.image"
                         label="画像URL"

@@ -9,6 +9,13 @@
                 <div>{{ props.article.createdAt }}</div>
             </div>
         </div>
+        <!-- <p class="article-category">{{ props.article.category?.text }}</p> -->
+        <v-chip
+            :color="props.article.category?.color"
+            class="ma-1">
+            {{ props.article.category?.text }}
+        </v-chip>
+        <!-- <p class="article-tag">{{ props.article.tags[0] }}</p> -->
         <h2 class="article-title">{{ props.article.title }}</h2>
         <p class="article-excerpt">
             {{ props.article.summary }}
@@ -21,6 +28,8 @@
 interface Props {
     article: WikiArticle
 }
+
+const categories = ref<Tag[]>([])
 
 const props = defineProps<Props>()
 
