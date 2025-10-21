@@ -2,6 +2,19 @@
   <!-- {{ props.weekDays }} -->
   <!-- {{ props.visibleUsers }} -->
   <!-- {{ props.events }} -->
+  
+  <!-- Debug buttons for cache and profiler -->
+  <div class="debug-controls mb-2" style="display: flex; gap: 8px; justify-content: flex-end;">
+    <v-btn size="small" color="warning" variant="outlined" @click="handleClearCache">
+      <v-icon start>mdi-cached</v-icon>
+      キャッシュクリア
+    </v-btn>
+    <v-btn size="small" color="info" variant="outlined" @click="handleShowProfiler">
+      <v-icon start>mdi-chart-line</v-icon>
+      パフォーマンス測定結果
+    </v-btn>
+  </div>
+
   <div class="calendar-container w-100 table_box">
     <v-table class="table-field">
       <thead>
@@ -273,9 +286,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useCalendar } from '~/composables/useCalendar';
+import { computed, onMounted } from 'vue';
+import { useCalendar, getMasterDataCache, getMasterDataCacheAsync } from '~/composables/useCalendar';
 import { useConstants } from '~/composables/common/useConstants';
+import { printFirestoreDebugSummary, resetFirestoreProfiler } from '~/composables/firebase/useFirestore';
 import type { User } from 'firebase/auth';
 
 const user = useState<User>('user');
@@ -294,6 +308,8 @@ const props = defineProps<Props>();
 
 // const emit = defineEmits(['eventClick', 'selectDay']);
 const emit = defineEmits(['dayClick']);
+
+const masterDataCache = getMasterDataCache();
 
 const isViewable = (event: EventDisplay) => {
   return event.private ? (event.participantIds?.includes(user.value.uid)) ?? false : true
@@ -486,6 +502,56 @@ const isConflicted = (id: string, event: EventDisplay) => {
   });
   return result;
 }
+
+onMounted(() => {
+  console.log('[WeeklyCalendarView] mounted at', new Date().toISOString());
+  // props の初期サイズも出しておく
+  try {
+    console.log('[WeeklyCalendarView] initial props.events.length =', Array.isArray(props.events) ? props.events.length : 0);
+    console.log('[WeeklyCalendarView] initial props.dailyOptions.length =', Array.isArray(props.dailyOptions) ? props.dailyOptions.length : 0);
+  } catch (e) {
+    // ignore
+  }
+  // 少し遅延して集計ログを出す（初期描画が落ち着くまで）
+  setTimeout(() => {
+    console.group('[WeeklyCalendarView] performance summary');
+    console.log('Component mounted and props loaded');
+    // キャッシュ状態をログ
+    console.log('Cache status: users cached?', masterDataCache.value.has('users'));
+    console.log('Cache status: holidays cached?', masterDataCache.value.has('holidays'));
+    console.groupEnd();
+    // Firestore クエリ集計も追加
+    try {
+      printFirestoreDebugSummary();
+    } catch (e) {
+      console.warn('Failed to call printFirestoreDebugSummary', e);
+    }
+  }, 500);
+});
+
+// --- Debug functions ---
+const handleClearCache = async () => {
+  console.log('[Debug] Clearing master data cache...');
+  masterDataCache.value.clear();
+  resetFirestoreProfiler();
+  console.log('[Debug] Cache cleared. Reloading data...');
+  
+  // Force refresh data
+  try {
+    await Promise.all([
+      getMasterDataCacheAsync('users', true),
+      getMasterDataCacheAsync('holidays', true),
+    ]);
+    console.log('[Debug] Data reloaded successfully');
+  } catch (error) {
+    console.error('[Debug] Failed to reload data:', error);
+  }
+};
+
+const handleShowProfiler = () => {
+  console.log('[Debug] Showing profiler summary...');
+  printFirestoreDebugSummary(true);
+};
 </script>
 
 <style scoped>

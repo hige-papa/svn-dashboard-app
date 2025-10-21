@@ -1,7 +1,99 @@
 // composables/useCalendar.ts
 import { ref, computed, onMounted, watch } from 'vue';
+import { useState } from 'nuxt/app';
 import { useEventService } from '~/services/eventService';
 import { useMaster } from '~/composables/master/useMaster';
+import { printFirestoreDebugSummary } from '~/composables/firebase/useFirestore';
+
+// --- Cache for master data ---
+type CacheEntry = {
+  data: any;
+  timestamp: number;
+  promise?: Promise<any>;
+};
+
+export const masterDataCache = useState('masterDataCache', () => new Map<string, CacheEntry>());
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes (300 seconds)
+
+/**
+ * Master data cache API with TTL, in-flight deduplication, and error handling
+ * @param key - Cache key ('users' | 'holidays')
+ * @param forceRefresh - Force refetch from Firestore, bypassing cache
+ * @returns Promise with data, fromCache flag, and timestamp
+ */
+export const getMasterDataCacheAsync = async (
+  key: 'users' | 'holidays',
+  forceRefresh = false
+): Promise<{ data: any; fromCache: boolean; timestamp: number }> => {
+  const now = Date.now();
+  const { getListAsync: getHolidaysListAsync } = useMaster('holidays');
+  const { getListAsync: getUsersListAsync } = useMaster('users');
+
+  // Check cache validity
+  const cached = masterDataCache.value.get(key);
+  if (!forceRefresh && cached && (now - cached.timestamp) < CACHE_DURATION_MS) {
+    console.log(`[Cache] Hit for ${key}`);
+    return { data: cached.data, fromCache: true, timestamp: cached.timestamp };
+  }
+
+  // In-flight deduplication: reuse existing promise if available
+  if (cached?.promise) {
+    console.log(`[Cache] In-flight dedup for ${key} - waiting for existing fetch`);
+    try {
+      const data = await cached.promise;
+      return { data, fromCache: false, timestamp: masterDataCache.value.get(key)?.timestamp || now };
+    } catch (error) {
+      console.error(`[Cache] In-flight fetch failed for ${key}:`, error);
+      throw error;
+    }
+  }
+
+  // Cache miss - fetch from Firestore
+  console.log(`[Cache] Miss for ${key} — fetching...`);
+  
+  const fetchPromise = (async () => {
+    try {
+      let data: any;
+      if (key === 'users') {
+        data = await (getUsersListAsync() as Promise<ExtendedUserProfile[]>);
+      } else if (key === 'holidays') {
+        data = await (getHolidaysListAsync() as Promise<Holiday[]>);
+      }
+      
+      // Update cache with fetched data
+      const timestamp = Date.now();
+      masterDataCache.value.set(key, { data, timestamp });
+      console.log(`[Cache] Set for ${key} (ttl=300s)`);
+      
+      return data;
+    } catch (error) {
+      // On error, fallback to stale cache if available
+      const staleCache = masterDataCache.value.get(key);
+      if (staleCache?.data) {
+        console.warn(`[Cache] Fetch failed for ${key}, using stale cache:`, error);
+        return staleCache.data;
+      }
+      console.error(`[Cache] Fetch failed for ${key} and no stale cache available:`, error);
+      throw error;
+    } finally {
+      // Clean up promise reference
+      const entry = masterDataCache.value.get(key);
+      if (entry) {
+        delete entry.promise;
+      }
+    }
+  })();
+
+  // Store promise for in-flight dedup
+  const entry = masterDataCache.value.get(key) || { data: null, timestamp: 0 };
+  entry.promise = fetchPromise;
+  masterDataCache.value.set(key, entry);
+
+  const data = await fetchPromise;
+  return { data, fromCache: false, timestamp: masterDataCache.value.get(key)?.timestamp || now };
+};
+
+export const getMasterDataCache = () => masterDataCache;
 
 export const useCalendar = () => {
   // --- Services ---
@@ -79,14 +171,19 @@ export const useCalendar = () => {
     isLoading.value = true;
     try {
       const dateRange = getCurrentDateRange();
-      const [eventsData, usersData, holidaysData] = await Promise.all([
+      const [eventsData, usersResult, holidaysResult] = await Promise.all([
         eventService.getEventsInRange(dateRange.startDate, dateRange.endDate),
-        getUsersListAsync() as Promise<ExtendedUserProfile[]>,
-        getHolidaysListAsync() as Promise<Holiday[]>,
+        getMasterDataCacheAsync('users'),
+        getMasterDataCacheAsync('holidays'),
       ]);
       events.value = eventsData;
-      users.value = usersData.map(u => ({ ...u, visible: true }));
-      holidays.value = holidaysData;
+      users.value = usersResult.data.map((u: ExtendedUserProfile) => ({ ...u, visible: true }));
+      holidays.value = holidaysResult.data;
+      
+      // Auto-print profiler summary on first load (weekly view)
+      if (currentView.value === 'weekly') {
+        printFirestoreDebugSummary();
+      }
     } catch (error) {
       console.error('Failed to load calendar data:', error);
     } finally {

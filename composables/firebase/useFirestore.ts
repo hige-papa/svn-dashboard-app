@@ -23,6 +23,80 @@ import {
 import { useDocumentRoot } from '~/composables/firebase/useDocumentRoot'
 import type { User } from 'firebase/auth';
 
+// --- Profiler for Firestore queries ---
+const firestoreQueryStats = new Map<string, { count: number; totalTime: number }>();
+let profilerFirstPrintDone = false;
+
+const recordQuery = (collectionName: string, startTime: number) => {
+  const endTime = performance.now();
+  const duration = endTime - startTime;
+  const key = collectionName;
+  if (!firestoreQueryStats.has(key)) {
+    firestoreQueryStats.set(key, { count: 0, totalTime: 0 });
+  }
+  const stats = firestoreQueryStats.get(key)!;
+  stats.count += 1;
+  stats.totalTime += duration;
+};
+
+export const printFirestoreDebugSummary = (force = false) => {
+  // Auto-print only once on first call unless forced
+  if (!force && profilerFirstPrintDone) {
+    return;
+  }
+
+  if (!force) {
+    profilerFirstPrintDone = true;
+  }
+
+  const collections: string[] = [];
+  let totalQueries = 0;
+  let totalTime = 0;
+
+  firestoreQueryStats.forEach((stats, collection) => {
+    collections.push(`${collection}=${stats.count}`);
+    totalQueries += stats.count;
+    totalTime += stats.totalTime;
+  });
+
+  const summary = `[Profiling] Firestore queries: ${collections.join(', ')}, total=${totalQueries}, elapsed=${totalTime.toFixed(2)}ms`;
+  console.log(summary);
+
+  // Detailed breakdown
+  console.group('[Firestore Query Details]');
+  firestoreQueryStats.forEach((stats, collection) => {
+    console.log(`  ${collection}: ${stats.count} calls, ${stats.totalTime.toFixed(2)}ms (avg: ${(stats.totalTime / stats.count).toFixed(2)}ms)`);
+  });
+  console.groupEnd();
+
+  // JSON output for easy analysis
+  const jsonOutput = {
+    total: totalQueries,
+    elapsed: parseFloat(totalTime.toFixed(2)),
+    collections: Array.from(firestoreQueryStats.entries()).map(([name, stats]) => ({
+      name,
+      count: stats.count,
+      totalTime: parseFloat(stats.totalTime.toFixed(2)),
+      avgTime: parseFloat((stats.totalTime / stats.count).toFixed(2))
+    }))
+  };
+  console.log('[Profiling JSON]', JSON.stringify(jsonOutput, null, 2));
+};
+
+export const resetFirestoreProfiler = () => {
+  firestoreQueryStats.clear();
+  profilerFirstPrintDone = false;
+  console.log('[Profiling] Stats reset');
+};
+
+export const getFirestoreProfilerStats = () => {
+  return {
+    stats: Array.from(firestoreQueryStats.entries()).map(([name, stats]) => ({ name, ...stats })),
+    firstPrintDone: profilerFirstPrintDone
+  };
+};
+
+
 export const useFirestore = () => {
     const firestore = useState<Firestore>('db');
 
@@ -37,16 +111,19 @@ export const useFirestore = () => {
     };
 
     const getCollectionAsync = async (c: string, ...qc: QueryConstraint[]) => {
+        const startTime = performance.now();
         const q = query(
             collection(firestore.value, c),
             ...qc
         );
         return getDocs(q)
             .then(response => {
+                recordQuery(c, startTime);
                 console.log(`success get from firebase firestore => ${c}`, response);
                 return response;
             })
             .catch(error => {
+                recordQuery(c, startTime);
                 console.error(`failed get from firebase firestore => ${c}`, error);
                 throw error;
             });
