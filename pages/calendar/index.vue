@@ -53,7 +53,35 @@
 
     <!-- 週間ビュー -->
     <div v-else-if="currentView === 'weekly'" class="weekly-view">
-      <h2 class="view-title">グループスケジュール</h2>
+      <v-list-item class="pa-0">
+        <template v-slot:prepend>
+          <h2 class="view-title">グループスケジュール</h2>
+        </template>
+        <template v-slot:append>
+          <div class="d-flex justify-end">
+            <v-checkbox
+              v-model="displayOption.isShowUser"
+              label="ユーザー"
+              hide-details
+            ></v-checkbox>
+            <v-checkbox
+              v-model="displayOption.isShowCompany"
+              label="会社"
+              hide-details
+            ></v-checkbox>
+            <v-checkbox
+              v-model="displayOption.isShowFacility"
+              label="施設"
+              hide-details
+            ></v-checkbox>
+            <v-checkbox
+              v-model="displayOption.isShowEquipment"
+              label="備品"
+              hide-details
+            ></v-checkbox>
+          </div>
+        </template>
+      </v-list-item>
 
       <div>
         <WeeklyCalendarView :users="visibleUsers" :company="company" :facilities="sortedFacilities" :equipments="sortedEquipments" :week-days="weekDays" :events="events" :daily-options="dailyOptions"
@@ -236,13 +264,23 @@ const {
   setDailyOption,
 } = useDailyOptions(currentDate, currentView);
 
+// 週次の表示設定
+const displayOption = ref<any>({
+  isShowUser: true,
+  isShowCompany: true,
+  isShowFacility: false,
+  isShowEquipment: false
+})
+
 const visibleUsers = computed(() => {
+  if (displayOption.value.isShowUser === false) return []
   return users.value?.filter(u => { return u.status === 'active' })
 })
 
 const { data: companies } = useMasterData<OwnCompany>('own-company')
 
 const company = computed(() => {
+  if (displayOption.value.isShowCompany === false) return undefined
   return companies.value?.map(company => {
       return {
         id: company.id,
@@ -257,12 +295,14 @@ const company = computed(() => {
 const facilitiesMaster = ref<MasterItem[]>([])
 
 const sortedFacilities = computed(() => {
+  if (displayOption.value.isShowFacility === false) return []
   return facilitiesMaster.value.sort((a, b) => { if (a.code > b.code) { return 1 } else { return -1 } })
 })
 
 const equipmentMaster = ref<MasterItem[]>([])
 
 const sortedEquipments = computed(() => {
+  if (displayOption.value.isShowEquipment === false) return []
   return equipmentMaster.value.sort((a, b) => { if (a.code > b.code) { return 1 } else { return -1 } })
 })
 
