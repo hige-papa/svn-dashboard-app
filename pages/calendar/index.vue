@@ -437,10 +437,10 @@ const loadViewFromStorage = (): CalendarView => {
 
 // 初期化
 onMounted(async () => {
-  // 保存されたビューを読み込んで設定
+  // 保存されたビューを読み込んで設定（watch トリガー前に直接設定）
   const savedView = loadViewFromStorage();
   if (savedView !== currentView.value) {
-    await setView(savedView);
+    currentView.value = savedView; // setView の代わりに直接設定（watch は次の loadData で処理）
   }
 
   
@@ -463,7 +463,7 @@ onMounted(async () => {
     }))
   })
 
-  // 初期表示時にデータを読み込む
+  // 初期表示時にデータを読み込む（ビュー設定後に1回のみ）
   await loadData();
 
   // 月間ビューの場合は現在の日を選択
@@ -499,6 +499,7 @@ watch(events, () => {
 }, { deep: true });
 
 // currentDateの変更を監視
+// Note: loadData は composable 側の watch で実行されるため、ここでは UI 更新のみ
 watch(currentDate, async () => {
   await updateCurrentDayEvents();
 });
@@ -511,6 +512,7 @@ watch(selectedDate, async () => {
 });
 
 // currentViewの変更を監視（ストレージへの保存を追加）
+// Note: loadData は composable 側の watch で実行されるため、ここでは UI 更新と保存のみ
 watch(currentView, async (newView) => {
   selectedDayEvents.value = [];
   selectedUser.value = undefined;

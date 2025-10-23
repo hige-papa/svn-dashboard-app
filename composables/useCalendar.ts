@@ -191,11 +191,39 @@ export const useCalendar = () => {
 
   // --- Core Data Loading ---
   const loadData = async () => {
+    // Prevent duplicate calls if already loading
+    if (isLoading.value) {
+      console.log('[loadData] Already loading, skipping duplicate call');
+      return;
+    }
+    
     isLoading.value = true;
     try {
       const dateRange = getCurrentDateRange();
+      
+      // ビューに応じて取得方法を切り替える
+      // 週間ビュー: 全員分のイベントを取得（全ユーザーのスケジュール表示用）
+      // 月間・日次ビュー: ログインユーザーのみのイベントを取得（個人スケジュール表示用）
+      let eventsPromise: Promise<EventDisplay[]>;
+      if (currentView.value === 'weekly') {
+        console.log(`[loadData] Loading all users' events for weekly view (${dateRange.startDate} ~ ${dateRange.endDate})`);
+        eventsPromise = eventService.getEventsInRange(dateRange.startDate, dateRange.endDate);
+      } else {
+        const currentUser = useState<ExtendedUserProfile>('userProfile');
+        if (!currentUser.value?.uid) {
+          console.error('[loadData] User not authenticated - cannot load events');
+          throw new Error('User not authenticated');
+        }
+        console.log(`[loadData] Loading user events only for ${currentView.value} view (user: ${currentUser.value.uid}, range: ${dateRange.startDate} ~ ${dateRange.endDate})`);
+        eventsPromise = eventService.getEventsByParticipantInRange(
+          currentUser.value.uid,
+          dateRange.startDate,
+          dateRange.endDate
+        );
+      }
+      
       const [eventsData, usersResult, holidaysResult] = await Promise.all([
-        eventService.getEventsInRange(dateRange.startDate, dateRange.endDate),
+        eventsPromise,
         getMasterDataCacheAsync('users'),
         getMasterDataCacheAsync('holidays'),
       ]);
@@ -290,7 +318,7 @@ export const useCalendar = () => {
   };
 
   // --- Lifecycle and Watchers ---
-  onMounted(loadData);
+  // Note: onMounted(loadData) is removed - let page component control initial load timing
   watch([currentDate, currentView], loadData, { deep: true });
 
   return {

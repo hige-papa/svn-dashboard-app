@@ -302,6 +302,8 @@ type Props = {
   weekDays: Date[];
   events: EventDisplay[];
   dailyOptions: DailyUserOption[];
+  // 関数型プロップ: 親から渡される日次スケジュール取得関数
+  getUserSchedulesForDay?: (userId: string, date: Date | null) => EventDisplay[];
 };
 
 const props = defineProps<Props>();
@@ -421,6 +423,14 @@ type RowType = 'user' | 'company' | 'facility' | 'equipment'
 
 // 特定のユーザーと日付のイベントを取得（propsのeventsを使用）
 const getUserEventsForDay = (type: RowType, id: string, date: Date) => {
+  // 親から関数が渡されていれば優先して使用する
+  if (type === 'user' && props.getUserSchedulesForDay) {
+    try {
+      return props.getUserSchedulesForDay(id, date);
+    } catch (e) {
+      console.warn('[WeeklyCalendarView] props.getUserSchedulesForDay threw error, falling back to local filter', e);
+    }
+  }
   if (!props.events || !Array.isArray(props.events)) {
     return [];
   }
