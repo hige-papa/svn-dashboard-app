@@ -3,8 +3,8 @@
   <!-- {{ props.visibleUsers }} -->
   <!-- {{ props.events }} -->
   
-  <!-- Debug buttons for cache and profiler -->
-  <div class="debug-controls mb-2" style="display: flex; gap: 8px; justify-content: flex-end;">
+  <!-- Debug buttons for cache and profiler (development only) -->
+  <div v-if="isDevelopment" class="debug-controls mb-2" style="display: flex; gap: 8px; justify-content: flex-end;">
     <v-btn size="small" color="warning" variant="outlined" @click="handleClearCache">
       <v-icon start>mdi-cached</v-icon>
       キャッシュクリア
@@ -293,6 +293,9 @@ import { printFirestoreDebugSummary, resetFirestoreProfiler } from '~/composable
 import type { User } from 'firebase/auth';
 
 const user = useState<User>('user');
+
+// 開発環境判定
+const isDevelopment = computed(() => process.env.NODE_ENV === 'development');
 
 type Props = {
   users: ExtendedUserProfile[];

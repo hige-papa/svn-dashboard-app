@@ -58,26 +58,38 @@
           <h2 class="view-title">グループスケジュール</h2>
         </template>
         <template v-slot:append>
-          <div class="d-flex justify-end">
+          <div class="display-options-wrapper">
             <v-checkbox
               v-model="displayOption.isShowUser"
               label="ユーザー"
               hide-details
+              density="compact"
+              color="primary"
+              class="custom-checkbox"
             ></v-checkbox>
             <v-checkbox
               v-model="displayOption.isShowCompany"
               label="会社"
               hide-details
+              density="compact"
+              color="primary"
+              class="custom-checkbox"
             ></v-checkbox>
             <v-checkbox
               v-model="displayOption.isShowFacility"
               label="施設"
               hide-details
+              density="compact"
+              color="primary"
+              class="custom-checkbox"
             ></v-checkbox>
             <v-checkbox
               v-model="displayOption.isShowEquipment"
               label="備品"
               hide-details
+              density="compact"
+              color="primary"
+              class="custom-checkbox"
             ></v-checkbox>
           </div>
         </template>
@@ -1031,6 +1043,37 @@ useHead({
 }
 .btn-primary:disabled { background-color: #adb5bd; /* --text-light */ cursor: not-allowed; transform: none; }
 
+/* Display options (checkboxes) responsive styling */
+.display-options-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* カスタムチェックボックスのスタイル（丸み + 青基調） */
+.custom-checkbox :deep(.v-selection-control__input) {
+  border-radius: 6px;
+}
+
+.custom-checkbox :deep(.v-selection-control__input .v-icon) {
+  color: #4361ee;
+}
+
+.custom-checkbox :deep(.v-selection-control__wrapper) {
+  border-radius: 6px;
+}
+
+.custom-checkbox :deep(.v-label) {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.custom-checkbox :deep(.v-selection-control--dirty .v-label) {
+  color: #4361ee;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 16px;
@@ -1061,6 +1104,26 @@ useHead({
 
   .view-title {
     font-size: 14px;
+  }
+
+  /* チェックボックスのモバイル対応 */
+  .display-options-wrapper {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 2px;
+  }
+
+  .display-options-wrapper :deep(.v-checkbox) {
+    flex: 0 1 auto;
+  }
+
+  .display-options-wrapper :deep(.v-label) {
+    font-size: 11px !important;
+    white-space: nowrap;
+  }
+
+  .display-options-wrapper :deep(.v-selection-control) {
+    min-height: 32px;
   }
 }
 </style>
