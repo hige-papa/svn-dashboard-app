@@ -13,43 +13,55 @@ type CacheEntry = {
 };
 
 export const masterDataCache = useState('masterDataCache', () => new Map<string, CacheEntry>());
-const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes (300 seconds)
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes (300 seconds) for users/holidays
+const DAILY_OPTIONS_CACHE_DURATION_MS = 60 * 60 * 1000; // 60 minutes (3600 seconds) for dailyOptions
 
 /**
  * Master data cache API with TTL, in-flight deduplication, and error handling
- * @param key - Cache key ('users' | 'holidays')
+ * @param key - Cache key ('users' | 'holidays' | 'dailyOptions')
  * @param forceRefresh - Force refetch from Firestore, bypassing cache
+ * @param options - Optional parameters (dateRange for dailyOptions)
  * @returns Promise with data, fromCache flag, and timestamp
  */
 export const getMasterDataCacheAsync = async (
-  key: 'users' | 'holidays',
-  forceRefresh = false
+  key: 'users' | 'holidays' | 'dailyOptions',
+  forceRefresh = false,
+  options?: { startDate?: string; endDate?: string }
 ): Promise<{ data: any; fromCache: boolean; timestamp: number }> => {
   const now = Date.now();
   const { getListAsync: getHolidaysListAsync } = useMaster('holidays');
   const { getListAsync: getUsersListAsync } = useMaster('users');
+  const { getListAsync: getDailyOptionsListAsync } = useMaster('daily_user_options');
+
+  // Build cache key (include date range for dailyOptions)
+  const cacheKey = key === 'dailyOptions' && options?.startDate && options?.endDate
+    ? `${key}:${options.startDate}:${options.endDate}`
+    : key;
+
+  // Select appropriate TTL
+  const cacheDuration = key === 'dailyOptions' ? DAILY_OPTIONS_CACHE_DURATION_MS : CACHE_DURATION_MS;
 
   // Check cache validity
-  const cached = masterDataCache.value.get(key);
-  if (!forceRefresh && cached && (now - cached.timestamp) < CACHE_DURATION_MS) {
-    console.log(`[Cache] Hit for ${key}`);
+  const cached = masterDataCache.value.get(cacheKey);
+  if (!forceRefresh && cached && (now - cached.timestamp) < cacheDuration) {
+    console.log(`[Cache] Hit for ${cacheKey}`);
     return { data: cached.data, fromCache: true, timestamp: cached.timestamp };
   }
 
   // In-flight deduplication: reuse existing promise if available
   if (cached?.promise) {
-    console.log(`[Cache] In-flight dedup for ${key} - waiting for existing fetch`);
+    console.log(`[Cache] In-flight dedup for ${cacheKey} - waiting for existing fetch`);
     try {
       const data = await cached.promise;
-      return { data, fromCache: false, timestamp: masterDataCache.value.get(key)?.timestamp || now };
+      return { data, fromCache: false, timestamp: masterDataCache.value.get(cacheKey)?.timestamp || now };
     } catch (error) {
-      console.error(`[Cache] In-flight fetch failed for ${key}:`, error);
+      console.error(`[Cache] In-flight fetch failed for ${cacheKey}:`, error);
       throw error;
     }
   }
 
   // Cache miss - fetch from Firestore
-  console.log(`[Cache] Miss for ${key} — fetching...`);
+  console.log(`[Cache] Miss for ${cacheKey} — fetching...`);
   
   const fetchPromise = (async () => {
     try {
@@ -58,26 +70,37 @@ export const getMasterDataCacheAsync = async (
         data = await (getUsersListAsync() as Promise<ExtendedUserProfile[]>);
       } else if (key === 'holidays') {
         data = await (getHolidaysListAsync() as Promise<Holiday[]>);
+      } else if (key === 'dailyOptions') {
+        // dailyOptions requires date range
+        if (!options?.startDate || !options?.endDate) {
+          throw new Error('[Cache] dailyOptions requires startDate and endDate in options');
+        }
+        const { where } = await import('firebase/firestore');
+        data = await (getDailyOptionsListAsync(
+          where('date', '>=', options.startDate),
+          where('date', '<=', options.endDate)
+        ) as Promise<DailyUserOption[]>);
       }
       
       // Update cache with fetched data
       const timestamp = Date.now();
-      masterDataCache.value.set(key, { data, timestamp });
-      console.log(`[Cache] Set for ${key} (ttl=300s)`);
+      const ttlSeconds = Math.floor(cacheDuration / 1000);
+      masterDataCache.value.set(cacheKey, { data, timestamp });
+      console.log(`[Cache] Set for ${cacheKey} (ttl=${ttlSeconds}s)`);
       
       return data;
     } catch (error) {
       // On error, fallback to stale cache if available
-      const staleCache = masterDataCache.value.get(key);
+      const staleCache = masterDataCache.value.get(cacheKey);
       if (staleCache?.data) {
-        console.warn(`[Cache] Fetch failed for ${key}, using stale cache:`, error);
+        console.warn(`[Cache] Fetch failed for ${cacheKey}, using stale cache:`, error);
         return staleCache.data;
       }
-      console.error(`[Cache] Fetch failed for ${key} and no stale cache available:`, error);
+      console.error(`[Cache] Fetch failed for ${cacheKey} and no stale cache available:`, error);
       throw error;
     } finally {
       // Clean up promise reference
-      const entry = masterDataCache.value.get(key);
+      const entry = masterDataCache.value.get(cacheKey);
       if (entry) {
         delete entry.promise;
       }
@@ -85,12 +108,12 @@ export const getMasterDataCacheAsync = async (
   })();
 
   // Store promise for in-flight dedup
-  const entry = masterDataCache.value.get(key) || { data: null, timestamp: 0 };
+  const entry = masterDataCache.value.get(cacheKey) || { data: null, timestamp: 0 };
   entry.promise = fetchPromise;
-  masterDataCache.value.set(key, entry);
+  masterDataCache.value.set(cacheKey, entry);
 
   const data = await fetchPromise;
-  return { data, fromCache: false, timestamp: masterDataCache.value.get(key)?.timestamp || now };
+  return { data, fromCache: false, timestamp: masterDataCache.value.get(cacheKey)?.timestamp || now };
 };
 
 export const getMasterDataCache = () => masterDataCache;
