@@ -1,6 +1,7 @@
 // services/eventService.ts
 import { useFirestoreGeneral } from '~/composables/firestoreGeneral/useFirestoreGeneral'
-import { where } from 'firebase/firestore'
+import { where, query } from 'firebase/firestore'
+import { queryByIdsInChunks } from '~/composables/firebase/useFirestore'
 
 export const useEventService = () => {
   const eventsService = useFirestoreGeneral('events')
@@ -101,7 +102,12 @@ export const useEventService = () => {
       const masterEventIds = [...new Set(instances.map(i => i.masterId))];
       const masterEventsData = new Map<string, EventData>();
       if (masterEventIds.length > 0) {
-        const masterEvents = await eventsService.getListAsync(where('__name__', 'in', masterEventIds)) as EventData[];
+        // Use queryByIdsInChunks to avoid IN limit (30 items)
+        const masterEvents = await queryByIdsInChunks<EventData>({
+          collectionRef: 'events',
+          field: '__name__',
+          ids: masterEventIds
+        });
         masterEvents.forEach(master => masterEventsData.set(master.id!, master));
       }
       for (const instance of instances) {
@@ -414,11 +420,18 @@ export const useEventService = () => {
         recurringMasterEvents.forEach(master => masterEventsData.set(master.id!, master));
 
         // 3. 該当マスターイベントのインスタンスを日付範囲で取得
-        const instances = await instancesService.getListAsync(
-          where('masterId', 'in', masterEventIds),
-          where('instanceDate', '>=', startDate),
-          where('instanceDate', '<=', endDate)
-        ) as EventInstance[];
+        // Use queryByIdsInChunks to avoid IN limit (30 items)
+        const instances = await queryByIdsInChunks<EventInstance>({
+          collectionRef: 'event_instances',
+          field: 'masterId',
+          ids: masterEventIds,
+          queryBuilder: (colRef, idsChunk) => query(
+            colRef,
+            where('masterId', 'in', idsChunk),
+            where('instanceDate', '>=', startDate),
+            where('instanceDate', '<=', endDate)
+          )
+        });
 
         for (const instance of instances) {
           if (instance.status === 'active') {
@@ -430,7 +443,12 @@ export const useEventService = () => {
         }
         
         // 4. まだインスタンスが生成されていない繰り返しイベントを検索して追加
-        const rules = await rulesService.getListAsync(where('masterId', 'in', masterEventIds)) as RecurrenceRule[];
+        // Use queryByIdsInChunks to avoid IN limit (30 items)
+        const rules = await queryByIdsInChunks<RecurrenceRule>({
+          collectionRef: 'recurrence_rules',
+          field: 'masterId',
+          ids: masterEventIds
+        });
         for (const rule of rules) {
             const masterEvent = masterEventsData.get(rule.masterId);
             if (!masterEvent || !masterEvent.startDate) continue;
