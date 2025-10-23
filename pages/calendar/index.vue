@@ -234,6 +234,7 @@ const {
   getDayOfWeek,
   formatDate,
   formatDatetime,
+  formatDateForDb,
   timeToPixels,
   getSchedulesForDay,
   getUserSchedulesForDay,
@@ -255,6 +256,9 @@ const {
   loadData,
   refreshEvents,
   setView,
+  saveCalendarPosition,
+  loadCalendarPosition,
+  clearCalendarPosition,
 } = useCalendar();
 
 const {
@@ -443,6 +447,13 @@ onMounted(async () => {
     currentView.value = savedView; // setView の代わりに直接設定（watch は次の loadData で処理）
   }
 
+  // 保存された週の位置を復元（予定登録などから戻ってきた時のため）
+  const savedPosition = loadCalendarPosition();
+  if (savedPosition) {
+    currentDate.value = savedPosition;
+    console.log('[Calendar] Restored calendar position:', formatDateForDb(savedPosition));
+  }
+
   
   getEquipmentsAsync().then(equipments => {
     equipmentMaster.value = (equipments as any[]).map(equipment => ({
@@ -502,6 +513,8 @@ watch(events, () => {
 // Note: loadData は composable 側の watch で実行されるため、ここでは UI 更新のみ
 watch(currentDate, async () => {
   await updateCurrentDayEvents();
+  // 週の位置を保存（予定登録などから戻ってきた時のため）
+  saveCalendarPosition();
 });
 
 // selectedDateの変更を監視
@@ -776,6 +789,8 @@ const eventDetail = ref<EventData>()
 
 const handleEditEvent = (event: EventDisplay | EventData) => {
   // alert(`edit => ${JSON.stringify(event)}`)
+  // 予定編集ページに遷移する前に現在の週の位置を保存
+  saveCalendarPosition();
   if (event?.id) navigateTo(`/calendar/${event.id}/edit`);
 };
 
@@ -823,6 +838,8 @@ const handleCancelDailyOption = () => {
 // }
 
 const goToRegister = () => {
+  // 予定登録ページに遷移する前に現在の週の位置を保存
+  saveCalendarPosition();
   navigateTo(`/calendar/register?date=${getDateString(selectedDate.value ?? new Date())}&participantId=${selectedUser.value?.uid}`)
 }
 

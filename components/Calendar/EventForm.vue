@@ -583,6 +583,7 @@ import { useEventService } from '~/services/eventService'
 import { useConstants } from '~/composables/common/useConstants'
 import { useMasterData } from '~/composables/useMasterData'
 import { useDisplay } from 'vuetify'
+import GroupHorizontalTimeline from '~/components/Calendar/DailyView/GroupHorizontalTimeline.vue'
 
 interface MasterItem {
   id: string;

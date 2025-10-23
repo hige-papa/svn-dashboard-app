@@ -268,6 +268,46 @@ export const useCalendar = () => {
   const goToToday = () => { currentDate.value = new Date(); };
   const goToSelectDate = (date: Date) => { currentDate.value = date; };
 
+  // --- Calendar Position Persistence (週の位置保存) ---
+  const CALENDAR_POSITION_KEY = 'calendar-current-date';
+
+  const saveCalendarPosition = () => {
+    if (import.meta.client) {
+      try {
+        localStorage.setItem(CALENDAR_POSITION_KEY, formatDateForDb(currentDate.value));
+      } catch (error) {
+        console.warn('Failed to save calendar position:', error);
+      }
+    }
+  };
+
+  const loadCalendarPosition = (): Date | null => {
+    if (import.meta.client) {
+      try {
+        const savedDate = localStorage.getItem(CALENDAR_POSITION_KEY);
+        if (savedDate) {
+          const date = new Date(savedDate);
+          if (!isNaN(date.getTime())) {
+            return date;
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to load calendar position:', error);
+      }
+    }
+    return null;
+  };
+
+  const clearCalendarPosition = () => {
+    if (import.meta.client) {
+      try {
+        localStorage.removeItem(CALENDAR_POSITION_KEY);
+      } catch (error) {
+        console.warn('Failed to clear calendar position:', error);
+      }
+    }
+  };
+
   // --- Computed Properties for Views ---
   const generateWeekDays = computed<Date[]>(() => {
     const week: Date[] = [];
@@ -349,11 +389,15 @@ export const useCalendar = () => {
     formatDate,
     formatDatetime,
     formatShortDate,
+    formatDateForDb,
     timeToPixels,
     timeToPixelsForHorizontal,
     toggleUserVisibility,
     generateCalendarDays,
     generateWeekDays,
     timeSlots,
+    saveCalendarPosition,
+    loadCalendarPosition,
+    clearCalendarPosition,
   };
 };
