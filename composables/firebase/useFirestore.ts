@@ -4,6 +4,7 @@ import {
     collectionGroup,
     doc,
     query,
+    where,
     getDocs,
     getDoc,
     setDoc,
@@ -23,6 +24,178 @@ import {
 import { useDocumentRoot } from '~/composables/firebase/useDocumentRoot'
 import type { User } from 'firebase/auth';
 
+// --- Profiler for Firestore queries ---
+const firestoreQueryStats = new Map<string, { count: number; totalTime: number }>();
+let profilerFirstPrintDone = false;
+
+const recordQuery = (collectionName: string, startTime: number) => {
+  const endTime = performance.now();
+  const duration = endTime - startTime;
+  const key = collectionName;
+  if (!firestoreQueryStats.has(key)) {
+    firestoreQueryStats.set(key, { count: 0, totalTime: 0 });
+  }
+  const stats = firestoreQueryStats.get(key)!;
+  stats.count += 1;
+  stats.totalTime += duration;
+};
+
+export const printFirestoreDebugSummary = (force = false) => {
+  // Auto-print only once on first call unless forced
+  if (!force && profilerFirstPrintDone) {
+    return;
+  }
+
+  if (!force) {
+    profilerFirstPrintDone = true;
+  }
+
+  const collections: string[] = [];
+  let totalQueries = 0;
+  let totalTime = 0;
+
+  firestoreQueryStats.forEach((stats, collection) => {
+    collections.push(`${collection}=${stats.count}`);
+    totalQueries += stats.count;
+    totalTime += stats.totalTime;
+  });
+
+  const summary = `[Profiling] Firestore queries: ${collections.join(', ')}, total=${totalQueries}, elapsed=${totalTime.toFixed(2)}ms`;
+  console.log(summary);
+
+  // Detailed breakdown
+  console.group('[Firestore Query Details]');
+  firestoreQueryStats.forEach((stats, collection) => {
+    console.log(`  ${collection}: ${stats.count} calls, ${stats.totalTime.toFixed(2)}ms (avg: ${(stats.totalTime / stats.count).toFixed(2)}ms)`);
+  });
+  console.groupEnd();
+
+  // JSON output for easy analysis
+  const jsonOutput = {
+    total: totalQueries,
+    elapsed: parseFloat(totalTime.toFixed(2)),
+    collections: Array.from(firestoreQueryStats.entries()).map(([name, stats]) => ({
+      name,
+      count: stats.count,
+      totalTime: parseFloat(stats.totalTime.toFixed(2)),
+      avgTime: parseFloat((stats.totalTime / stats.count).toFixed(2))
+    }))
+  };
+  console.log('[Profiling JSON]', JSON.stringify(jsonOutput, null, 2));
+};
+
+export const resetFirestoreProfiler = () => {
+  firestoreQueryStats.clear();
+  profilerFirstPrintDone = false;
+  console.log('[Profiling] Stats reset');
+};
+
+export const getFirestoreProfilerStats = () => {
+  return {
+    stats: Array.from(firestoreQueryStats.entries()).map(([name, stats]) => ({ name, ...stats })),
+    firstPrintDone: profilerFirstPrintDone
+  };
+};
+
+// --- Chunked Query Helper for IN/array-contains-any limit (30) ---
+/**
+ * Firestore の IN / array-contains-any クエリの 30 要素制限を回避するため、
+ * ids を chunkSize ごとに分割して並列でクエリを実行し、結果をマージして返す。
+ * 
+ * @param opts.collectionRef - Firestore の CollectionReference またはコレクションパス文字列
+ * @param opts.field - 検索対象フィールド名（例: 'participantIds'）
+ * @param opts.ids - 検索する ID の配列
+ * @param opts.chunkSize - チャンクサイズ（デフォルト: 30）
+ * @param opts.queryBuilder - オプション: カスタムクエリビルダー関数
+ * @returns マッチするドキュメントの配列（重複除去済み）
+ */
+export const queryByIdsInChunks = async <T = DocumentData>(opts: {
+  collectionRef: CollectionReference<T> | string;
+  field: string;
+  ids: string[];
+  chunkSize?: number;
+  queryBuilder?: (collectionRef: CollectionReference<T>, idsChunk: string[]) => ReturnType<typeof query>;
+}): Promise<T[]> => {
+  const { collectionRef, field, ids, chunkSize = 30, queryBuilder } = opts;
+
+  // Early return for empty ids
+  if (ids.length === 0) {
+    console.debug('[queryByIdsInChunks] Empty ids array, returning empty result');
+    return [];
+  }
+
+  const firestore = useState<Firestore>('db');
+  
+  // Resolve collection reference
+  const colRef = typeof collectionRef === 'string' 
+    ? collection(firestore.value, collectionRef) as CollectionReference<T>
+    : collectionRef;
+
+  const collectionName = typeof collectionRef === 'string' ? collectionRef : 'unknown';
+
+  // Split ids into chunks
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += chunkSize) {
+    chunks.push(ids.slice(i, i + chunkSize));
+  }
+
+  console.debug(`[queryByIdsInChunks] Querying ${collectionName} with ${ids.length} ids split into ${chunks.length} chunk(s)`);
+
+  // Execute queries in parallel
+  const results: T[] = [];
+  const errors: Error[] = [];
+
+  await Promise.all(
+    chunks.map(async (chunk, index) => {
+      try {
+        const startTime = performance.now();
+        
+        // Build query
+        const q = queryBuilder 
+          ? queryBuilder(colRef, chunk)
+          : query(colRef, where(field, field === '__name__' ? 'in' : 'array-contains-any', chunk));
+
+        const snapshot = await getDocs(q);
+        
+        // Record profiling
+        recordQuery(collectionName, startTime);
+        
+        const chunkResults = snapshot.docs.map(doc => {
+          const data = doc.data() as any;
+          return { ...data, id: doc.id } as T;
+        });
+        results.push(...chunkResults);
+        
+        console.debug(`[queryByIdsInChunks] Chunk ${index + 1}/${chunks.length}: ${chunkResults.length} documents`);
+      } catch (error) {
+        console.error(`[queryByIdsInChunks] Chunk ${index + 1}/${chunks.length} failed:`, error);
+        errors.push(error as Error);
+      }
+    })
+  );
+
+  // Error handling: throw if all chunks failed
+  if (errors.length === chunks.length) {
+    console.error(`[queryByIdsInChunks] All ${chunks.length} chunk(s) failed`);
+    throw new Error(`All chunks failed when querying ${collectionName}. First error: ${errors[0]?.message}`);
+  }
+
+  // Log warning if some chunks failed
+  if (errors.length > 0) {
+    console.warn(`[queryByIdsInChunks] ${errors.length}/${chunks.length} chunk(s) failed, returning partial results`);
+  }
+
+  // Deduplicate by document id
+  const uniqueResults = Array.from(
+    new Map(results.map(doc => [(doc as any).id, doc])).values()
+  );
+
+  console.debug(`[queryByIdsInChunks] Returning ${uniqueResults.length} unique documents (from ${results.length} total)`);
+
+  return uniqueResults;
+};
+
+
 export const useFirestore = () => {
     const firestore = useState<Firestore>('db');
 
@@ -37,16 +210,19 @@ export const useFirestore = () => {
     };
 
     const getCollectionAsync = async (c: string, ...qc: QueryConstraint[]) => {
+        const startTime = performance.now();
         const q = query(
             collection(firestore.value, c),
             ...qc
         );
         return getDocs(q)
             .then(response => {
+                recordQuery(c, startTime);
                 console.log(`success get from firebase firestore => ${c}`, response);
                 return response;
             })
             .catch(error => {
+                recordQuery(c, startTime);
                 console.error(`failed get from firebase firestore => ${c}`, error);
                 throw error;
             });

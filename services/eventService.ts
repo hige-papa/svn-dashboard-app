@@ -1,6 +1,7 @@
 // services/eventService.ts
 import { useFirestoreGeneral } from '~/composables/firestoreGeneral/useFirestoreGeneral'
-import { where } from 'firebase/firestore'
+import { where, query } from 'firebase/firestore'
+import { queryByIdsInChunks } from '~/composables/firebase/useFirestore'
 
 export const useEventService = () => {
   const eventsService = useFirestoreGeneral('events')
@@ -86,31 +87,66 @@ export const useEventService = () => {
   const getEventsInRange = async (startDate: string, endDate: string): Promise<EventDisplay[]> => {
     const preliminaryEvents: EventDisplay[] = [];
     try {
-      const nonRecurringEvents = await eventsService.getListAsync(where('dateType', 'in', ['single', 'range'])) as EventData[];
-      for (const eventData of nonRecurringEvents) {
-        if (eventData.dateType === 'single' && eventData.date && eventData.date >= startDate && eventData.date <= endDate) {
+      // 1. Non-recurring events (single + range): date範囲クエリで取得
+      // Note: dateTypeでの複合インデックスを避けるため、dateTypeフィルタは後で行う
+      const allSingleEvents = await eventsService.getListAsync(
+        where('date', '>=', startDate),
+        where('date', '<=', endDate)
+      ) as EventData[];
+      
+      // クライアント側でdateType='single'のみフィルタ
+      allSingleEvents
+        .filter(e => e.dateType === 'single')
+        .forEach(eventData => {
           preliminaryEvents.push(convertToEvent(eventData));
-        } else if (eventData.dateType === 'range' && eventData.startDate) {
+        });
+
+      // 2. Range events: startDate範囲クエリで取得（endDateのオーバーラップは後でフィルタ）
+      const allRangeEvents = await eventsService.getListAsync(
+        where('startDate', '<=', endDate)
+      ) as EventData[];
+      
+      // クライアント側でdateType='range'とオーバーラップをフィルタ
+      for (const eventData of allRangeEvents) {
+        if (eventData.dateType === 'range' && eventData.startDate) {
           const eventEndDate = eventData.endDate || eventData.startDate;
-          if (eventData.startDate <= endDate && eventEndDate >= startDate) {
+          // 範囲が重なっている場合のみ追加
+          if (eventEndDate >= startDate) {
             preliminaryEvents.push(convertToEvent(eventData));
           }
         }
       }
-      const instances = await instancesService.getListAsync(where('instanceDate', '>=', startDate), where('instanceDate', '<=', endDate)) as EventInstance[];
+
+      // 3. Recurring event instances: date範囲クエリで取得
+      const instances = await instancesService.getListAsync(
+        where('instanceDate', '>=', startDate),
+        where('instanceDate', '<=', endDate)
+      ) as EventInstance[];
+      
       const masterEventIds = [...new Set(instances.map(i => i.masterId))];
       const masterEventsData = new Map<string, EventData>();
+      
       if (masterEventIds.length > 0) {
-        const masterEvents = await eventsService.getListAsync(where('__name__', 'in', masterEventIds)) as EventData[];
+        // Use queryByIdsInChunks to avoid IN limit (30 items)
+        const masterEvents = await queryByIdsInChunks<EventData>({
+          collectionRef: 'events',
+          field: '__name__',
+          ids: masterEventIds
+        });
         masterEvents.forEach(master => masterEventsData.set(master.id!, master));
       }
+      
       for (const instance of instances) {
         if (instance.status === 'active') {
           const masterEvent = masterEventsData.get(instance.masterId);
           if (masterEvent) preliminaryEvents.push(mergeInstanceWithMaster(instance, masterEvent));
         }
       }
+
+      // 4. Generate missing recurring events (まだインスタンスが生成されていない繰り返しイベント)
       await generateMissingRecurringEvents(startDate, endDate, preliminaryEvents);
+
+      // 5. 複数日にまたがるイベントを展開
       const finalEvents: EventDisplay[] = [];
       for (const event of preliminaryEvents) {
         if (event.endDate && event.endDate > event.date) {
@@ -173,14 +209,25 @@ export const useEventService = () => {
   };
   
   const generateMissingRecurringEvents = async (startDate: string, endDate: string, preliminaryEvents: EventDisplay[]): Promise<void> => {
-    const allRules = await rulesService.getListAsync() as RecurrenceRule[];
-    // const recurringMasterEvents = await eventsService.getListAsync(where('dateType', '==', 'recurring')) as EventData[];
+    // 1. 日付範囲に関連する繰り返しイベントマスターのみを取得
     const recurringMasterEvents = await eventsService.getListAsync(
         where('dateType', '==', 'recurring'),
         // イベント自体の開始日が表示終了日より後のものは除外
         where('startDate', '<=', endDate) 
     ) as EventData[];
+    
+    if (recurringMasterEvents.length === 0) return; // 繰り返しイベントがない場合は早期リターン
+    
+    const masterEventIds = recurringMasterEvents.map(e => e.id!);
     const masterEventsMap = new Map(recurringMasterEvents.map(e => [e.id!, e]));
+    
+    // 2. 該当するマスターイベントのルールのみを取得（queryByIdsInChunks使用）
+    const allRules = await queryByIdsInChunks<RecurrenceRule>({
+      collectionRef: 'recurrence_rules',
+      field: 'masterId',
+      ids: masterEventIds
+    });
+    
     for (const rule of allRules) {
       const masterEvent = masterEventsMap.get(rule.masterId);
       if (!masterEvent || !masterEvent.startDate) continue;
@@ -208,6 +255,7 @@ export const useEventService = () => {
       isRecurring: eventData.dateType === 'recurring',
       eventType: eventData.eventType, eventTypeName: eventData.eventTypeName, eventTypeColor: eventData.eventTypeColor,
       private: eventData.private,
+      conflicted: false,
     };
   };
   
@@ -239,6 +287,7 @@ export const useEventService = () => {
       isRecurring: true, masterId: instance.masterId, isException: !!instance.isException,
       eventType: masterEvent.eventType, eventTypeName: masterEvent.eventTypeName, eventTypeColor: masterEvent.eventTypeColor,
       private: masterEvent.private,
+      conflicted: false,
     };
   };
 
@@ -414,11 +463,18 @@ export const useEventService = () => {
         recurringMasterEvents.forEach(master => masterEventsData.set(master.id!, master));
 
         // 3. 該当マスターイベントのインスタンスを日付範囲で取得
-        const instances = await instancesService.getListAsync(
-          where('masterId', 'in', masterEventIds),
-          where('instanceDate', '>=', startDate),
-          where('instanceDate', '<=', endDate)
-        ) as EventInstance[];
+        // Use queryByIdsInChunks to avoid IN limit (30 items)
+        const instances = await queryByIdsInChunks<EventInstance>({
+          collectionRef: 'event_instances',
+          field: 'masterId',
+          ids: masterEventIds,
+          queryBuilder: (colRef, idsChunk) => query(
+            colRef,
+            where('masterId', 'in', idsChunk),
+            where('instanceDate', '>=', startDate),
+            where('instanceDate', '<=', endDate)
+          )
+        });
 
         for (const instance of instances) {
           if (instance.status === 'active') {
@@ -430,7 +486,12 @@ export const useEventService = () => {
         }
         
         // 4. まだインスタンスが生成されていない繰り返しイベントを検索して追加
-        const rules = await rulesService.getListAsync(where('masterId', 'in', masterEventIds)) as RecurrenceRule[];
+        // Use queryByIdsInChunks to avoid IN limit (30 items)
+        const rules = await queryByIdsInChunks<RecurrenceRule>({
+          collectionRef: 'recurrence_rules',
+          field: 'masterId',
+          ids: masterEventIds
+        });
         for (const rule of rules) {
             const masterEvent = masterEventsData.get(rule.masterId);
             if (!masterEvent || !masterEvent.startDate) continue;

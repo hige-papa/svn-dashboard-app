@@ -58,26 +58,38 @@
           <h2 class="view-title">グループスケジュール</h2>
         </template>
         <template v-slot:append>
-          <div class="d-flex justify-end">
+          <div class="display-options-wrapper">
             <v-checkbox
               v-model="displayOption.isShowUser"
               label="ユーザー"
               hide-details
+              density="compact"
+              color="primary"
+              class="custom-checkbox"
             ></v-checkbox>
             <v-checkbox
               v-model="displayOption.isShowCompany"
               label="会社"
               hide-details
+              density="compact"
+              color="primary"
+              class="custom-checkbox"
             ></v-checkbox>
             <v-checkbox
               v-model="displayOption.isShowFacility"
               label="施設"
               hide-details
+              density="compact"
+              color="primary"
+              class="custom-checkbox"
             ></v-checkbox>
             <v-checkbox
               v-model="displayOption.isShowEquipment"
               label="備品"
               hide-details
+              density="compact"
+              color="primary"
+              class="custom-checkbox"
             ></v-checkbox>
           </div>
         </template>
@@ -234,6 +246,7 @@ const {
   getDayOfWeek,
   formatDate,
   formatDatetime,
+  formatDateForDb,
   timeToPixels,
   getSchedulesForDay,
   getUserSchedulesForDay,
@@ -255,6 +268,9 @@ const {
   loadData,
   refreshEvents,
   setView,
+  saveCalendarPosition,
+  loadCalendarPosition,
+  clearCalendarPosition,
 } = useCalendar();
 
 const {
@@ -437,10 +453,17 @@ const loadViewFromStorage = (): CalendarView => {
 
 // 初期化
 onMounted(async () => {
-  // 保存されたビューを読み込んで設定
+  // 保存されたビューを読み込んで設定（watch トリガー前に直接設定）
   const savedView = loadViewFromStorage();
   if (savedView !== currentView.value) {
-    await setView(savedView);
+    currentView.value = savedView; // setView の代わりに直接設定（watch は次の loadData で処理）
+  }
+
+  // 保存された週の位置を復元（予定登録などから戻ってきた時のため）
+  const savedPosition = loadCalendarPosition();
+  if (savedPosition) {
+    currentDate.value = savedPosition;
+    console.log('[Calendar] Restored calendar position:', formatDateForDb(savedPosition));
   }
 
   
@@ -463,7 +486,7 @@ onMounted(async () => {
     }))
   })
 
-  // 初期表示時にデータを読み込む
+  // 初期表示時にデータを読み込む（ビュー設定後に1回のみ）
   await loadData();
 
   // 月間ビューの場合は現在の日を選択
@@ -499,8 +522,11 @@ watch(events, () => {
 }, { deep: true });
 
 // currentDateの変更を監視
+// Note: loadData は composable 側の watch で実行されるため、ここでは UI 更新のみ
 watch(currentDate, async () => {
   await updateCurrentDayEvents();
+  // 週の位置を保存（予定登録などから戻ってきた時のため）
+  saveCalendarPosition();
 });
 
 // selectedDateの変更を監視
@@ -511,6 +537,7 @@ watch(selectedDate, async () => {
 });
 
 // currentViewの変更を監視（ストレージへの保存を追加）
+// Note: loadData は composable 側の watch で実行されるため、ここでは UI 更新と保存のみ
 watch(currentView, async (newView) => {
   selectedDayEvents.value = [];
   selectedUser.value = undefined;
@@ -774,6 +801,8 @@ const eventDetail = ref<EventData>()
 
 const handleEditEvent = (event: EventDisplay | EventData) => {
   // alert(`edit => ${JSON.stringify(event)}`)
+  // 予定編集ページに遷移する前に現在の週の位置を保存
+  saveCalendarPosition();
   if (event?.id) navigateTo(`/calendar/${event.id}/edit`);
 };
 
@@ -821,6 +850,8 @@ const handleCancelDailyOption = () => {
 // }
 
 const goToRegister = () => {
+  // 予定登録ページに遷移する前に現在の週の位置を保存
+  saveCalendarPosition();
   navigateTo(`/calendar/register?date=${getDateString(selectedDate.value ?? new Date())}&participantId=${selectedUser.value?.uid}`)
 }
 
@@ -1012,6 +1043,37 @@ useHead({
 }
 .btn-primary:disabled { background-color: #adb5bd; /* --text-light */ cursor: not-allowed; transform: none; }
 
+/* Display options (checkboxes) responsive styling */
+.display-options-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* カスタムチェックボックスのスタイル（丸み + 青基調） */
+.custom-checkbox :deep(.v-selection-control__input) {
+  border-radius: 6px;
+}
+
+.custom-checkbox :deep(.v-selection-control__input .v-icon) {
+  color: #4361ee;
+}
+
+.custom-checkbox :deep(.v-selection-control__wrapper) {
+  border-radius: 6px;
+}
+
+.custom-checkbox :deep(.v-label) {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.custom-checkbox :deep(.v-selection-control--dirty .v-label) {
+  color: #4361ee;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 16px;
@@ -1042,6 +1104,26 @@ useHead({
 
   .view-title {
     font-size: 14px;
+  }
+
+  /* チェックボックスのモバイル対応 */
+  .display-options-wrapper {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 2px;
+  }
+
+  .display-options-wrapper :deep(.v-checkbox) {
+    flex: 0 1 auto;
+  }
+
+  .display-options-wrapper :deep(.v-label) {
+    font-size: 11px !important;
+    white-space: nowrap;
+  }
+
+  .display-options-wrapper :deep(.v-selection-control) {
+    min-height: 32px;
   }
 }
 </style>
