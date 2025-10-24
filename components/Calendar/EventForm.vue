@@ -89,7 +89,7 @@
                   時間
                   <span class="required">*</span>
                 </div>
-                <button type="button" class="btn-allday-small" aria-label="終日">終日</button>
+                <button type="button" class="btn-allday-small" aria-label="終日" @click="setAlldayTimes($event)">終日</button>
               </label>
               <div class="time-inputs">
                 <div class="time-from-wrapper">
@@ -138,7 +138,7 @@
                   時間
                   <span class="required">*</span>
                 </div>
-                <button type="button" class="btn-allday-small" aria-label="終日">終日</button>
+                <button type="button" class="btn-allday-small" aria-label="終日" @click="setAlldayTimes($event)">終日</button>
               </label>
               <div class="time-inputs">
                 <div class="time-from-wrapper">
@@ -175,7 +175,7 @@
                     時間
                     <span class="required">*</span>
                   </div>
-                  <button type="button" class="btn-allday-small" aria-label="終日">終日</button>
+                  <button type="button" class="btn-allday-small" aria-label="終日" @click="setAlldayTimes($event)">終日</button>
                 </label>
                 <div class="time-inputs">
                   <div class="time-from-wrapper">
@@ -894,6 +894,21 @@ const removeParticipant = (id: string) => { const i = formData.participantIds.in
 const removeFacility = (id: string) => { const i = formData.facilityIds.indexOf(id); if (i > -1) { formData.facilityIds.splice(i, 1); } }
 const removeEquipment = (id: string) => { const i = formData.equipmentIds.indexOf(id); if (i > -1) { formData.equipmentIds.splice(i, 1); } }
 
+// Set start/end times to 09:00 - 18:00 (visual-only, client-side)
+const setAlldayTimes = (e?: Event) => {
+  formData.startTime = '09:00'
+  formData.endTime = '18:00'
+  // clear any time-related validation error
+  clearError('time')
+  // remove focus from the clicked button so UI doesn't keep focus styles
+  try {
+    const target = e?.currentTarget as HTMLElement | undefined
+    target?.blur()
+  } catch (err) {
+    // noop
+  }
+}
+
 const getModalIcon = () => { /* ... */ }
 const getModalTitle = () => { /* ... */ }
 
@@ -1245,7 +1260,7 @@ onMounted(() => {
 }
 
 .header {
-  background: linear-gradient(135deg, #4361ee, #7209b7);
+  background: linear-gradient(135deg, var(--brand-color-1), var(--brand-color-2), var(--brand-color-3));
   /* --primary-color, --accent-color */
   color: white;
   padding: 32px 40px;
@@ -2270,23 +2285,26 @@ onMounted(() => {
 
 .btn-allday-small {
   appearance: none;
-  background: white;
-  border: 1px solid #dee2e6;
-  color: #374151;
-  padding: 4px 8px;
+  background-color: transparent;
+  color: #000000;
+  /* --primary-color */
+  border: 2px solid #e2e8f0;
+  /* --primary-color */
+  padding: 0px 8px;
   border-radius: 6px;
   font-size: 12px;
   cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  /* --transition */
 }
 
-/* focus style similar to date-type-label */
-.btn-allday-small:focus,
-.btn-allday-small:focus-visible {
-  outline: none;
-  border-color: #4361ee;
-  background-color: #eef2ff;
-  color: #4361ee;
+/* hover style similar to btn-select-master */
+.btn-allday-small:hover {
+  background-color: #4361ee;
+  /* --primary-color */
+  color: white;
 }
+
 
 .btn-add-team {
   background-color: #eef2ff;

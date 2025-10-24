@@ -13,7 +13,7 @@ type CacheEntry = {
 };
 
 export const masterDataCache = useState('masterDataCache', () => new Map<string, CacheEntry>());
-const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes (300 seconds) for users/holidays
+const CACHE_DURATION_MS = 10 * 60 * 60 * 1000; // 10 hours (36000 seconds) for users/holidays
 const DAILY_OPTIONS_CACHE_DURATION_MS = 60 * 60 * 1000; // 60 minutes (3600 seconds) for dailyOptions
 
 /**
