@@ -96,7 +96,7 @@
       </v-list-item>
 
       <div>
-        <WeeklyCalendarView :users="visibleUsers" :company="company" :facilities="sortedFacilities" :equipments="sortedEquipments" :week-days="weekDays" :events="events" :daily-options="dailyOptions"
+        <WeeklyCalendarView :users="visibleUsers" :company="company" :facilities="sortedFacilities" :equipments="sortedEquipments" :week-days="weekDays" :events="events" :daily-options="dailyOptions" :holidays="holidays" :is-holiday="isHoliday" :get-holiday-name="getHolidayName"
           :get-user-schedules-for-day="getUserSchedulesForDay" @day-click="handleDayClickForWeekly" />
       </div>
       <!-- WeeklyCalendarViewコンポーネントを使用 -->

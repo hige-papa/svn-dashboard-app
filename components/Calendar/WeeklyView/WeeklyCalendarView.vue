@@ -29,10 +29,10 @@
               {
                 'sunday': day.getDay() === 0,
                 'saturday': day.getDay() === 6,
-                'holiday': getHolidayName(day)
+                'holiday': getHolidayNameLocal(day)
               }
             ]">
-              {{ getDayOfWeek(day) }}曜日<span v-if="getHolidayName(day)" class="holiday-indicator">（祝）</span>
+              {{ getDayOfWeek(day) }}曜日<span v-if="getHolidayNameLocal(day)" class="holiday-indicator">（祝）</span>
             </div>
             <!-- 日付の横に出社人数を表示 -->
             <div class="d-flex align-center justify-center gap-3">
@@ -286,7 +286,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import { useCalendar, getMasterDataCache, getMasterDataCacheAsync } from '~/composables/useCalendar';
 import { useConstants } from '~/composables/common/useConstants';
 import { printFirestoreDebugSummary, resetFirestoreProfiler } from '~/composables/firebase/useFirestore';
@@ -305,8 +305,11 @@ type Props = {
   weekDays: Date[];
   events: EventDisplay[];
   dailyOptions: DailyUserOption[];
+  holidays?: Holiday[];
   // 関数型プロップ: 親から渡される日次スケジュール取得関数
   getUserSchedulesForDay?: (userId: string, date: Date | null) => EventDisplay[];
+  isHoliday?: (date: Date) => boolean;
+  getHolidayName?: (date: Date) => string;
 };
 
 const props = defineProps<Props>();
@@ -351,6 +354,23 @@ const getDailyOptionView = (uid: string) => {
 const getDailyOptions = (uid: string, date: Date) => {
   return getDailyOptionView(uid)[dateString(date)];
 }
+
+// 祝日名をcomputedで計算（propsの更新に自動追従）
+const holidayNames = computed(() => {
+  const map: Record<string, string> = {};
+  if (Array.isArray(props.holidays)) {
+    props.holidays.forEach((holiday: Holiday) => {
+      map[holiday.date] = holiday.name;
+    });
+  }
+  return map;
+});
+
+// テンプレートで使用する関数
+const getHolidayNameLocal = (date: Date) => {
+  const key = dateString(date);
+  return holidayNames.value[key] || '';
+};
 
 const getWorkStyle = (uid: string, date: Date) => {
   const workStyle = getDailyOptions(uid, date)?.workStyle;
@@ -522,6 +542,8 @@ onMounted(() => {
   try {
     console.log('[WeeklyCalendarView] initial props.events.length =', Array.isArray(props.events) ? props.events.length : 0);
     console.log('[WeeklyCalendarView] initial props.dailyOptions.length =', Array.isArray(props.dailyOptions) ? props.dailyOptions.length : 0);
+    console.log('[WeeklyCalendarView] initial props.holidays.length =', Array.isArray(props.holidays) ? props.holidays.length : 0);
+    console.log('[WeeklyCalendarView] props.getHolidayName =', typeof props.getHolidayName);
   } catch (e) {
     // ignore
   }
@@ -529,6 +551,7 @@ onMounted(() => {
   setTimeout(() => {
     console.group('[WeeklyCalendarView] performance summary');
     console.log('Component mounted and props loaded');
+    console.log('holidayNames computed value:', Object.keys(holidayNames.value).length, 'holidays');
     // キャッシュ状態をログ
     console.log('Cache status: users cached?', masterDataCache.value.has('users'));
     console.log('Cache status: holidays cached?', masterDataCache.value.has('holidays'));
@@ -541,6 +564,14 @@ onMounted(() => {
     }
   }, 500);
 });
+
+// 祝日の更新を監視（propsの変更時に自動更新）
+watch(() => props.holidays, (newHolidays) => {
+  if (newHolidays && newHolidays.length > 0) {
+    console.log('[WeeklyCalendarView] holidays updated:', newHolidays.length, 'items');
+    console.log('[WeeklyCalendarView] holidayNames computed now has:', Object.keys(holidayNames.value).length, 'entries');
+  }
+}, { deep: true });
 
 // --- Debug functions ---
 const handleClearCache = async () => {

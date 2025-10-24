@@ -286,6 +286,14 @@ export const useCalendar = () => {
       holidays.value = holidaysResult.data;
       console.log('[Phase1] Basic data loaded (users, holidays)');
       
+      // DailyOptionsの同期キャッシュチェック（即時表示用）
+      const dailyOptionsCacheKey = `dailyOptions:${dateRange.startDate}:${dateRange.endDate}`;
+      const cachedDailyOptions = masterDataCache.value.get(dailyOptionsCacheKey);
+      if (cachedDailyOptions && (Date.now() - cachedDailyOptions.timestamp) < DAILY_OPTIONS_CACHE_DURATION_MS) {
+        dailyOptions.value = cachedDailyOptions.data;
+        console.log(`[Phase1] DailyOptions cache hit - set immediately (${dailyOptions.value.length} options)`);
+      }
+      
       // === フェーズ2: 全イベントの取得（バックグラウンド） ===
       setTimeout(async () => {
         try {
