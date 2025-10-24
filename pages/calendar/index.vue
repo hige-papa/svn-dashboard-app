@@ -40,7 +40,43 @@
       </div>
 
     <div v-else-if="currentView === 'weekly'" class="weekly-view">
-      <v-list-item class="pa-0">
+      <v-row>
+        <v-col cols="12" sm="6">
+          <h2 class="view-title">グループスケジュール</h2>
+        </v-col>
+        <v-col cols="12" sm="6">
+          <div class="d-flex justify-end">
+            <v-checkbox
+              v-model="displayOption.isShowUser"
+              label="ユーザー"
+              density="compact"
+              hide-details
+            ></v-checkbox>
+            <v-checkbox
+              v-model="displayOption.isShowCompany"
+              label="会社"
+              density="compact"
+              hide-details
+              class="ml-2"
+            ></v-checkbox>
+            <v-checkbox
+              v-model="displayOption.isShowFacility"
+              label="施設"
+              density="compact"
+              hide-details
+              class="ml-2"
+            ></v-checkbox>
+            <v-checkbox
+              v-model="displayOption.isShowEquipment"
+              label="備品"
+              density="compact"
+              hide-details
+              class="ml-2"
+            ></v-checkbox>
+          </div>
+        </v-col>
+      </v-row>
+      <!-- <v-list-item class="pa-0">
         <template v-slot:prepend>
           <h2 class="view-title">グループスケジュール</h2>
         </template>
@@ -68,7 +104,7 @@
             ></v-checkbox>
           </div>
         </template>
-      </v-list-item>
+      </v-list-item> -->
 
       <div>
         <WeeklyCalendarView :users="visibleUsers" :company="company" :facilities="sortedFacilities" :equipments="sortedEquipments" :week-days="weekDays" :events="events" :daily-options="dailyOptions"
@@ -995,6 +1031,7 @@ useHead({
 
   .view-title {
     font-size: 14px;
+    margin-bottom: 0;
   }
 }
 </style>
