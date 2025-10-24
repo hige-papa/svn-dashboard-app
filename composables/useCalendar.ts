@@ -57,8 +57,12 @@ export const useCalendar = () => {
     let startDate: Date, endDate: Date;
 
     if (currentView.value === 'monthly') {
-      startDate = new Date(d.getFullYear(), d.getMonth(), 1);
-      startDate.setDate(startDate.getDate() - startDate.getDay());
+      const firstDayOfMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+      const startDayIndex = firstDayOfMonth.getDay(); 
+      
+      startDate = new Date(firstDayOfMonth);
+      startDate.setDate(firstDayOfMonth.getDate() - startDayIndex); 
+
       endDate = new Date(startDate);
       endDate.setDate(endDate.getDate() + 41);
     } else if (currentView.value === 'weekly') {
@@ -119,6 +123,7 @@ export const useCalendar = () => {
   const nextMonth = () => currentDate.value = new Date(currentDate.value.setMonth(currentDate.value.getMonth() + 1));
   const goToToday = () => { currentDate.value = new Date(); };
   const goToSelectDate = (date: Date) => { currentDate.value = date; };
+  const selectDay = (date: Date) => { selectedDate.value = date; };
 
   // --- Computed Properties for Views ---
   const generateWeekDays = computed<Date[]>(() => {
@@ -141,7 +146,8 @@ export const useCalendar = () => {
     const month = d.getMonth();
     const firstDayOfMonth = new Date(year, month, 1);
     const startDate = new Date(firstDayOfMonth);
-    startDate.setDate(startDate.getDate() - firstDayOfMonth.getDay());
+    const startDayIndex = firstDayOfMonth.getDay();
+    startDate.setDate(firstDayOfMonth.getDate() - startDayIndex); 
 
     for (let i = 0; i < 42; i++) {
       const day = new Date(startDate);
@@ -170,8 +176,9 @@ export const useCalendar = () => {
   };
 
   // --- Lifecycle and Watchers ---
-  onMounted(loadData);
-  watch([currentDate, currentView], loadData, { deep: true });
+  // onMounted(loadData);
+  // ★★★ 修正箇所: watchを削除し、明示的なロードに一本化する ★★★
+  // watch([currentDate, currentView], loadData, { deep: true });
 
   return {
     currentDate,
@@ -181,10 +188,10 @@ export const useCalendar = () => {
     events,
     holidays,
     isLoading,
-    loadData,
+    loadData, // loadDataを公開
     refreshEvents,
     setView,
-    selectDay: (date: Date) => { selectedDate.value = date; },
+    selectDay,
     previousDay,
     nextDay,
     previousWeek,

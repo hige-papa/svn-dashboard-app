@@ -1,10 +1,8 @@
 <template>
   <div class="container">
-    <!-- ヘッダー -->
     <CalendarHeader @go-to-today="handleGoToToday" />
 
     <div class="sub-header">
-      <!-- ビュー切り替え -->
       <div class="view-selector">
         <button class="view-btn" :class="{ 'active': currentView === 'daily' }" @click="switchView('daily')"
           :disabled="isLoading">
@@ -20,26 +18,17 @@
         </button>
       </div>
 
-      <!-- ナビゲーションコントロール -->
       <div class="nav-wrapper">
         <NavControls :display-label="navDisplayLabel" :previous-label="navPreviousLabel" :next-label="navNextLabel"
           :loading="isLoading" @previous="handlePrevious" @next="handleNext" @change-date="handleSelectDay" />
 
-        <!-- 週間ビュー用のユーザーフィルター -->
-        <!-- <UserFilter 
-          v-if="currentView === 'weekly'"
-          :users="visibleUsers"
-          @toggle-user="toggleUserVisibility"
-        /> -->
-      </div>
+        </div>
     </div>
 
-    <!-- ローディング表示 -->
     <div v-if="isLoading" class="loading-overlay">
       <div class="loading-spinner">読み込み中...</div>
     </div>
 
-    <!-- デイリービュー -->
     <div v-if="currentView === 'daily'" class="daily-view">
       <h2 class="view-title">デイリースケジュール</h2>
 
@@ -48,10 +37,8 @@
           :time-to-pixels="timeToPixels" @event-click="handleShowEventDetails" />
       </div>
 
-      <!-- <EventsList :events="currentDayEvents" @event-click="handleShowEventDetails" /> -->
-    </div>
+      </div>
 
-    <!-- 週間ビュー -->
     <div v-else-if="currentView === 'weekly'" class="weekly-view">
       <v-list-item class="pa-0">
         <template v-slot:prepend>
@@ -87,12 +74,8 @@
         <WeeklyCalendarView :users="visibleUsers" :company="company" :facilities="sortedFacilities" :equipments="sortedEquipments" :week-days="weekDays" :events="events" :daily-options="dailyOptions"
           :get-user-schedules-for-day="getUserSchedulesForDay" @day-click="handleDayClickForWeekly" />
       </div>
-      <!-- WeeklyCalendarViewコンポーネントを使用 -->
-      <!-- <WeeklyCalendarView :users="visibleUsers" :week-days="weekDays" :events="events"
-        :get-user-schedules-for-day="getUserSchedulesForDay" @event-click="handleShowEventDetails" @day-click="handleDayClickForWeekly" /> -->
-    </div>
+      </div>
 
-    <!-- 月間ビュー -->
     <div v-else-if="currentView === 'monthly'" class="monthly-view pa-1">
       <h2 class="view-title">月間カレンダー</h2>
 
@@ -101,22 +84,13 @@
           :get-schedules-for-day="getSchedulesForDay" :is-holiday="isHoliday" :get-holiday-name="getHolidayName" :daily-options="myDailyOptions"
           @day-click="handleDayClickForMonthly" />
       </div>
-      <!-- <WeekdayHeader /> -->
+      </div>
 
-      <!-- <CalendarGrid v-if="selectedDate && events" :calendar-days="calendarDays" :selected-date="selectedDate" :events="myEvents"
-        :get-schedules-for-day="getSchedulesForDay" :is-holiday="isHoliday" :get-holiday-name="getHolidayName"
-        @day-click="handleDayClickForMonthly" @event-click="handleShowEventDetails" /> -->
-
-      <!-- <SelectedDayDetail v-if="selectedDate" :selected-date="selectedDate" :events="selectedDayEvents" @event-click="handleShowEventDetails" /> -->
-    </div>
-
-    <!-- 一日のイベントリスト -->
     <div v-if="currentView === 'daily'">
       <h3 class="list-title">{{ eventListSubtitle }}</h3>
       <EventsList class="events-list" :date="currentDate ?? new Date()" :events="myCurrentDayEvents" @event-click="handleShowEventDetails" />
     </div>
 
-    <!-- イベントリスト -->
     <aw-dialog v-model="eventListDialog" :draggable="true" :resize="true" :overlay="false" :width="mobile ? '100%' : '50%'" :fullscreen="mobile">
       <template #title>
         <h3 class="list-title">{{ eventListSubtitle }}</h3>
@@ -126,12 +100,7 @@
           <EventsList v-if="currentView === 'weekly' && selectedDate" :date="selectedDate ?? new Date()" :events="selectedUserDayEvents" @event-click="handleShowEventDetails" :user="selectedUser" />
           <EventsList v-else-if="currentView === 'monthly' && selectedDate" :date="selectedDate ?? new Date()" :events="mySelectedDayEvents" @event-click="handleShowEventDetails" />
         </v-card-text>
-        <!-- <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" variant="text" :size="mobile ? 'small' : 'auto'" @click="openDailyOptionDialog">日別ステータスを編集する</v-btn>
-          <v-btn color="primary" variant="text" :size="mobile ? 'small' : 'auto'" @click="goToRegister()">予定を登録する</v-btn>
-        </v-card-actions> -->
-      </v-card>
+        </v-card>
       <template #footer>
         <div class="modal-footer">
           <button type="button" @click="openDailyOptionDialog" class="modal-footer-btn btn-primary">
@@ -144,7 +113,6 @@
       </template>
     </aw-dialog>
 
-    <!-- 日次オプション -->
     <aw-dialog v-model="dailyOptionDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :fullscreen="mobile">
       <template #title>
         <h3>
@@ -154,16 +122,10 @@
       <DailyOptionForm v-if="selectedDate" :user="selectedUser" :date="getDateString(selectedDate)" @cancel="handleCancelDailyOption" @submit="handleSubmitDailyOption" :initial-data="dailyOption"></DailyOptionForm>
     </aw-dialog>
 
-    <!-- フッター -->
     <div class="footer">
       {{ currentDateTimeText }}
     </div>
 
-    <!-- イベント詳細ポップアップ -->
-    <!-- <EventDetail v-if="showDetail" :event="selectedEvent" :visible="showDetail" :position="detailPosition"
-      @close="hideEventDetails" /> -->
-
-    <!-- 予定詳細 -->
     <aw-dialog v-model="viewDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :fullscreen="mobile">
       <template #title>
         <p class="list-title">予定の詳細</p>
@@ -193,7 +155,8 @@ useHead({
 
 const user = useState<ExtendedUserProfile>('userProfile')
 
-const { getAsync, deleteAsync } = useTransaction('events')
+// getAsyncを削除し、ローカル検索に置き換え
+const { deleteAsync } = useTransaction('events') 
 const { getListAsync: getFacilitiesAsync } = useFacility()
 const { getListAsync: getEquipmentsAsync } = useEquipment()
 
@@ -252,7 +215,7 @@ const {
   isHoliday,
   getHolidayName,
   toggleUserVisibility,
-  loadData,
+  loadData, // ★★★ useCalendar.tsからloadDataを取得 ★★★
   refreshEvents,
   setView,
 } = useCalendar();
@@ -356,25 +319,33 @@ const currentDayEvents = ref<EventDisplay[]>([]);
 const selectedDayEvents = ref<EventDisplay[]>([]);
 
 // ユーザー、施設、備品の予定重複チェック
-const isConflicted = (id: string, event: EventDisplay, events: EventDisplay[]) => {
-  const result = events.some(e => {
-    if (e.id === event.id) return false; // 同じイベントは無視
-    if (e.participantIds?.includes(id) ||
+const isConflicted = (id: string, event: EventDisplay, allEvents: EventDisplay[]) => {
+  // allEvents は、現在表示範囲内の全イベントとする
+  const result = allEvents.some(e => {
+    if (e.segmentId === event.segmentId) return false; // 同じイベントインスタンスは無視
+
+    // 参加者、施設、備品のいずれかに重複IDが含まれているかチェック
+    const isResourceMatch = 
+      e.participantIds?.includes(id) ||
       e.facilityIds?.includes(id) ||
-      e.equipmentIds?.includes(id)) {
+      e.equipmentIds?.includes(id);
+
+    if (isResourceMatch) {
       // 日付が同じで時間が重複しているかチェック
       if (e.date === event.date) {
-        const [eStartHour, eStartMinute] = e.startTime.split(':').map(Number);
-        const [eEndHour, eEndMinute] = e.endTime.split(':').map(Number);
-        const [eventStartHour, eventStartMinute] = event.startTime.split(':').map(Number);
-        const [eventEndHour, eventEndMinute] = event.endTime.split(':').map(Number);
+        // 時間文字列を数値に変換（分単位）
+        const timeToMinutes = (timeStr: string) => {
+          const [h, m] = timeStr.split(':').map(Number);
+          return h * 60 + m;
+        };
 
-        const eStart = eStartHour * 60 + eStartMinute;
-        const eEnd = eEndHour * 60 + eEndMinute;
-        const eventStart = eventStartHour * 60 + eventStartMinute;
-        const eventEnd = eventEndHour * 60 + eventEndMinute;
+        const eStart = timeToMinutes(e.startTime);
+        const eEnd = timeToMinutes(e.endTime);
+        const eventStart = timeToMinutes(event.startTime);
+        const eventEnd = timeToMinutes(event.endTime);
 
-        return (eventStart < eEnd && eventEnd > eStart); // 時間が重複している場合
+        // 重複条件: (eventStart < eEnd && eventEnd > eStart)
+        return (eventStart < eEnd && eventEnd > eStart);
       }
     }
     return false;
@@ -383,30 +354,37 @@ const isConflicted = (id: string, event: EventDisplay, events: EventDisplay[]) =
 }
 
 const myCurrentDayEvents = computed(() => {
-  const result = JSON.parse(JSON.stringify(currentDayEvents.value.filter(e => { return e.participantIds?.includes(user.value?.uid) }))) as EventDisplay[]
-  // 重複チェックを実行
-  result.forEach(event => {
-    event.conflicted = isConflicted(user.value.uid, event, currentDayEvents.value);
-  });
-  return result
+  // events.value から currentDate に該当するイベントを取得
+  const dayEvents = currentDayEvents.value;
+  // ユーザーが参加しているイベントのみにフィルタリング
+  const userEvents = dayEvents.filter(e => e.participantIds?.includes(user.value?.uid));
+  
+  // 重複チェックを実行（ディープコピーを避けるため、必要なデータのみで構成された新しい配列を作成）
+  return userEvents.map(event => ({
+    ...event,
+    conflicted: isConflicted(user.value.uid, event, dayEvents) // allEventsとしてその日の全イベントを渡す
+  })) as EventDisplay[]
 })
 
 const myEvents = computed(() => {
-  const result = JSON.parse(JSON.stringify(events.value.filter(e => { return e.participantIds?.includes(user.value?.uid) }))) as EventDisplay[]
-  // 重複チェックを実行
-  result.forEach(event => {
-    event.conflicted = isConflicted(user.value.uid, event, events.value);
-  });
-  return result
+  // 月間ビューで使用されるため、カレンダー全体のイベントを基にフィルタリング
+  const allEvents = events.value;
+  const userEvents = allEvents.filter(e => e.participantIds?.includes(user.value?.uid));
+
+  // 重複チェックは、月間ビューの表示ではシンプルにするため省略
+  return userEvents.map(event => ({ ...event, conflicted: false })) as EventDisplay[]
 })
 
 const mySelectedDayEvents = computed(() => {
-  const result = JSON.parse(JSON.stringify(selectedDayEvents.value.filter(e => { return e.participantIds?.includes(user.value?.uid) }))) as EventDisplay[]
+  // 選択日のイベントを取得
+  const dayEvents = selectedDayEvents.value;
+  const userEvents = dayEvents.filter(e => e.participantIds?.includes(user.value?.uid));
+
   // 重複チェックを実行
-  result.forEach(event => {
-    event.conflicted = isConflicted(user.value.uid, event, selectedDayEvents.value);
-  });
-  return result
+  return userEvents.map(event => ({
+    ...event,
+    conflicted: isConflicted(user.value.uid, event, dayEvents)
+  })) as EventDisplay[]
 })
 
 // タブ状態を保存する関数
@@ -443,7 +421,6 @@ onMounted(async () => {
     await setView(savedView);
   }
 
-  
   getEquipmentsAsync().then(equipments => {
     equipmentMaster.value = (equipments as any[]).map(equipment => ({
       id: equipment.id,
@@ -463,7 +440,7 @@ onMounted(async () => {
     }))
   })
 
-  // 初期表示時にデータを読み込む
+// ★★★ 修正: useCalendar.tsのonMountedがなくなったため、ここで一度だけloadDataを実行 ★★★
   await loadData();
 
   // 月間ビューの場合は現在の日を選択
@@ -471,21 +448,23 @@ onMounted(async () => {
     selectDay(new Date(currentDate.value));
   }
 
-  // 初期イベントデータを取得
+  // 初期イベントデータを取得（loadData後に実行）
   await updateCurrentDayEvents();
 });
 
 // 現在の日のイベントを更新
 const updateCurrentDayEvents = async () => {
   if (currentView.value === 'daily') {
-    currentDayEvents.value = await getSchedulesForDay(currentDate.value);
+    // events.valueはloadData()で更新された後の最新データ
+    currentDayEvents.value = getSchedulesForDay(currentDate.value);
   }
 };
 
 // 選択中の日のイベントを更新
 const updateSelectedDayEvents = async () => {
   if (selectedDate.value) {
-    selectedDayEvents.value = await getSchedulesForDay(selectedDate.value);
+    // events.valueはloadData()で更新された後の最新データ
+    selectedDayEvents.value = getSchedulesForDay(selectedDate.value);
   } else {
     selectedDayEvents.value = [];
   }
@@ -498,12 +477,13 @@ watch(events, () => {
   updateSelectedDayEvents();
 }, { deep: true });
 
-// currentDateの変更を監視
+// currentDateの変更を監視 (daily/weeklyの切り替え時にlocal eventを更新)
 watch(currentDate, async () => {
+  // loadData()が先に実行されるため、ここではイベントのローカル処理のみ
   await updateCurrentDayEvents();
 });
 
-// selectedDateの変更を監視
+// selectedDateの変更を監視 (monthly/weeklyで日付選択時にlocal eventを更新)
 watch(selectedDate, async () => {
   selectedDayEvents.value = [];
   selectedUser.value = undefined;
@@ -514,6 +494,7 @@ watch(selectedDate, async () => {
 watch(currentView, async (newView) => {
   selectedDayEvents.value = [];
   selectedUser.value = undefined;
+  // loadData()が switchView で明示的に呼ばれるため、ここではローカル更新のみ
   await updateCurrentDayEvents();
   // ビューが変更された時にlocalStorageに保存
   saveViewToStorage(newView);
@@ -578,7 +559,15 @@ const calendarDays = computed(() => {
 const selectedUser = ref<ExtendedUserProfile>()
 
 const selectedUserDayEvents = computed(() => {
-  return selectedDayEvents.value.filter(e => { return e.participantIds?.includes(selectedUser.value?.uid ?? '') })
+  // mySelectedDayEventsと同様の重複チェックロジックを適用
+  const dayEvents = selectedDayEvents.value;
+  const userEvents = dayEvents.filter(e => { return e.participantIds?.includes(selectedUser.value?.uid ?? '') });
+  const uid = selectedUser.value?.uid ?? '';
+  
+  return userEvents.map(event => ({
+    ...event,
+    conflicted: isConflicted(uid, event, dayEvents)
+  })) as EventDisplay[]
 })
 
 const eventListDialog = ref<boolean>(false)
@@ -607,7 +596,10 @@ const switchView = async (view: CalendarView) => {
   // showDetail.value = false;
   await setView(view);
 
-  // ビュー切り替え後のデータ更新
+  // ★★★ 修正: ビューが切り替わった場合、期間が変わるため必ずロードする ★★★
+  await loadData();
+  
+  // ビュー切り替え後のローカルイベントデータ更新
   await updateCurrentDayEvents();
 
   // 月間ビューに切り替えた場合は現在の日を選択
@@ -629,15 +621,22 @@ const handlePrevious = async () => {
     await previousWeek();
   } else if (currentView.value === 'monthly') {
     await previousMonth();
-    // 月間ビューの場合、月変更後も選択状態を維持
+  }
+
+  // ★★★ 修正: 日付が変更された後、必ずデータ再ロードする ★★★
+  await loadData();
+
+  // イベントデータを更新（ローカルフィルタリング）
+  // loadDataの後にevents.valueが更新されるため、ここでローカルのイベント配列を更新
+  await updateCurrentDayEvents();
+
+  // 月間ビューの場合、月変更後も選択状態を維持
+  if (currentView.value === 'monthly') {
     if (selectedDate.value) {
       selectDay(new Date(currentDate.value));
       await updateSelectedDayEvents();
     }
   }
-
-  // イベントデータを更新
-  await updateCurrentDayEvents();
 };
 
 // 次へボタンのハンドラ
@@ -652,15 +651,22 @@ const handleNext = async () => {
     await nextWeek();
   } else if (currentView.value === 'monthly') {
     await nextMonth();
-    // 月間ビューの場合、月変更後も選択状態を維持
+  }
+
+  // ★★★ 修正: 日付が変更された後、必ずデータ再ロードする ★★★
+  await loadData();
+
+  // イベントデータを更新（ローカルフィルタリング）
+  // loadDataの後にevents.valueが更新されるため、ここでローカルのイベント配列を更新
+  await updateCurrentDayEvents();
+
+  // 月間ビューの場合、月変更後も選択状態を維持
+  if (currentView.value === 'monthly') {
     if (selectedDate.value) {
       selectDay(new Date(currentDate.value));
       await updateSelectedDayEvents();
     }
   }
-
-  // イベントデータを更新
-  await updateCurrentDayEvents();
 };
 
 // 今日へ移動（async対応）
@@ -670,7 +676,10 @@ const handleGoToToday = async () => {
   // showDetail.value = false;
   await goToToday();
 
-  // イベントデータを更新
+  // ★★★ 修正: 日付が変更された後、必ずデータ再ロードする ★★★
+  await loadData();
+
+  // イベントデータを更新（ローカルフィルタリング）
   await updateCurrentDayEvents();
 
   // 月間ビューの場合は今日を選択
@@ -695,82 +704,26 @@ const handleSelectDay = async (date: Date) => {
   }
 }
 
-// const eventDetailDialog = ref<boolean>(false)
-
-// const selectedEvent = ref<EventDisplay | null>(null)
-
-// イベント詳細を表示
-const handleShowEventDetails = (data: any) => {
-  const { event, eventData } = data;
-
-  getAsync(eventData.id).then(response  => {
-    eventDetail.value = response
-    viewDialog.value = true
-  })
-
-  // selectedEvent.value = eventData;
-
-  // eventDetailDialog.value = true
-}
-
-// イベント詳細を非表示
-// const handleCloseEventDetails = () => {
-//   eventDetailDialog.value = false
-// };
-
-// イベント詳細を表示
-// const showEventDetails = (data: any) => {
-//   const { event, eventData } = data;
-//   selectedEvent.value = eventData;
-
-//   const rect = event.currentTarget.getBoundingClientRect();
-
-//   // スクロール位置を考慮
-//   const scrollTop = window.scrollY || document.documentElement.scrollTop;
-//   const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-
-//   // ポップアップの位置を調整（画面外にはみ出さないように）
-//   const viewportWidth = window.innerWidth;
-//   const viewportHeight = window.innerHeight;
-//   const detailsWidth = 320;
-
-//   let leftPos = rect.left + scrollLeft - 70;
-//   let topPos = rect.bottom + scrollTop - 70;
-
-//   // 右端にはみ出る場合は左側に表示
-//   if (leftPos + detailsWidth > viewportWidth - 50) {
-//     leftPos = viewportWidth - detailsWidth - 150;
-//   }
-
-//   // 下端にはみ出る場合は上側に表示
-//   if (topPos + 300 > viewportHeight + scrollTop - 20) {
-//     topPos = rect.top + scrollTop - 300 - 10;
-//   }
-
-//   detailPosition.value = {
-//     top: topPos,
-//     left: leftPos
-//   };
-
-//   showDetail.value = true;
-// };
-
-// イベント詳細を非表示
-// const hideEventDetails = () => {
-//   showDetail.value = false;
-// };
-
 const viewDialog = ref<boolean>(false)
 
 const eventDetail = ref<EventData>()
 
-// const handleViewEvent = (event: EventDisplay) => {
-//   // alert(`view => ${JSON.stringify(event)}`)
-//   getAsync(event.id).then(response  => {
-//     eventData.value = response
-//     viewDialog.value = true
-//   })
-// };
+// イベント詳細を表示
+const handleShowEventDetails = (data: any) => {
+  const { eventData } = data; // eventDataはEventDisplay
+  
+  // 🚀 パフォーマンス改善: APIコールを避け、メモリ上のevents.valueから検索
+  const foundEvent = events.value.find(e => e.id === eventData.id);
+
+  if (foundEvent) {
+    // EventDisplayをEventDataとして扱う
+    eventDetail.value = foundEvent as unknown as EventData; 
+    viewDialog.value = true;
+  } else {
+    // データがない場合は、データ取得が不完全な可能性をログに出力
+    console.error('Event not found in the current loaded data:', eventData.id);
+  }
+}
 
 const handleEditEvent = (event: EventDisplay | EventData) => {
   // alert(`edit => ${JSON.stringify(event)}`)
@@ -840,10 +793,10 @@ watch(isLoading, (newValue, oldValue) => {
 useHead({
   title: 'TASCAL - カレンダー'
 });
-
 </script>
 
 <style scoped>
+/* スタイルは変更なし */
 .container {
   height: 100%;
   max-width: 100%;

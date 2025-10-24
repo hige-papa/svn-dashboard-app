@@ -83,9 +83,14 @@ export const useEventService = () => {
     return masterEvent.id;
   };
 
+  /**
+   * 単発/期間イベントと、生成済みの繰り返しイベントのインスタンスを取得し、統合する。
+   * クライアントでの複雑な繰り返し計算を避け、DBからの読み取りに集中する。
+   */
   const getEventsInRange = async (startDate: string, endDate: string): Promise<EventDisplay[]> => {
     const preliminaryEvents: EventDisplay[] = [];
     try {
+      // 1. 単発/期間イベントの取得とフィルタリング
       const nonRecurringEvents = await eventsService.getListAsync(where('dateType', 'in', ['single', 'range'])) as EventData[];
       for (const eventData of nonRecurringEvents) {
         if (eventData.dateType === 'single' && eventData.date && eventData.date >= startDate && eventData.date <= endDate) {
@@ -97,20 +102,30 @@ export const useEventService = () => {
           }
         }
       }
+      
+      // 2. 繰り返しイベントのインスタンスを取得
       const instances = await instancesService.getListAsync(where('instanceDate', '>=', startDate), where('instanceDate', '<=', endDate)) as EventInstance[];
       const masterEventIds = [...new Set(instances.map(i => i.masterId))];
       const masterEventsData = new Map<string, EventData>();
+      
+      // 3. インスタンスに対応するマスターイベントの一括取得
       if (masterEventIds.length > 0) {
         const masterEvents = await eventsService.getListAsync(where('__name__', 'in', masterEventIds)) as EventData[];
         masterEvents.forEach(master => masterEventsData.set(master.id!, master));
       }
+      
+      // 4. インスタンスとマスターイベントの統合
       for (const instance of instances) {
         if (instance.status === 'active') {
           const masterEvent = masterEventsData.get(instance.masterId);
           if (masterEvent) preliminaryEvents.push(mergeInstanceWithMaster(instance, masterEvent));
         }
       }
-      await generateMissingRecurringEvents(startDate, endDate, preliminaryEvents);
+      
+      // 5. 不足している繰り返しイベントのインスタンスを生成・追加 (サーバーサイドへの移行推奨)
+      await generateMissingRecurringEvents(startDate, endDate, preliminaryEvents); 
+      
+      // 6. 複数日イベントの展開と最終リスト作成
       const finalEvents: EventDisplay[] = [];
       for (const event of preliminaryEvents) {
         if (event.endDate && event.endDate > event.date) {
@@ -430,6 +445,7 @@ export const useEventService = () => {
         }
         
         // 4. まだインスタンスが生成されていない繰り返しイベントを検索して追加
+        // NOTE: この処理は負荷が高いため、サーバーサイドへの移行を推奨します。
         const rules = await rulesService.getListAsync(where('masterId', 'in', masterEventIds)) as RecurrenceRule[];
         for (const rule of rules) {
             const masterEvent = masterEventsData.get(rule.masterId);
