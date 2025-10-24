@@ -83,17 +83,24 @@
             </div>
 
             <div class="form-group" :class="{ error: errors.time }">
-              <label class="form-label">
-                <i class="mdi mdi-clock-outline icon"></i>
-                時間
-                <span class="required">*</span>
+              <label class="form-label time-label">
+                <div class="time-label-left">
+                  <i class="mdi mdi-clock-outline icon"></i>
+                  時間
+                  <span class="required">*</span>
+                </div>
+                <button type="button" class="btn-allday-small" aria-label="終日">終日</button>
               </label>
               <div class="time-inputs">
-                <input id="startTime" v-model="formData.startTime" type="time" class="form-input"
-                  @blur="validateTimeFields" @input="clearError('time')">
+                <div class="time-from-wrapper">
+                  <input id="startTime" v-model="formData.startTime" type="time" class="form-input"
+                    @blur="validateTimeFields" @input="clearError('time')">
+                </div>
                 <span class="time-separator">〜</span>
-                <input id="endTime" v-model="formData.endTime" type="time" class="form-input" @blur="validateTimeFields"
-                  @input="clearError('time')">
+                <div class="time-to-wrapper">
+                  <input id="endTime" v-model="formData.endTime" type="time" class="form-input" @blur="validateTimeFields"
+                    @input="clearError('time')">
+                </div>
               </div>
               <div v-if="errors.time" class="form-error">{{ errors.time }}</div>
             </div>
@@ -125,17 +132,24 @@
             </div>
 
             <div class="form-group" :class="{ error: errors.time }">
-              <label class="form-label">
-                <i class="mdi mdi-clock-outline icon"></i>
-                時間
-                <span class="required">*</span>
+              <label class="form-label time-label">
+                <div class="time-label-left">
+                  <i class="mdi mdi-clock-outline icon"></i>
+                  時間
+                  <span class="required">*</span>
+                </div>
+                <button type="button" class="btn-allday-small" aria-label="終日">終日</button>
               </label>
               <div class="time-inputs">
-                <input v-model="formData.startTime" type="time" class="form-input" @blur="validateTimeFields"
-                  @input="clearError('time')">
+                <div class="time-from-wrapper">
+                  <input v-model="formData.startTime" type="time" class="form-input" @blur="validateTimeFields"
+                    @input="clearError('time')">
+                </div>
                 <span class="time-separator">〜</span>
-                <input v-model="formData.endTime" type="time" class="form-input" @blur="validateTimeFields"
-                  @input="clearError('time')">
+                <div class="time-to-wrapper">
+                  <input v-model="formData.endTime" type="time" class="form-input" @blur="validateTimeFields"
+                    @input="clearError('time')">
+                </div>
               </div>
               <div v-if="errors.time" class="form-error">{{ errors.time }}</div>
             </div>
@@ -155,17 +169,24 @@
               </div>
 
               <div class="form-group" :class="{ error: errors.time }">
-                <label class="form-label">
-                  <i class="mdi mdi-clock-outline icon"></i>
-                  時間
-                  <span class="required">*</span>
+                <label class="form-label time-label">
+                  <div class="time-label-left">
+                    <i class="mdi mdi-clock-outline icon"></i>
+                    時間
+                    <span class="required">*</span>
+                  </div>
+                  <button type="button" class="btn-allday-small" aria-label="終日">終日</button>
                 </label>
                 <div class="time-inputs">
-                  <input v-model="formData.startTime" type="time" class="form-input" @blur="validateTimeFields"
-                    @input="clearError('time')">
+                  <div class="time-from-wrapper">
+                    <input v-model="formData.startTime" type="time" class="form-input" @blur="validateTimeFields"
+                      @input="clearError('time')">
+                  </div>
                   <span class="time-separator">〜</span>
-                  <input v-model="formData.endTime" type="time" class="form-input" @blur="validateTimeFields"
-                    @input="clearError('time')">
+                  <div class="time-to-wrapper">
+                    <input v-model="formData.endTime" type="time" class="form-input" @blur="validateTimeFields"
+                      @input="clearError('time')">
+                  </div>
                 </div>
                 <div v-if="errors.time" class="form-error">{{ errors.time }}</div>
               </div>
@@ -2196,6 +2217,75 @@ onMounted(() => {
 .team-selection-item:hover {
   background-color: #f8f9fa;
   /* --background-light */
+}
+
+/* time input - from/to wrappers and allday button (visual only) */
+.time-inputs {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr; /* start / separator / end */
+  gap: 8px;
+  align-items: center;
+}
+
+.time-from-wrapper,
+.time-to-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ensure inputs take full available width inside wrappers */
+.time-inputs .form-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.btn-allday {
+  background-color: #f1f5f9; /* light gray */
+  border: 1px solid #d1d5db;
+  color: #374151;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: default; /* visual only */
+}
+
+.btn-allday:hover {
+  background-color: #e2e8f0;
+}
+
+/* small allday button placed next to the time label */
+.time-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.time-label-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-allday-small {
+  appearance: none;
+  background: white;
+  border: 1px solid #dee2e6;
+  color: #374151;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* focus style similar to date-type-label */
+.btn-allday-small:focus,
+.btn-allday-small:focus-visible {
+  outline: none;
+  border-color: #4361ee;
+  background-color: #eef2ff;
+  color: #4361ee;
 }
 
 .btn-add-team {
