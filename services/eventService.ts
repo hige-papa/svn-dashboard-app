@@ -223,7 +223,7 @@ export const useEventService = () => {
       isRecurring: eventData.dateType === 'recurring',
       eventType: eventData.eventType, eventTypeName: eventData.eventTypeName, eventTypeColor: eventData.eventTypeColor,
       private: eventData.private,
-    };
+    } as any;
   };
   
   const calculateInstanceEndDate = (instanceStartDateStr: string, masterEvent: EventData): string | undefined => {
@@ -254,7 +254,7 @@ export const useEventService = () => {
       isRecurring: true, masterId: instance.masterId, isException: !!instance.isException,
       eventType: masterEvent.eventType, eventTypeName: masterEvent.eventTypeName, eventTypeColor: masterEvent.eventTypeColor,
       private: masterEvent.private,
-    };
+    } as any;
   };
 
   const generateRecurringDates = (
