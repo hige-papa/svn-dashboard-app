@@ -107,9 +107,10 @@ export const useDailyOptions = (currentDate: Ref<Date | null>, currentView: Ref<
   };
 
   // --- Lifecycle and Watchers ---
-  // マウント時と、日付・ビューの変更を監視してデータを再取得
-  onMounted(loadDailyOptions);
-  watch([currentDate, currentView], loadDailyOptions, { deep: true });
+  // NOTE: 自動取得を停止（useCalendar.tsから明示的に呼び出す）
+  // これにより、重複したdailyOptionsの取得を防止
+  // onMounted(loadDailyOptions);
+  // watch([currentDate, currentView], loadDailyOptions, { deep: true });
 
   return {
     dailyOptions,

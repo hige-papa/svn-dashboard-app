@@ -15,6 +15,67 @@ type CacheEntry = {
 export const masterDataCache = useState('masterDataCache', () => new Map<string, CacheEntry>());
 const CACHE_DURATION_MS = 10 * 60 * 60 * 1000; // 10 hours (36000 seconds) for users/holidays
 const DAILY_OPTIONS_CACHE_DURATION_MS = 60 * 60 * 1000; // 60 minutes (3600 seconds) for dailyOptions
+const MY_EVENTS_CACHE_DURATION_MS = 30 * 60 * 1000; // 30 minutes (1800 seconds) for my events
+
+/**
+ * Get cached events for the current user (localStorage-based)
+ * @param uid - User ID
+ * @param dateRange - Date range for events
+ * @returns Cached events array or null if cache miss/expired
+ */
+const getCachedMyEvents = (uid: string, dateRange: { startDate: string; endDate: string }): EventDisplay[] | null => {
+  if (!import.meta.client) return null;
+  
+  try {
+    const cacheKey = `my-events-cache:${uid}:${dateRange.startDate}:${dateRange.endDate}`;
+    const cached = localStorage.getItem(cacheKey);
+    
+    if (!cached) {
+      console.log('[EventCache] Miss - no cached data found');
+      return null;
+    }
+    
+    const { data, timestamp } = JSON.parse(cached);
+    const now = Date.now();
+    
+    if ((now - timestamp) > MY_EVENTS_CACHE_DURATION_MS) {
+      console.log('[EventCache] Miss - cache expired');
+      localStorage.removeItem(cacheKey);
+      return null;
+    }
+    
+    console.log('[EventCache] Hit - returning cached events');
+    return data;
+  } catch (error) {
+    console.warn('[EventCache] Error reading cache:', error);
+    return null;
+  }
+};
+
+/**
+ * Set cached events for the current user (localStorage-based)
+ * @param uid - User ID
+ * @param dateRange - Date range for events
+ * @param allEvents - All events to cache (will filter for user)
+ */
+const setCachedMyEvents = (uid: string, dateRange: { startDate: string; endDate: string }, allEvents: EventDisplay[]): void => {
+  if (!import.meta.client) return;
+  
+  try {
+    const cacheKey = `my-events-cache:${uid}:${dateRange.startDate}:${dateRange.endDate}`;
+    const myEvents = allEvents.filter(event => event.participantIds?.includes(uid));
+    const cacheData = {
+      data: myEvents,
+      timestamp: Date.now()
+    };
+    
+    localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+    console.log(`[EventCache] Cached ${myEvents.length} events for user ${uid}`);
+  } catch (error) {
+    console.warn('[EventCache] Error writing cache:', error);
+  }
+};
+
 
 /**
  * Master data cache API with TTL, in-flight deduplication, and error handling
@@ -131,6 +192,7 @@ export const useCalendar = () => {
   const users = ref<UserWithVisibility[]>([]);
   const events = ref<EventDisplay[]>([]);
   const holidays = ref<Holiday[]>([]);
+  const dailyOptions = ref<DailyUserOption[]>([]); // DailyOptionsの状態を追加
   const isLoading = ref(false);
 
   // --- Utility Functions ---
@@ -200,41 +262,84 @@ export const useCalendar = () => {
     isLoading.value = true;
     try {
       const dateRange = getCurrentDateRange();
+      const currentUser = useState<ExtendedUserProfile>('userProfile');
       
-      // ビューに応じて取得方法を切り替える
-      // 週間ビュー: 全員分のイベントを取得（全ユーザーのスケジュール表示用）
-      // 月間・日次ビュー: ログインユーザーのみのイベントを取得（個人スケジュール表示用）
-      let eventsPromise: Promise<EventDisplay[]>;
-      if (currentView.value === 'weekly') {
-        console.log(`[loadData] Loading all users' events for weekly view (${dateRange.startDate} ~ ${dateRange.endDate})`);
-        eventsPromise = eventService.getEventsInRange(dateRange.startDate, dateRange.endDate);
-      } else {
-        const currentUser = useState<ExtendedUserProfile>('userProfile');
-        if (!currentUser.value?.uid) {
-          console.error('[loadData] User not authenticated - cannot load events');
-          throw new Error('User not authenticated');
+      console.log(`[Phase1] Loading basic data for ${currentView.value} view (${dateRange.startDate} ~ ${dateRange.endDate})`);
+      
+      // === フェーズ1: 基本データの優先取得 ===
+      // 週次ビューの場合のみキャッシュから自身のイベントを取得
+      if (currentView.value === 'weekly' && currentUser.value?.uid) {
+        const cachedEvents = getCachedMyEvents(currentUser.value.uid, dateRange);
+        if (cachedEvents && cachedEvents.length > 0) {
+          events.value = cachedEvents;
+          console.log(`[Phase1] Cached events found - displaying ${cachedEvents.length} events immediately`);
         }
-        console.log(`[loadData] Loading user events only for ${currentView.value} view (user: ${currentUser.value.uid}, range: ${dateRange.startDate} ~ ${dateRange.endDate})`);
-        eventsPromise = eventService.getEventsByParticipantInRange(
-          currentUser.value.uid,
-          dateRange.startDate,
-          dateRange.endDate
-        );
       }
       
-      const [eventsData, usersResult, holidaysResult] = await Promise.all([
-        eventsPromise,
+      // マスターデータ（users, holidays）を並行取得
+      const [usersResult, holidaysResult] = await Promise.all([
         getMasterDataCacheAsync('users'),
         getMasterDataCacheAsync('holidays'),
       ]);
-      events.value = eventsData;
+      
       users.value = usersResult.data.map((u: ExtendedUserProfile) => ({ ...u, visible: true }));
       holidays.value = holidaysResult.data;
+      console.log('[Phase1] Basic data loaded (users, holidays)');
       
-      // Auto-print profiler summary on first load (weekly view)
-      if (currentView.value === 'weekly') {
-        printFirestoreDebugSummary();
-      }
+      // === フェーズ2: 全イベントの取得（バックグラウンド） ===
+      setTimeout(async () => {
+        try {
+          console.log('[Phase2] Loading all events in background...');
+          let allEvents: EventDisplay[];
+          
+          if (currentView.value === 'weekly') {
+            // 週次ビュー: 全ユーザーのイベントを取得
+            allEvents = await eventService.getEventsInRange(dateRange.startDate, dateRange.endDate);
+            // 自身のイベントをキャッシュ
+            if (currentUser.value?.uid) {
+              setCachedMyEvents(currentUser.value.uid, dateRange, allEvents);
+            }
+          } else {
+            // 月次・日次ビュー: ログインユーザーのみのイベントを取得
+            if (!currentUser.value?.uid) {
+              console.error('[Phase2] User not authenticated - cannot load events');
+              return;
+            }
+            allEvents = await eventService.getEventsByParticipantInRange(
+              currentUser.value.uid,
+              dateRange.startDate,
+              dateRange.endDate
+            );
+          }
+          
+          events.value = allEvents;
+          console.log(`[Phase2] All events loaded (${allEvents.length} events)`);
+          
+          // Auto-print profiler summary on first load (weekly view)
+          if (currentView.value === 'weekly') {
+            printFirestoreDebugSummary();
+          }
+        } catch (error) {
+          console.error('[Phase2] Failed to load all events:', error);
+        }
+      }, 0);
+      
+      // === フェーズ3: DailyOptionの取得（最低優先度） ===
+      setTimeout(async () => {
+        try {
+          console.log('[Phase3] Loading daily options...');
+          const dailyOptionsResult = await getMasterDataCacheAsync('dailyOptions', false, {
+            startDate: dateRange.startDate,
+            endDate: dateRange.endDate
+          });
+          dailyOptions.value = dailyOptionsResult.data;
+          console.log(`[Phase3] Daily options loaded (${dailyOptions.value.length} options)`);
+        } catch (error) {
+          console.error('[Phase3] Failed to load daily options:', error);
+          dailyOptions.value = []; // エラー時は空にする
+        }
+      }, 100);
+      
     } catch (error) {
       console.error('Failed to load calendar data:', error);
     } finally {
@@ -368,6 +473,7 @@ export const useCalendar = () => {
     users,
     events,
     holidays,
+    dailyOptions, // DailyOptionsを追加
     isLoading,
     loadData,
     refreshEvents,

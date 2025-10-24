@@ -188,15 +188,15 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick } from 'vue';
-import { useCalendar } from '~/composables/useCalendar';
+import { useCalendar, getMasterDataCache } from '~/composables/useCalendar';
 import { useDisplay } from 'vuetify'
 import { useTransaction } from '~/composables/transaction/useTransaction'
 import type { User } from 'firebase/auth';
 import { padStart } from 'vuetify/lib/util/helpers.mjs';
-import { useDailyOptions } from '~/composables/useDailyOptions'
 import { useFacility } from '~/composables/useFacility'
 import { useEquipment } from '~/composables/useEquipment'
 import { useMasterData } from '~/composables/useMasterData';
+import { useDailyOptionService } from '~/services/dailyOptionService';
 
 // head設定
 useHead({
@@ -242,6 +242,7 @@ const {
   users,
   events,
   holidays,
+  dailyOptions, // useCalendarからdailyOptionsを取得
   isLoading,
   getDayOfWeek,
   formatDate,
@@ -272,13 +273,6 @@ const {
   loadCalendarPosition,
   clearCalendarPosition,
 } = useCalendar();
-
-const {
-  dailyOptions,
-  getUserOptionForDay,
-  loadDailyOptions,
-  setDailyOption,
-} = useDailyOptions(currentDate, currentView);
 
 // 週次の表示設定
 const displayOption = ref<any>({
@@ -325,6 +319,43 @@ const sortedEquipments = computed(() => {
 const myDailyOptions = computed(() => {
   return dailyOptions.value.filter(e => { return e.uid === user.value.uid });
 })
+
+// --- DailyOption関連のヘルパー関数 ---
+const dailyOptionService = useDailyOptionService();
+
+/**
+ * 特定のユーザーの特定の日付のオプションを取得
+ */
+const getUserOptionForDay = (userId: string, date: Date | null): DailyUserOption | undefined => {
+  if (!date || !userId) return undefined;
+  const dateString = formatDateForDb(date);
+  return dailyOptions.value.find(option => option.uid === userId && option.date === dateString);
+};
+
+/**
+ * ユーザーの日別ステータスを設定（作成/更新）
+ */
+const setDailyOption = async (optionData: Omit<DailyUserOption, 'id'>) => {
+  try {
+    await dailyOptionService.setDailyOption(optionData);
+    
+    // Clear dailyOptions cache (all date ranges)
+    const masterDataCache = getMasterDataCache();
+    const keysToDelete: string[] = [];
+    masterDataCache.value.forEach((_, key) => {
+      if (key.startsWith('dailyOptions:')) {
+        keysToDelete.push(key);
+      }
+    });
+    keysToDelete.forEach(key => masterDataCache.value.delete(key));
+    console.log(`[Cache] Cleared ${keysToDelete.length} dailyOptions cache entries due to update`);
+    
+    // データを再読み込み
+    await loadData();
+  } catch (error) {
+    console.error("Failed to set daily option:", error);
+  }
+};
 
 // イベント詳細表示用の状態
 // const showDetail = ref<boolean>(false);
