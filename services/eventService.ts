@@ -1,7 +1,6 @@
 // services/eventService.ts
 import { useFirestoreGeneral } from '~/composables/firestoreGeneral/useFirestoreGeneral'
-import { where, query } from 'firebase/firestore'
-import { queryByIdsInChunks } from '~/composables/firebase/useFirestore'
+import { where } from 'firebase/firestore'
 
 export const useEventService = () => {
   const eventsService = useFirestoreGeneral('events')
@@ -96,39 +95,22 @@ export const useEventService = () => {
       for (const eventData of nonRecurringEvents) {
         if (eventData.dateType === 'single' && eventData.date && eventData.date >= startDate && eventData.date <= endDate) {
           preliminaryEvents.push(convertToEvent(eventData));
-        });
-
-      // 2. Range events: startDate範囲クエリで取得（endDateのオーバーラップは後でフィルタ）
-      const allRangeEvents = await eventsService.getListAsync(
-        where('startDate', '<=', endDate)
-      ) as EventData[];
-      
-      // クライアント側でdateType='range'とオーバーラップをフィルタ
-      for (const eventData of allRangeEvents) {
-        if (eventData.dateType === 'range' && eventData.startDate) {
+        } else if (eventData.dateType === 'range' && eventData.startDate) {
           const eventEndDate = eventData.endDate || eventData.startDate;
-          // 範囲が重なっている場合のみ追加
-          if (eventEndDate >= startDate) {
+          if (eventData.startDate <= endDate && eventEndDate >= startDate) {
             preliminaryEvents.push(convertToEvent(eventData));
           }
         }
       }
-
-      // 3. Recurring event instances: date範囲クエリで取得
-      const instances = await instancesService.getListAsync(
-        where('instanceDate', '>=', startDate),
-        where('instanceDate', '<=', endDate)
-      ) as EventInstance[];
       
+      // 2. 繰り返しイベントのインスタンスを取得
+      const instances = await instancesService.getListAsync(where('instanceDate', '>=', startDate), where('instanceDate', '<=', endDate)) as EventInstance[];
       const masterEventIds = [...new Set(instances.map(i => i.masterId))];
       const masterEventsData = new Map<string, EventData>();
+      
+      // 3. インスタンスに対応するマスターイベントの一括取得
       if (masterEventIds.length > 0) {
-        // Use queryByIdsInChunks to avoid IN limit (30 items)
-        const masterEvents = await queryByIdsInChunks<EventData>({
-          collectionRef: 'events',
-          field: '__name__',
-          ids: masterEventIds
-        });
+        const masterEvents = await eventsService.getListAsync(where('__name__', 'in', masterEventIds)) as EventData[];
         masterEvents.forEach(master => masterEventsData.set(master.id!, master));
       }
       
@@ -206,25 +188,14 @@ export const useEventService = () => {
   };
   
   const generateMissingRecurringEvents = async (startDate: string, endDate: string, preliminaryEvents: EventDisplay[]): Promise<void> => {
-    // 1. 日付範囲に関連する繰り返しイベントマスターのみを取得
+    const allRules = await rulesService.getListAsync() as RecurrenceRule[];
+    // const recurringMasterEvents = await eventsService.getListAsync(where('dateType', '==', 'recurring')) as EventData[];
     const recurringMasterEvents = await eventsService.getListAsync(
         where('dateType', '==', 'recurring'),
         // イベント自体の開始日が表示終了日より後のものは除外
         where('startDate', '<=', endDate) 
     ) as EventData[];
-    
-    if (recurringMasterEvents.length === 0) return; // 繰り返しイベントがない場合は早期リターン
-    
-    const masterEventIds = recurringMasterEvents.map(e => e.id!);
     const masterEventsMap = new Map(recurringMasterEvents.map(e => [e.id!, e]));
-    
-    // 2. 該当するマスターイベントのルールのみを取得（queryByIdsInChunks使用）
-    const allRules = await queryByIdsInChunks<RecurrenceRule>({
-      collectionRef: 'recurrence_rules',
-      field: 'masterId',
-      ids: masterEventIds
-    });
-    
     for (const rule of allRules) {
       const masterEvent = masterEventsMap.get(rule.masterId);
       if (!masterEvent || !masterEvent.startDate) continue;
@@ -458,18 +429,11 @@ export const useEventService = () => {
         recurringMasterEvents.forEach(master => masterEventsData.set(master.id!, master));
 
         // 3. 該当マスターイベントのインスタンスを日付範囲で取得
-        // Use queryByIdsInChunks to avoid IN limit (30 items)
-        const instances = await queryByIdsInChunks<EventInstance>({
-          collectionRef: 'event_instances',
-          field: 'masterId',
-          ids: masterEventIds,
-          queryBuilder: (colRef, idsChunk) => query(
-            colRef,
-            where('masterId', 'in', idsChunk),
-            where('instanceDate', '>=', startDate),
-            where('instanceDate', '<=', endDate)
-          )
-        });
+        const instances = await instancesService.getListAsync(
+          where('masterId', 'in', masterEventIds),
+          where('instanceDate', '>=', startDate),
+          where('instanceDate', '<=', endDate)
+        ) as EventInstance[];
 
         for (const instance of instances) {
           if (instance.status === 'active') {
