@@ -707,7 +707,8 @@ const tempSelection = ref<string[]>([])
 
 const participants = ref<MasterItem[]>([])
 const participantsMaster = computed(() => {
-  return [
+  // 1. ユーザーリストと自社リストを結合する
+  const combinedList = [
     ...participants.value,
     ...(ownCompanies.value?.map(company => {
       return {
@@ -719,6 +720,17 @@ const participantsMaster = computed(() => {
       }
     }) ?? [])
   ]
+
+  // 2. 結合したリストに対して重複情報をリアクティブに適用する
+  // (conflicts.value が変更されると、この computed も再計算されます)
+  return combinedList.map(item => {
+    const conflict = conflicts.value.find(c => c.id === item.id && c.type === 'participant')
+    if (conflict) {
+      return { ...item, isConflict: true, conflictInfo: `${conflict.date} ${conflict.startTime}-${conflict.endTime} に「${conflict.eventTitle}」と重複` }
+    } else {
+      return { ...item, isConflict: false, conflictInfo: '' }
+    }
+  })
 })
 const facilitiesMaster = ref<MasterItem[]>([])
 const equipmentMaster = ref<MasterItem[]>([])
@@ -1026,7 +1038,9 @@ watch(() => [formData.date, formData.startTime, formData.endTime, formData.parti
 })
 
 const updateMasterConflicts = () => {
-  const markConflicts = (items: MasterItem[], type: 'participant' | 'facility' | 'equipment') => {
+  // participants.value への代入が不要になったため、
+  // markConflicts の型定義から 'participant' を削除
+  const markConflicts = (items: MasterItem[], type: 'facility' | 'equipment') => {
     return items.map(item => {
       const conflict = conflicts.value.find(c => c.id === item.id && c.type === type)
       if (conflict) {
@@ -1037,7 +1051,9 @@ const updateMasterConflicts = () => {
     })
   }
 
-  participants.value = markConflicts(participantsMaster.value, 'participant')
+  // participants.value = markConflicts(participantsMaster.value, 'participant') // <- 問題の行を削除
+  
+  // 施設と備品はこれまで通り更新
   facilitiesMaster.value = markConflicts(facilitiesMaster.value, 'facility')
   equipmentMaster.value = markConflicts(equipmentMaster.value, 'equipment')
 }
@@ -1153,7 +1169,6 @@ const showEventRelatedParties = async () => {
 
 onMounted(() => {
   setDefaultValues(props.initialData)
-  console.log('own-companies:', ownCompanies.value)
   getUsersAsync().then(users => {
     participants.value = [
       ...(users as any[]).map(user => ({
