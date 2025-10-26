@@ -27,15 +27,24 @@
                         rows="10"
                         required
                     ></v-textarea>
-                    <v-select v-model="form.tags" :items="categories" label="タグ" multiple chips></v-select>
-                    <v-text-field
-                        v-model="form.tags"
-                        label="タグ (カンマ区切り)"
-                    ></v-text-field>
-                    <v-text-field
+                    <v-select
                         v-model="form.category"
+                        :items="categories"
+                        item-title="text"
                         label="カテゴリー"
-                    ></v-text-field>
+                        variant="outlined"
+                        return-object>
+                    </v-select>  
+                    <v-autocomplete
+                        v-model="form.tags"
+                        :items="tags"
+                        item-title="text"
+                        label="タグ"
+                        variant="outlined"
+                        multiple
+                        chips
+                        return-object>
+                    </v-autocomplete>
                     <v-text-field
                         v-model="form.image"
                         label="画像URL"
@@ -66,10 +75,19 @@
 
 <script setup lang="ts">
 import { useWiki } from '~/composables/useWiki'
+import { useMaster } from '~/composables/master/useMaster'
+
+const { addAsync: addCategoryAsync, getListAsync: getCategoriesAsync, deleteAsync: deleteCategoryAsync } = useMaster('categories')
+
+const { addAsync: addTagAsync, getListAsync: getTagsAsync, deleteAsync: deleteTagAsync } = useMaster('tags')
 
 const { getAsync: getWikiArticle, updateAsync: updateWikiArticle } = useWiki()
 
 const user = useState<ExtendedUserProfile>('userProfile')
+
+const tags = ref<Tag[]>([])
+
+const categories = ref<Tag[]>([])
 
 const { params } = useRoute()
 
@@ -77,14 +95,14 @@ const id = computed(() => {
     return params.id as string
 })
 
-const categories = ref<any[]>(['カテゴリ1','カテゴリ2','カテゴリ3'])
+// const categories = ref<any[]>(['カテゴリ1','カテゴリ2','カテゴリ3'])
 
 const form = ref<WikiArticleForm>({
     title: '',
     content: '',
     summary: '',
     tags: [],
-    category: '',
+    category: undefined,
     image: '',
     author: user.value?.displayName || '匿名',
     department: user.value?.department || '未設定',
@@ -127,5 +145,12 @@ onMounted(async () => {
             navigateTo('/wiki')
         }
     }
+
+    getTagsAsync().then(response => {
+        tags.value = response
+    })
+    getCategoriesAsync().then(response => {
+        categories.value = response
+    })
 })
 </script>
