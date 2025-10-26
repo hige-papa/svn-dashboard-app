@@ -6,16 +6,47 @@
             <input type="text" v-model="keyword" :placeholder="props.searchPlaceHolder" id="searchInput">
             <button class="search-btn" @click.stop="handleClickSearch">🔍</button>
         </div>
+        <v-container>
+            <v-row>
+                <v-col>
+                    <v-chip
+                        v-for="(category, index) in categories"
+                        :key="`category-${index}`"
+                        :color="category.isActive ? 'blue' : 'grey'"
+                        class="ma-1"
+                        @click.stop=toggleCategoryActive(category)>
+                        {{ category.text }}
+                    </v-chip>
+                </v-col>
+            </v-row>
+            <v-row>
+                <v-col>
+                    <v-chip
+                        v-for="(tag, index) in tags"
+                        :key="`tag-${index}`"
+                        :color="tag.isActive ? 'blue' : 'grey'"
+                        class="ma-1"
+                        @click.stop=toggleTagActive(tag)>
+                        {{ tag.text }}
+                    </v-chip>
+                </v-col>
+            </v-row>
+        </v-container>
     </section>
 </template>
 
 <script setup lang="ts">
+import { useMaster } from '~/composables/master/useMaster'
+
 interface Props { 
     title: string
     subtitle: string
     searchable: boolean
     searchPlaceHolder: string
 }
+
+const { getListAsync: getCategoriesAsync } = useMaster('categories')
+const { getListAsync: getTagsAsync } = useMaster('tags')
 
 const props = withDefaults(defineProps<Props>(), {
     title: '',
@@ -27,10 +58,32 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits(['onClickSearch'])
 
 const keyword = ref<string>('')
+const categories = ref<any[]>([])
+const tags = ref<any[]>([])
 
 const handleClickSearch = () => {
     emit('onClickSearch', keyword.value)
 }
+
+const toggleCategoryActive = (tag: any) => {
+    const target = categories.value.find(t => t.id === tag.id) as any
+    if (target) target.isActive = !(target.isActive ?? false)
+}
+
+const toggleTagActive = (tag: any) => {
+    const target = tags.value.find(t => t.id === tag.id) as any
+    if (target) target.isActive = !(target.isActive ?? false)
+}
+
+onMounted(() => {
+    getCategoriesAsync().then(response => {
+        categories.value = response
+    })
+    getTagsAsync().then(response => {
+        tags.value = response
+    })
+})
+
 </script>
 
 <style scoped>
