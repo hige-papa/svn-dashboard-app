@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { currentRoute } = useRouter()
+// const { currentRoute } = useRouter()
 </script>
 
 <template>
@@ -7,7 +7,7 @@ const { currentRoute } = useRouter()
         <AppHeader />
         <SideBar />
         <v-main>
-            <div>{{ currentRoute.name }}</div>
+            <!-- <div>{{ currentRoute.name }}</div> -->
             <slot></slot>
         </v-main>
     </v-app>
