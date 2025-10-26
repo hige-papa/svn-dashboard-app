@@ -11,19 +11,9 @@
         {
           "fieldPath": "instanceDate",
           "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "users",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
         },
         {
-          "fieldPath": "displayName",
+          "fieldPath": "__name__",
           "order": "ASCENDING"
         }
       ]
@@ -33,11 +23,15 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "facilityIds",
-          "arrayConfig": "CONTAINS"
+          "fieldPath": "dateType",
+          "order": "ASCENDING"
         },
         {
-          "fieldPath": "dateType",
+          "fieldPath": "startDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
           "order": "ASCENDING"
         }
       ]
@@ -53,6 +47,28 @@
         {
           "fieldPath": "dateType",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "facilityIds",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "dateType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
         }
       ]
     },
@@ -67,19 +83,27 @@
         {
           "fieldPath": "dateType",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
         }
       ]
     },
     {
-      "collectionGroup": "events",
+      "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "dateType",
+          "fieldPath": "status",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "startDate",
+          "fieldPath": "displayName",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
           "order": "ASCENDING"
         }
       ]

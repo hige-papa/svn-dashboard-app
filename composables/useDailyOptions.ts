@@ -1,6 +1,7 @@
 // composables/useDailyOptions.ts
 import { ref, watch, onMounted, type Ref } from 'vue';
 import { useDailyOptionService } from '~/services/dailyOptionService';
+import { getMasterDataCacheAsync, masterDataCache } from '~/composables/useCalendar';
 
 // useCalendarなど、他のComposableから日付やビューのRefを受け取り、同期することを想定
 export const useDailyOptions = (currentDate: Ref<Date | null>, currentView: Ref<string>) => {
@@ -51,12 +52,12 @@ export const useDailyOptions = (currentDate: Ref<Date | null>, currentView: Ref<
     isLoading.value = true;
     try {
       const dateRange = getCurrentDateRange();
-      // サービスを呼び出し、表示範囲内の全ユーザーの日別ステータスを取得
-      const optionsData = await dailyOptionService.getDailyOptionsInRange(
-        dateRange.startDate,
-        dateRange.endDate
-      );
-      dailyOptions.value = optionsData;
+      // Use cache for daily options
+      const result = await getMasterDataCacheAsync('dailyOptions', false, {
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate
+      });
+      dailyOptions.value = result.data;
     } catch (error) {
       console.error('Failed to load daily options data:', error);
       dailyOptions.value = []; // エラー時は空にする
@@ -87,6 +88,17 @@ export const useDailyOptions = (currentDate: Ref<Date | null>, currentView: Ref<
   const setDailyOption = async (optionData: Omit<DailyUserOption, 'id'>) => {
     try {
       await dailyOptionService.setDailyOption(optionData);
+      
+      // Clear dailyOptions cache (all date ranges)
+      const keysToDelete: string[] = [];
+      masterDataCache.value.forEach((_, key) => {
+        if (key.startsWith('dailyOptions:')) {
+          keysToDelete.push(key);
+        }
+      });
+      keysToDelete.forEach(key => masterDataCache.value.delete(key));
+      console.log(`[Cache] Cleared ${keysToDelete.length} dailyOptions cache entries due to update`);
+      
       await loadDailyOptions(); // 変更を即時反映するためにデータをリフレッシュ
     } catch (error) {
       console.error("Failed to set daily option:", error);

@@ -83,17 +83,24 @@
             </div>
 
             <div class="form-group" :class="{ error: errors.time }">
-              <label class="form-label">
-                <i class="mdi mdi-clock-outline icon"></i>
-                時間
-                <span class="required">*</span>
+              <label class="form-label time-label">
+                <div class="time-label-left">
+                  <i class="mdi mdi-clock-outline icon"></i>
+                  時間
+                  <span class="required">*</span>
+                </div>
+                <button type="button" class="btn-allday-small" aria-label="終日" @click="setAlldayTimes($event)">終日</button>
               </label>
               <div class="time-inputs">
-                <input id="startTime" v-model="formData.startTime" type="time" class="form-input"
-                  @blur="validateTimeFields" @input="clearError('time')">
+                <div class="time-from-wrapper">
+                  <input id="startTime" v-model="formData.startTime" type="time" class="form-input"
+                    @blur="validateTimeFields" @input="clearError('time')">
+                </div>
                 <span class="time-separator">〜</span>
-                <input id="endTime" v-model="formData.endTime" type="time" class="form-input" @blur="validateTimeFields"
-                  @input="clearError('time')">
+                <div class="time-to-wrapper">
+                  <input id="endTime" v-model="formData.endTime" type="time" class="form-input" @blur="validateTimeFields"
+                    @input="clearError('time')">
+                </div>
               </div>
               <div v-if="errors.time" class="form-error">{{ errors.time }}</div>
             </div>
@@ -125,17 +132,24 @@
             </div>
 
             <div class="form-group" :class="{ error: errors.time }">
-              <label class="form-label">
-                <i class="mdi mdi-clock-outline icon"></i>
-                時間
-                <span class="required">*</span>
+              <label class="form-label time-label">
+                <div class="time-label-left">
+                  <i class="mdi mdi-clock-outline icon"></i>
+                  時間
+                  <span class="required">*</span>
+                </div>
+                <button type="button" class="btn-allday-small" aria-label="終日" @click="setAlldayTimes($event)">終日</button>
               </label>
               <div class="time-inputs">
-                <input v-model="formData.startTime" type="time" class="form-input" @blur="validateTimeFields"
-                  @input="clearError('time')">
+                <div class="time-from-wrapper">
+                  <input v-model="formData.startTime" type="time" class="form-input" @blur="validateTimeFields"
+                    @input="clearError('time')">
+                </div>
                 <span class="time-separator">〜</span>
-                <input v-model="formData.endTime" type="time" class="form-input" @blur="validateTimeFields"
-                  @input="clearError('time')">
+                <div class="time-to-wrapper">
+                  <input v-model="formData.endTime" type="time" class="form-input" @blur="validateTimeFields"
+                    @input="clearError('time')">
+                </div>
               </div>
               <div v-if="errors.time" class="form-error">{{ errors.time }}</div>
             </div>
@@ -155,17 +169,24 @@
               </div>
 
               <div class="form-group" :class="{ error: errors.time }">
-                <label class="form-label">
-                  <i class="mdi mdi-clock-outline icon"></i>
-                  時間
-                  <span class="required">*</span>
+                <label class="form-label time-label">
+                  <div class="time-label-left">
+                    <i class="mdi mdi-clock-outline icon"></i>
+                    時間
+                    <span class="required">*</span>
+                  </div>
+                  <button type="button" class="btn-allday-small" aria-label="終日" @click="setAlldayTimes($event)">終日</button>
                 </label>
                 <div class="time-inputs">
-                  <input v-model="formData.startTime" type="time" class="form-input" @blur="validateTimeFields"
-                    @input="clearError('time')">
+                  <div class="time-from-wrapper">
+                    <input v-model="formData.startTime" type="time" class="form-input" @blur="validateTimeFields"
+                      @input="clearError('time')">
+                  </div>
                   <span class="time-separator">〜</span>
-                  <input v-model="formData.endTime" type="time" class="form-input" @blur="validateTimeFields"
-                    @input="clearError('time')">
+                  <div class="time-to-wrapper">
+                    <input v-model="formData.endTime" type="time" class="form-input" @blur="validateTimeFields"
+                      @input="clearError('time')">
+                  </div>
                 </div>
                 <div v-if="errors.time" class="form-error">{{ errors.time }}</div>
               </div>
@@ -583,6 +604,7 @@ import { useEventService } from '~/services/eventService'
 import { useConstants } from '~/composables/common/useConstants'
 import { useMasterData } from '~/composables/useMasterData'
 import { useDisplay } from 'vuetify'
+import GroupHorizontalTimeline from '~/components/Calendar/DailyView/GroupHorizontalTimeline.vue'
 
 interface MasterItem {
   id: string;
@@ -883,6 +905,21 @@ const toggleItem = (id: string) => {
 const removeParticipant = (id: string) => { const i = formData.participantIds.indexOf(id); if (i > -1) { formData.participantIds.splice(i, 1); } }
 const removeFacility = (id: string) => { const i = formData.facilityIds.indexOf(id); if (i > -1) { formData.facilityIds.splice(i, 1); } }
 const removeEquipment = (id: string) => { const i = formData.equipmentIds.indexOf(id); if (i > -1) { formData.equipmentIds.splice(i, 1); } }
+
+// Set start/end times to 09:00 - 18:00 (visual-only, client-side)
+const setAlldayTimes = (e?: Event) => {
+  formData.startTime = '09:00'
+  formData.endTime = '18:00'
+  // clear any time-related validation error
+  clearError('time')
+  // remove focus from the clicked button so UI doesn't keep focus styles
+  try {
+    const target = e?.currentTarget as HTMLElement | undefined
+    target?.blur()
+  } catch (err) {
+    // noop
+  }
+}
 
 const getModalIcon = () => { /* ... */ }
 const getModalTitle = () => { /* ... */ }
@@ -1238,7 +1275,7 @@ onMounted(() => {
 }
 
 .header {
-  background: linear-gradient(135deg, #4361ee, #7209b7);
+  background: linear-gradient(135deg, var(--brand-color-1), var(--brand-color-2), var(--brand-color-3));
   /* --primary-color, --accent-color */
   color: white;
   padding: 32px 40px;
@@ -2211,6 +2248,78 @@ onMounted(() => {
   background-color: #f8f9fa;
   /* --background-light */
 }
+
+/* time input - from/to wrappers and allday button (visual only) */
+.time-inputs {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr; /* start / separator / end */
+  gap: 8px;
+  align-items: center;
+}
+
+.time-from-wrapper,
+.time-to-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ensure inputs take full available width inside wrappers */
+.time-inputs .form-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.btn-allday {
+  background-color: #f1f5f9; /* light gray */
+  border: 1px solid #d1d5db;
+  color: #374151;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: default; /* visual only */
+}
+
+.btn-allday:hover {
+  background-color: #e2e8f0;
+}
+
+/* small allday button placed next to the time label */
+.time-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.time-label-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-allday-small {
+  appearance: none;
+  background-color: transparent;
+  color: #000000;
+  /* --primary-color */
+  border: 2px solid #e2e8f0;
+  /* --primary-color */
+  padding: 0px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  /* --transition */
+}
+
+/* hover style similar to btn-select-master */
+.btn-allday-small:hover {
+  background-color: #4361ee;
+  /* --primary-color */
+  color: white;
+}
+
 
 .btn-add-team {
   background-color: #eef2ff;
