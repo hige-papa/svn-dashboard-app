@@ -305,6 +305,7 @@ type Props = {
   weekDays: Date[];
   events: EventDisplay[];
   dailyOptions: DailyUserOption[];
+  holidays: Holiday[];
   // 関数型プロップ: 親から渡される日次スケジュール取得関数
   getUserSchedulesForDay?: (userId: string, date: Date | null) => EventDisplay[];
 };
@@ -330,8 +331,13 @@ const {
 const {
   getDayOfWeek,
   formatShortDate,
-  getHolidayName
+  formatDateForDb,
 } = useCalendar();
+
+// props.holidays を使用した getHolidayName の自実装
+const getHolidayName = (date: Date): string => {
+  return props.holidays.find(h => h.date === formatDateForDb(date))?.name || '';
+};
 
 const dateString = (date: Date) => {
   const year = date.getFullYear();
@@ -637,7 +643,7 @@ const handleShowProfiler = () => {
 }
 
 .user-extension {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-secondary);
   text-align: center;
   margin-top: 2px;
@@ -878,7 +884,7 @@ const handleShowProfiler = () => {
   }
 
   .user-extension {
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-secondary);
     text-align: center;
     margin-top: 2px;
