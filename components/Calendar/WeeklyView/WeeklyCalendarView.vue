@@ -643,7 +643,7 @@ const handleShowProfiler = () => {
 }
 
 .user-extension {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-secondary);
   text-align: center;
   margin-top: 2px;
@@ -884,7 +884,7 @@ const handleShowProfiler = () => {
   }
 
   .user-extension {
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-secondary);
     text-align: center;
     margin-top: 2px;
