@@ -63,7 +63,7 @@ const storage = admin.storage();
 
 // --- 定数 ---
 const TIME_ZONE = 'Asia/Tokyo'; // 処理を実行するタイムゾーン
-const BUCKET_NAME = process.env.GCLOUD_STORAGE_BUCKET || `${process.env.GCP_PROJECT}.appspot.com`;
+// const BUCKET_NAME = process.env.GCLOUD_STORAGE_BUCKET || `${process.env.GCP_PROJECT}.appspot.com`;
 const CACHE_FOLDER = 'calendar-cache';
 
 /**
@@ -114,24 +114,27 @@ const generateCacheData = async (startDate: string, endDate: string) => {
 
     const events: EventDisplay[] = [];
     snapshot.docs.forEach(doc => {
-        const data = doc.data() as EventData;
+        const data = doc.data() as EventDisplay;
+
+        // そのまま追加する
+        events.push(data as EventDisplay);
         
-        // クライアントで必要な EventDisplay 形式に変換
-        const eventDisplay: Partial<EventDisplay> = {
-            id: doc.id,
-            title: data.title,
-            date: data.date!,
-            startTime: data.startTime,
-            endTime: data.endTime,
-            priority: data.priority,
-            participantIds: data.participantIds,
-            // ... その他の必要な EventDisplay フィールド
-            eventTypeName: data.eventTypeName,
-            eventTypeColor: data.eventTypeColor,
-            private: data.private,
-            conflicted: false, // 衝突チェックはクライアント側または参照時に実施
-        };
-        events.push(eventDisplay as EventDisplay);
+        // // クライアントで必要な EventDisplay 形式に変換
+        // const eventDisplay: Partial<EventDisplay> = {
+        //     id: doc.id,
+        //     title: data.title,
+        //     date: data.date!,
+        //     startTime: data.startTime,
+        //     endTime: data.endTime,
+        //     priority: data.priority,
+        //     participantIds: data.participantIds,
+        //     // ... その他の必要な EventDisplay フィールド
+        //     eventTypeName: data.eventTypeName,
+        //     eventTypeColor: data.eventTypeColor,
+        //     private: data.private,
+        //     conflicted: false, // 衝突チェックはクライアント側または参照時に実施
+        // };
+        // events.push(eventDisplay as EventDisplay);
     });
 
     // キャッシュデータ構造を定義 (週次ビューに必要な情報をここに含める)
@@ -151,24 +154,78 @@ const generateCacheData = async (startDate: string, endDate: string) => {
  * 生成したデータをCloud StorageにJSONファイルとして書き込む
  */
 const uploadCacheFile = async (cacheKey: string, data: any): Promise<string> => {
+    // BUCKET_NAME の定義を使用せず、admin.storage().bucket() を使用
+    // これにより、デフォルトのStorageバケット (tascal-app-a344b.appspot.com) を安全に参照できます
+    const bucket = storage.bucket(); 
+    
     const filePath = `${CACHE_FOLDER}/${cacheKey}-cache.json`;
-    const file = storage.bucket(BUCKET_NAME).file(filePath);
+    const file = bucket.file(filePath); // <-- 修正箇所
 
-    // JSONデータを文字列化
     const jsonString = JSON.stringify(data, null, 2);
     
     await file.save(jsonString, {
         contentType: 'application/json',
-        // キャッシュ制御: CDNで1時間キャッシュし、クライアント側では再検証を促す
         metadata: {
             cacheControl: 'public, max-age=3600, must-revalidate' 
         }
     });
-
-    functions.logger.info(`Cache file uploaded successfully to gs://${BUCKET_NAME}/${filePath}`);
+    functions.logger.info(`Cache file uploaded successfully to gs://${bucket.name}/${filePath}`); // <-- ログ出力も修正
     return filePath;
 }
 
+// --- ★★★ 新規追加: 初期移行用バッチ Functions ★★★
+/**
+ * 既存の全イベントを走査し、週ごとのキャッシュファイルを一括で生成する
+ * (HTTPトリガーとして、運用開始時に一度だけ手動で実行することを想定)
+ */
+export const initialCacheGeneration = functions.region('asia-northeast1')
+    .runWith({ timeoutSeconds: 300, memory: '1GB' }) // 大量データ処理のため設定を増強
+    .https.onRequest(async (req, res) => {
+        // 🚨 運用上のセキュリティ確保:
+        // 実際の運用では、認証チェックやシークレットキーの検証を追加して、
+        // 開発者または承認されたユーザーのみが実行できるようにしてください。
+        
+        functions.logger.info("Starting initial cache generation for all existing events.");
+
+        try {
+            // 1. 全イベントから、データが存在する全ての週キーを収集する
+            const allEventsSnapshot = await db.collection('events').select('date').get(); // dateフィールドのみを取得
+            const cacheKeys = new Set<string>();
+
+            allEventsSnapshot.docs.forEach(doc => {
+                const data = doc.data() as Partial<EventData>;
+                if (data.date) {
+                    // イベントの開始日をキーとして使用
+                    cacheKeys.add(getCacheKeyForDate(data.date));
+                }
+            });
+            const keysArray = Array.from(cacheKeys);
+            functions.logger.info(`Found ${keysArray.length} distinct weeks to process.`);
+            
+            // 2. 収集した全週キーに対してキャッシュを生成・アップロード (並列処理)
+            const promises = keysArray.map(async (key) => {
+                const { startDate, endDate } = getDateRangeForCacheKey(key);
+                const cacheData = await generateCacheData(startDate, endDate);
+                await uploadCacheFile(key, cacheData);
+                return key;
+            });
+
+            const completedKeys = await Promise.all(promises);
+
+            res.status(200).send({
+                status: "SUCCESS",
+                message: `${completedKeys.length} weekly cache files generated successfully for existing data.`,
+                weeksGenerated: completedKeys,
+            });
+        } catch (error) {
+            functions.logger.error("Initial cache generation failed:", error);
+            res.status(500).send({
+                status: "ERROR",
+                message: "Initial cache generation failed.",
+                error: error instanceof Error ? error.message : "An unknown error occurred.",
+            });
+        }
+    });
 
 // --- Firestore トリガー ---
 
@@ -176,7 +233,7 @@ const uploadCacheFile = async (cacheKey: string, data: any): Promise<string> => 
  * イベントの作成、更新、削除時にキャッシュファイルを再生成する
  * トリガーは一つの関数にまとめることで、イベントがどの操作で変更されても対応できる
  */
-export const onEventChangeRecalculateCache = functions
+export const onEventChangeRecalculateCache = functions.region('asia-northeast1')
     .firestore.document('events/{eventId}')
     .onWrite(async (change, context) => {
         const beforeData = change.before.data() as EventData | undefined;

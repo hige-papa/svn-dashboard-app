@@ -614,6 +614,14 @@ interface TeamItem {
   memberCount: number;
 }
 
+// ⭐︎ useCalendarから必要なユーティリティ関数をインポート
+const { 
+  timeToPixels, 
+  timeSlots, 
+  formatDateForDb, 
+  formatDate, // useCalendar.tsで復活
+} = useCalendar();
+
 const { eventTypeDetails } = useConstants()
 
 const { data: ownCompanies } = useMasterData<OwnCompany>('own-company')
@@ -627,9 +635,15 @@ const { getListAsync: getUsersAsync } = useMaster('users')
 const { getListAsync: getFacilitiesAsync } = useFacility()
 const { getListAsync: getEquipmentsAsync } = useEquipment()
 const { getListAsync: getTeamsAsync } = useTeam()
-const { timeToPixels, timeSlots, formatDateForDb } = useCalendar();
-const { getEventsByParticipantInRange, getEventsByEquipmentInRange, getEventsByFacilityInRange, createEvent } = useEventService();
+// ⭐︎ useEventServiceから必要な関数をインポート
+const { 
+  getEventsByParticipantInRange, 
+  getEventsByEquipmentInRange, 
+  getEventsByFacilityInRange, 
+  createEvent 
+} = useEventService();
 
+// UTCで日付文字列をDateオブジェクトに変換 (useCalendarにもあるが、ここでは依存しないように再定義)
 const parseDateAsLocal = (dateStr: string): Date => new Date(`${dateStr}T00:00:00`);
 
 interface Props {
@@ -821,7 +835,7 @@ const targetDate = computed(() => {
     case 'range': dateStr = formData.startDate; break;
     case 'recurring': dateStr = formData.recurringStartDate; break;
   }
-  return dateStr ? new Date(dateStr) : new Date();
+  return dateStr ? parseDateAsLocal(dateStr) : new Date();
 })
 
 const openParticipantModal = () => {
@@ -911,7 +925,6 @@ const getSearchPlaceholder = () => {
 }
 
 const checkConflicts = async () => {
-  // 単発イベント以外、または時間が未設定の場合はスキップ
   if (isLoading.value || formData.dateType !== 'single' || !formData.date || !formData.startTime || !formData.endTime) {
     conflicts.value = []
     updateMasterConflicts()
@@ -924,6 +937,8 @@ const checkConflicts = async () => {
 
   try {
     isLoading.value = true
+    
+    // キャッシュ方式でも、リソース別取得関数は必要
     const results = await Promise.all([
       ...formData.participantIds.map(id => getEventsByParticipantInRange(id, checkDate, checkDate)),
       ...formData.facilityIds.map(id => getEventsByFacilityInRange(id, checkDate, checkDate)),
@@ -934,7 +949,6 @@ const checkConflicts = async () => {
 
     const uniqueEventsMap = new Map()
     allEvents.forEach(event => {
-      // 登録/更新対象のイベント自身との重複を避ける (initialData.id を持つイベントは無視)
       if (event && event.id && event.id !== props.initialData?.id) {
         uniqueEventsMap.set(event.id, event)
       }
@@ -950,10 +964,8 @@ const checkConflicts = async () => {
       const eventStart = new Date(`${event.date}T${event.startTime}:00`)
       const eventEnd = new Date(`${event.date}T${event.endTime}:00`)
 
-      // 時間の重複があるかチェック (排他的ではないチェック)
       if ((startDateTime < eventEnd) && (endDateTime > eventStart)) {
         
-        // 参加者のチェック
         const conflictingPids = event.participantIds?.filter(pid => formData.participantIds.includes(pid)) || []
         conflictingPids.forEach(pid => {
           const user = participantsMaster.value.find(u => u.id === pid)
@@ -968,7 +980,6 @@ const checkConflicts = async () => {
           })
         })
 
-        // 施設のチェック
         const conflictingFids = event.facilityIds?.filter(fid => formData.facilityIds.includes(fid)) || []
         conflictingFids.forEach(fid => {
           const facility = facilitiesMaster.value.find(f => f.id === fid)
@@ -983,7 +994,6 @@ const checkConflicts = async () => {
           })
         })
 
-        // 備品のチェック
         const conflictingEids = event.equipmentIds?.filter(eid => formData.equipmentIds.includes(eid)) || []
         conflictingEids.forEach(eid => {
           const equipment = equipmentMaster.value.find(e => e.id === eid)
@@ -1009,7 +1019,6 @@ const checkConflicts = async () => {
   }
 }
 
-// フォームの変更をキャッチして重複チェックを実行
 watch(() => [formData.dateType, formData.date, formData.startTime, formData.endTime, formData.participantIds, formData.facilityIds, formData.equipmentIds], () => {
   if (formData.dateType === 'single') {
     checkConflicts()
@@ -1052,9 +1061,9 @@ const getConflictTypeName = (type: string) => {
     default: return '不明';
   }
 }
-const formatDate = (date: string) => new Date(date).toLocaleDateString('ja-JP')
+// ⭐︎ 修正点: useCalendarから復活したformatDateを使用
+// const formatDate = (date: string) => formatDate(parseDateAsLocal(date)); 
 
-// --- フォームバリデーション (既存ロジックを維持) ---
 const validateField = (fieldName: keyof any) => { 
   if (fieldName === 'eventTitle' && !formData.title) errors.eventTitle = '予定タイトルは必須です';
   if (fieldName === 'eventDate' && formData.dateType === 'single' && !formData.date) errors.eventDate = '日付は必須です';
@@ -1082,8 +1091,6 @@ const validateForm = (): boolean => {
   validateTimeFields()
   return Object.keys(errors).length === 0
 }
-// --- フォームバリデーション終了 ---
-
 const clearError = (fieldName: keyof any) => { if (errors[fieldName]) delete errors[fieldName] }
 
 const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
@@ -1096,7 +1103,6 @@ const emit = defineEmits<{ (e: 'submit', data: any): void }>()
 const handleSubmit = async () => {
   if (!validateForm()) return showNotification('入力内容を確認してください', 'error')
   
-  // 単発イベントの場合のみ衝突確認が必要
   if (formData.dateType === 'single' && conflicts.value.length > 0 && !confirm('重複があります。保存しますか？')) return
 
   isLoading.value = true
@@ -1183,7 +1189,6 @@ const showEventRelatedParties = async () => {
       return;
   }
   
-  // targetDate (computed) は参照日付を返すが、GroupHorizontalTimeline は Date オブジェクトを期待するため変換
   const displayDate = parseDateAsLocal(targetDateString);
 
   let result: EventDisplay[] = []

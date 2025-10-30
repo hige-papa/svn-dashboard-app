@@ -192,8 +192,8 @@ import { useTransaction } from '~/composables/transaction/useTransaction'
 import type { User } from 'firebase/auth';
 import { padStart } from 'vuetify/lib/util/helpers.mjs';
 import { useDailyOptions } from '~/composables/useDailyOptions'
-import { useFacility } from '~/composables/useFacility'
-import { useEquipment } from '~/composables/useEquipment'
+// import { useFacility } from '~/composables/useFacility'
+// import { useEquipment } from '~/composables/useEquipment'
 import { useMasterData } from '~/composables/useMasterData';
 
 // head設定
@@ -205,8 +205,8 @@ const user = useState<ExtendedUserProfile>('userProfile')
 
 // getAsyncを削除し、ローカル検索に置き換え
 const { deleteAsync } = useTransaction('events') 
-const { getListAsync: getFacilitiesAsync } = useFacility()
-const { getListAsync: getEquipmentsAsync } = useEquipment()
+// const { getListAsync: getFacilitiesAsync } = useFacility()
+// const { getListAsync: getEquipmentsAsync } = useEquipment()
 
 const { mobile } = useDisplay()
 
@@ -480,24 +480,24 @@ onMounted(async () => {
     console.log('[Calendar] Restored calendar position:', formatDateForDb(savedPosition));
   }
 
-  getEquipmentsAsync().then(equipments => {
-    equipmentMaster.value = (equipments as any[]).map(equipment => ({
-      id: equipment.id,
-      code: equipment.code,
-      name: equipment.name,
-      capacity: equipment.capacity,
-      avatar: equipment.imageUrl,
-    }))
-  })
-  getFacilitiesAsync().then(facilities => {
-    facilitiesMaster.value = (facilities as any[]).map(facility => ({
-      id: facility.id,
-      code: facility.code,
-      name: facility.name,
-      capacity: facility.capacity,
-      avatar: facility.imageUrl,
-    }))
-  })
+  // getEquipmentsAsync().then(equipments => {
+  //   equipmentMaster.value = (equipments as any[]).map(equipment => ({
+  //     id: equipment.id,
+  //     code: equipment.code,
+  //     name: equipment.name,
+  //     capacity: equipment.capacity,
+  //     avatar: equipment.imageUrl,
+  //   }))
+  // })
+  // getFacilitiesAsync().then(facilities => {
+  //   facilitiesMaster.value = (facilities as any[]).map(facility => ({
+  //     id: facility.id,
+  //     code: facility.code,
+  //     name: facility.name,
+  //     capacity: facility.capacity,
+  //     avatar: facility.imageUrl,
+  //   }))
+  // })
 
 // ★★★ 修正: useCalendar.tsのonMountedがなくなったため、ここで一度だけloadDataを実行 ★★★
   await loadData();
