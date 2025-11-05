@@ -102,12 +102,12 @@
                 </template>
               </div>
 
-              <div 
+              <!-- <div 
                 v-if="cell.allEvents.length > cell.visibleEvents.length" 
                 class="more-events"
               >
                 +{{ cell.allEvents.length - cell.visibleEvents.length }}件
-              </div>
+              </div> -->
             </td>
           </tr>
         </template>
@@ -337,7 +337,7 @@ const getRowData = (resource: any, type: RowType) => {
     days: props.weekDays.map(date => {
       const dateStr = dateToDateString(date);
       const allEvents = getUserEventsForDayOptimized(type, resourceId, date);
-      const visibleEvents = allEvents.slice(0, 2);
+      const visibleEvents = allEvents //allEvents.slice(0, 2);
 
       // ユーザー固有の情報
       let workStyleDetails = null;

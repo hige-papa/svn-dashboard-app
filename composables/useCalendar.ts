@@ -4,28 +4,7 @@ import { useState } from 'nuxt/app';
 import { useEventService } from '~/services/eventService';
 import { useMaster } from '~/composables/master/useMaster';
 import { printFirestoreDebugSummary } from '~/composables/firebase/useFirestore';
-import moment from 'moment-timezone'; // 日付処理ライブラリの使用を想定
-
-// --- 共通型定義 (EventForm.d.tsから参照) ---
-// useCalendarが依存するインターフェースをローカルに定義またはインポート
-// interface ExtendedUserProfile {
-//     uid: string;
-//     displayName: string;
-//     email: string;
-//     photoURL?: string;
-//     department?: string;
-//     position?: string;
-// }
-
-// interface UserWithVisibility extends ExtendedUserProfile {
-//     visible: boolean;
-// }
-
-// interface Holiday {
-//     id: string;
-//     date: string; // YYYY-MM-DD
-//     name: string;
-// }
+import moment from 'moment-timezone';
 
 type CalendarView = 'daily' | 'weekly' | 'monthly';
 
@@ -39,58 +18,26 @@ interface CalendarDay {
     currentMonth: boolean;
 }
 
-// interface EventDisplay {
-//     id: string; 
-//     title: string;
-//     date: string; // YYYY-MM-DD
-//     endDate?: string;
-//     startTime: string;
-//     endTime: string;
-//     priority: 'low' | 'medium' | 'high';
-//     participantIds: string[];
-//     participants: string[];
-//     facilityIds?: string[];
-//     facilities?: string[];
-//     equipmentIds?: string[];
-//     equipments?: string[];
-    
-//     eventTypeName: string;
-//     eventTypeColor: string;
-//     private: boolean;
-
-//     segmentId?: string;
-//     isRecurring?: boolean;
-//     masterId?: string;
-//     isException?: boolean;
-//     isMultiDay?: boolean;
-//     isFirstDay?: boolean;
-//     isLastDay?: boolean;
-//     conflicted: boolean; 
-//     description?: string;
-//     location?: string;
-// }
-
 // --- Cache for master data (既存ロジックを維持) ---
 type CacheEntry = {
-  data: any;
-  timestamp: number;
-  promise?: Promise<any>;
+    data: any;
+    timestamp: number;
+    promise?: Promise<any>;
 };
 
 export const masterDataCache = useState('masterDataCache', () => new Map<string, CacheEntry>());
-const CACHE_DURATION_MS = 10 * 60 * 60 * 1000; // 10 hours for users/holidays
-const DAILY_OPTIONS_CACHE_DURATION_MS = 60 * 60 * 1000; // 60 minutes for dailyOptions
+const CACHE_DURATION_MS = 10 * 60 * 60 * 1000;
+const DAILY_OPTIONS_CACHE_DURATION_MS = 60 * 60 * 1000;
 
-type MasterDataKey = 'users' | 'holidays' | 'dailyOptions' | 'facilities' | 'equipments'; // 👈 追加
+type MasterDataKey = 'users' | 'holidays' | 'dailyOptions' | 'facilities' | 'equipments';
 
 /**
  * Master data cache API (既存ロジックを流用)
- * ※ useMaster.ts/useFirestore.ts に依存
  */
 export const getMasterDataCacheAsync = async (
-  key: MasterDataKey, // 👈 変更
-  forceRefresh = false,
-  options?: { startDate?: string; endDate?: string }
+    key: MasterDataKey,
+    forceRefresh = false,
+    options?: { startDate?: string; endDate?: string }
 ): Promise<{ data: any; fromCache: boolean; timestamp: number }> => {
     const now = Date.now();
     const cacheKey = key;
@@ -104,30 +51,26 @@ export const getMasterDataCacheAsync = async (
             if (updatedCache) {
                 return { data: updatedCache.data, fromCache: true, timestamp: updatedCache.timestamp };
             }
-            // Fallback to the previous cache entry if the updated one is missing
             return { data: cache.data, fromCache: true, timestamp: cache.timestamp };
         }
         return { data: cache.data, fromCache: true, timestamp: cache.timestamp };
     }
 
-    const masterService = useMaster(key); // ★ key をコレクション名として使用
-    
-    // DailyOptions の場合は、日付範囲フィルタリングが必要な可能性があるが、
-    // useMaster.ts の getListAsync は QueryConstraint を受け取るため、ここでは汎用的に呼び出し
-    const fetchPromise = masterService.getListAsync(); 
-    
+    const masterService = useMaster(key);
+    const fetchPromise = masterService.getListAsync();
+
     masterDataCache.value.set(cacheKey, { data: [], timestamp: now, promise: fetchPromise });
 
     try {
         const data = await fetchPromise;
-        
+
         const newCacheEntry = { data: data, timestamp: Date.now() };
         masterDataCache.value.set(cacheKey, newCacheEntry);
-        
+
         return { data: data, fromCache: false, timestamp: newCacheEntry.timestamp };
     } catch (error) {
         console.error(`Failed to fetch master data for key: ${key}`, error);
-        masterDataCache.value.delete(cacheKey); 
+        masterDataCache.value.delete(cacheKey);
         throw error;
     }
 };
@@ -137,18 +80,17 @@ export const getMasterDataCache = () => masterDataCache;
 
 // --- メインコンポーザブル ---
 export const useCalendar = () => {
-    const currentUserId = ref('dummy-user-id-001'); // 暫定的なユーザーID (ログインユーザーIDに置き換える)
+    const currentUserId = ref('dummy-user-id-001');
 
     const eventService = useEventService();
-    // useMaster は getMasterDataCacheAsync 内で利用されるため、ここでは省略
-    
+
     // --- リアクティブな状態 ---
     const currentDate = ref(new Date());
     const selectedDate = ref(new Date());
     const currentView = ref<CalendarView>('monthly');
     const users = ref<UserWithVisibility[]>([]);
-    const facilities = ref<MasterItem[]>([]); // 👈 追加: 施設マスター
-    const equipments = ref<MasterItem[]>([]); // 👈 追加: 備品マスター
+    const facilities = ref<MasterItem[]>([]);
+    const equipments = ref<MasterItem[]>([]);
     const events = ref<EventDisplay[]>([]);
     const holidays = ref<Holiday[]>([]);
     const isLoading = ref(false);
@@ -157,29 +99,27 @@ export const useCalendar = () => {
     const TIME_ZONE = 'Asia/Tokyo';
 
     const formatDate = (date: Date | null): string => {
-      if (!date) return '';
-      return moment(date).tz(TIME_ZONE).format('YYYY/MM/DD');
+        if (!date) return '';
+        return moment(date).tz(TIME_ZONE).format('YYYY/MM/DD');
     };
-    
+
     const formatDatetime = (date: Date | null): string => {
         if (!date) return '';
         return moment(date).tz(TIME_ZONE).format('YYYY/MM/DD HH:mm:ss');
     };
-    
+
     const formatShortDate = (date: Date | null): string => {
         if (!date) return '';
         return moment(date).tz(TIME_ZONE).format('MM/DD');
     };
 
     const formatDateForDb = (date: Date): string => {
-      if (!date) return '';
-      // Firestoreの date フィールドは YYYY-MM-DD 形式
-      return moment(date).tz(TIME_ZONE).format('YYYY-MM-DD');
+        if (!date) return '';
+        return moment(date).tz(TIME_ZONE).format('YYYY-MM-DD');
     };
 
     const getDayOfWeek = (date: Date): string => ['日', '月', '火', '水', '木', '金', '土'][moment(date).tz(TIME_ZONE).day()];
-    
-    // timeToPixels: 9:00を0とする
+
     const timeToPixels = (timeStr: string): number => {
         const [hours, minutes] = timeStr.split(':').map(Number);
         return ((hours - 9) * 60 + minutes) * (32 / 30);
@@ -187,45 +127,168 @@ export const useCalendar = () => {
 
     const timeToPixelsForHorizontal = (timeStr: string): number => {
         const [hours, minutes] = timeStr.split(':').map(Number);
-        // 30分あたりの幅を96pxとして計算
         return ((hours - 9) * 60 + minutes) * (96 / 30);
     };
-    
+
     const getCacheKeyForDate = (dateStr: string): string => {
-        // useEventService に依存するが、ここではユーティリティとして提供
         const date = moment.tz(dateStr, TIME_ZONE);
         const year = date.isoWeekYear();
         const week = date.isoWeek().toString().padStart(2, '0');
         return `${year}-${week}`;
     };
 
+    const convertFormDataToEventDisplay = (id: string, formData: EventFormData): EventDisplay => {
+        // EventFormData には、登録時に EventService 側で設定された masterId などは含まれていないため、
+        // 単一イベントの登録完了直後の画面更新に特化して、最低限の情報を変換します。
+        // 期間/繰り返しイベントは実体化されるため、この変換は単一イベントにのみ適用することが最も安全です。
+
+        const dateStr = formData.dateType === 'single' ? formData.date! : formData.startDate!
+        const endDateStr = formData.dateType === 'single' ? formData.date : formData.endDate;
+
+        return {
+            id: id,
+            title: formData.title,
+            date: dateStr,
+            endDate: endDateStr,
+            startTime: formData.startTime || '09:00', // デフォルト値を想定
+            endTime: formData.endTime || '18:00',     // デフォルト値を想定
+            location: formData.location,
+            description: formData.description,
+            priority: formData.priority,
+            participantIds: formData.participantIds || [],
+            participants: formData.participants,
+            facilityIds: formData.facilityIds || [],
+            facilities: formData.facilities,
+            equipmentIds: formData.equipmentIds || [],
+            equipments: formData.equipments,
+            isRecurring: false,
+            masterId: undefined, // 直接登録の場合 masterId は設定されない
+            isException: false,
+            eventType: formData.eventType as any,
+            eventTypeName: formData.eventTypeName,
+            eventTypeColor: formData.eventTypeColor,
+            private: formData.private,
+            conflicted: false,
+        } as EventDisplay;
+    };
+
+    /**
+     * イベント登録を実行し、成功した場合にメモリ上のイベントリストを更新する
+     * @param formData イベントフォームデータ
+     * @returns 登録されたイベントIDの配列
+     */
+    const createEventAndRefresh = async (formData: EventFormData): Promise<string[]> => {
+        // 1. Firestoreにイベントを登録し、IDを取得
+        //    注: EventServiceは期間/繰り返しイベントを実体化し、複数のIDを返します
+        const newIds = await eventService.createEvent(formData);
+
+        // 2. メモリ上の events.value を直接更新
+        if (formData.dateType === 'single' && newIds.length === 1) {
+            // 単一イベントの場合のみ、即座にメモリに追加
+            const newEvent = convertFormDataToEventDisplay(newIds[0], formData);
+
+            // プライベートイベントのマスキング処理を実行
+            const maskedEvent = filterPrivateEvents([newEvent], currentUserId.value)[0];
+
+            events.value.push(maskedEvent);
+
+            // 3. ソートして表示を更新
+            events.value.sort((a, b) =>
+                a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)
+            );
+        }
+
+        // 4. (非同期で) キャッシュの更新を待つ
+        //    ⇒ 期間・繰り返しイベントはここで refreshEvents を呼んでも、キャッシュが未更新のため表示されない。
+        //       そのため、更新は強制的に行わず、キャッシュ更新後に自動的に反映されるのを待つ。
+        //       今回は単一イベントの即時反映のみに絞る。
+
+        return newIds;
+    };
+
+    /**
+     * イベント更新を実行し、成功した場合にメモリ上のイベントリストを更新する
+     * @param initialData 更新前のイベントデータ (idを含む)
+     * @param formData 更新するイベントフォームデータ
+     * @returns 更新されたイベントIDの配列
+     */
+    const updateEventAndRefresh = async (initialData: EventData, formData: EventFormData): Promise<string[]> => {
+        if (!initialData.id || initialData.dateType !== 'single' || formData.dateType !== 'single') {
+            throw new Error('メモリ上の即時更新は単一イベントでのみサポートされています。');
+        }
+
+        // 1. Firestoreにイベントを更新
+        const updatedIds = await eventService.updateEvent(initialData, formData);
+
+        // 2. メモリ上の events.value を直接更新
+        if (updatedIds.length === 1 && updatedIds[0] === initialData.id) {
+            const updatedEvent = convertFormDataToEventDisplay(initialData.id, formData);
+
+            // プライベートイベントのマスキング処理を実行
+            const maskedEvent = filterPrivateEvents([updatedEvent], currentUserId.value)[0];
+
+            const index = events.value.findIndex(e => e.id === initialData.id);
+            if (index !== -1) {
+                // 既存のイベントを新しいデータで置き換え
+                events.value[index] = maskedEvent;
+            } else {
+                // IDが見つからない場合は追加 (日付が変わった場合などに備えて)
+                events.value.push(maskedEvent);
+            }
+
+            // 3. ソートして表示を更新
+            events.value.sort((a, b) =>
+                a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)
+            );
+        }
+
+        return updatedIds;
+    };
+
+    /**
+     * イベント削除を実行し、成功した場合にメモリ上のイベントリストを更新する
+     * @param eventId 削除するイベントID
+     */
+    const deleteEventAndRefresh = async (eventId: string): Promise<void> => {
+        if (!eventId) return;
+
+        // 1. Firestoreからイベントを削除
+        await eventService.deleteEvent(eventId);
+
+        // 2. メモリ上の events.value から該当IDのイベントを削除 (リアクティビティで画面更新)
+        events.value = events.value.filter(e => e.id !== eventId);
+
+        // 3. (非同期で) キャッシュの更新を待つ
+        //    ⇒ refreshEvents の強制呼び出しは行わない
+    };
+
     // --- Date Range Calculation (既存ロジックを維持) ---
     const getCurrentDateRange = (): DateRange => {
-      const d = new Date(currentDate.value);
-      let startDate: Date, endDate: Date;
+        const d = new Date(currentDate.value);
+        let startDate: Date, endDate: Date;
 
-      if (currentView.value === 'monthly') {
-          const firstDayOfMonth = new Date(d.getFullYear(), d.getMonth(), 1);
-          const startDayIndex = firstDayOfMonth.getDay(); 
-          
-          startDate = new Date(firstDayOfMonth);
-          startDate.setDate(firstDayOfMonth.getDate() - startDayIndex); 
+        if (currentView.value === 'monthly') {
+            const firstDayOfMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+            const startDayIndex = firstDayOfMonth.getDay();
 
-          endDate = new Date(startDate);
-          endDate.setDate(endDate.getDate() + 41);
-      } else if (currentView.value === 'weekly') {
-          const dayOfWeek = d.getDay();
-          startDate = new Date(d);
-          startDate.setDate(d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
-          endDate = new Date(startDate);
-          endDate.setDate(startDate.getDate() + 6);
-      } else { // daily
-          startDate = d;
-          endDate = d;
-      }
-      return { startDate: formatDateForDb(startDate), endDate: formatDateForDb(endDate) };
+            startDate = new Date(firstDayOfMonth);
+            startDate.setDate(firstDayOfMonth.getDate() - startDayIndex);
+
+            endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + 41);
+        } else if (currentView.value === 'weekly') {
+            const dayOfWeek = d.getDay();
+            startDate = new Date(d);
+            startDate.setDate(d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
+            endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 6);
+        } else { // daily
+            startDate = d;
+            endDate = d;
+        }
+        return { startDate: formatDateForDb(startDate), endDate: formatDateForDb(endDate) };
     };
-    
+
     // --- イベント取得キーの計算 ---
     const getWeeksInView = (date: Date, view: CalendarView): string[] => {
         const dateStr = formatDateForDb(date);
@@ -246,7 +309,7 @@ export const useCalendar = () => {
         } else if (view === 'daily') {
             keys.add(getCacheKeyForDate(current.format('YYYY-MM-DD')));
         }
-        
+
         return Array.from(keys);
     };
 
@@ -274,6 +337,7 @@ export const useCalendar = () => {
     };
 
     // --- イベントロード関数 (Core Logic) ---
+    // eventService.tsでデフォルトtrueになっているため、常に最新を取得
     const refreshEvents = async (): Promise<void> => {
         if (isLoading.value) return;
 
@@ -281,7 +345,7 @@ export const useCalendar = () => {
         try {
             // 1. 表示範囲から必要な週キーを計算
             const cacheKeys = getWeeksInView(currentDate.value, currentView.value);
-            
+
             // 2. 全ての週のキャッシュを並列で取得
             const fetchPromises = cacheKeys.map(key => eventService.getEventsFromCacheAsync(key));
             const results = await Promise.all(fetchPromises);
@@ -299,16 +363,16 @@ export const useCalendar = () => {
             allEvents = filterPrivateEvents(allEvents, currentUserId.value);
 
             // 5. リアクティブな変数にセット
-            events.value = allEvents.sort((a, b) => 
+            events.value = allEvents.sort((a, b) =>
                 a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)
             );
-            
+
             // 6. デバッグサマリーの表示 (既存コードで存在)
             printFirestoreDebugSummary();
-            
+
         } catch (error) {
             console.error("Failed to load events from cache:", error);
-            events.value = []; 
+            events.value = [];
         } finally {
             isLoading.value = false;
         }
@@ -316,9 +380,11 @@ export const useCalendar = () => {
 
     // --- データロード関数 (マスターデータ + イベント) ---
     const loadData = async (forceRefresh = false): Promise<void> => {
-        // 1. マスターデータのロード (既存ロジックを維持 - useMasterに依存)
+        // ロード中の多重実行を防ぐ
+        if (isLoading.value) return;
+
+        // 1. マスターデータのロード (forceRefresh に従う)
         try {
-             // 実際には useMaster().getMasterDataCacheAsync を呼び出す
             const usersResult = await getMasterDataCacheAsync('users', forceRefresh);
             const holidaysResult = await getMasterDataCacheAsync('holidays', forceRefresh);
             users.value = usersResult.data.map((u: ExtendedUserProfile) => ({ ...u, visible: true }));
@@ -327,7 +393,7 @@ export const useCalendar = () => {
             console.error("Failed to load master data:", e);
         }
 
-        // 2. イベントデータのロード (キャッシュ取得に置き換え)
+        // 2. イベントデータのロード (常にブラウザキャッシュを無視して実行)
         await refreshEvents();
     };
 
@@ -335,28 +401,28 @@ export const useCalendar = () => {
     // --- カレンダー操作関数 ---
 
     const setView = (view: CalendarView): void => {
-      currentView.value = view;
+        currentView.value = view;
     };
 
     const selectDay = (date: Date): void => {
-      selectedDate.value = date;
+        selectedDate.value = date;
     };
 
     // 日付移動ヘルパー (Moment.jsを使用)
     const moveDate = (unit: 'day' | 'week' | 'month', amount: number): void => {
-      const newDate = moment(currentDate.value).add(amount, unit).toDate();
-      currentDate.value = newDate;
-      if (currentView.value === 'daily') {
-          selectedDate.value = newDate;
-      }
+        const newDate = moment(currentDate.value).add(amount, unit).toDate();
+        currentDate.value = newDate;
+        if (currentView.value === 'daily') {
+            selectedDate.value = newDate;
+        }
     };
 
     const goToToday = (): void => {
-      const today = new Date();
-      currentDate.value = today;
-      selectedDate.value = today;
+        const today = new Date();
+        currentDate.value = today;
+        selectedDate.value = today;
     };
-    
+
     const goToSelectDate = (date: Date): void => {
         currentDate.value = date;
         selectedDate.value = date;
@@ -372,17 +438,16 @@ export const useCalendar = () => {
 
     // --- イベント取得ヘルパー ---
     const getSchedulesForDay = (date: Date, userId?: string): EventDisplay[] => {
-      const dateStr = formatDateForDb(date);
-      let dayEvents = events.value.filter(e => e.date === dateStr);
-      
-      if (userId) {
-          // ユーザーの表示設定と参加者フィルタリング (ここではユーザーvisibleフラグは省略)
-          dayEvents = dayEvents.filter(e => e.participantIds?.includes(userId));
-      }
-      
-      return dayEvents.sort((a, b) => a.startTime.localeCompare(b.startTime));
+        const dateStr = formatDateForDb(date);
+        let dayEvents = events.value.filter(e => e.date === dateStr);
+
+        if (userId) {
+            dayEvents = dayEvents.filter(e => e.participantIds?.includes(userId));
+        }
+
+        return dayEvents.sort((a, b) => a.startTime.localeCompare(b.startTime));
     };
-    
+
     const getUserSchedulesForDay = (userId: string, date: Date | null): EventDisplay[] => {
         if (!date) return [];
         return getSchedulesForDay(date, userId);
@@ -402,7 +467,7 @@ export const useCalendar = () => {
         const days: CalendarDay[] = [];
         const d = currentDate.value;
         const month = moment(d).month();
-        const startDate = moment(d).startOf('month').startOf('isoWeek'); 
+        const startDate = moment(d).startOf('month').startOf('isoWeek');
 
         for (let i = 0; i < 42; i++) {
             const day = startDate.clone().add(i, 'days');
@@ -412,12 +477,12 @@ export const useCalendar = () => {
     });
 
     const timeSlots = computed<string[]>(() => {
-      const slots: string[] = [];
-      for (let hour = 9; hour <= 18; hour++) {
-        slots.push(`${hour}:00`);
-        slots.push(`${hour}:30`);
-      }
-      return slots;
+        const slots: string[] = [];
+        for (let hour = 9; hour <= 18; hour++) {
+            slots.push(`${hour}:00`);
+            slots.push(`${hour}:30`);
+        }
+        return slots;
     });
 
     // --- Holiday Helpers ---
@@ -427,107 +492,119 @@ export const useCalendar = () => {
         const user = users.value.find(u => u.uid === userId);
         if (user) user.visible = !user.visible;
     };
-    
+
     // Calendar Position Persistence (既存ロジックを維持)
     const CALENDAR_POSITION_KEY = 'calendar-current-date';
 
     const saveCalendarPosition = () => {
         if (import.meta.client) {
-        try {
-            localStorage.setItem(CALENDAR_POSITION_KEY, formatDateForDb(currentDate.value));
-        } catch (error) {
-            console.warn('Failed to save calendar position:', error);
-        }
+            try {
+                localStorage.setItem(CALENDAR_POSITION_KEY, formatDateForDb(currentDate.value));
+            } catch (error) {
+                console.warn('Failed to save calendar position:', error);
+            }
         }
     };
 
     const loadCalendarPosition = (): Date | null => {
         if (import.meta.client) {
-        try {
-            const savedDate = localStorage.getItem(CALENDAR_POSITION_KEY);
-            if (savedDate) {
-            const date = new Date(savedDate);
-            if (!isNaN(date.getTime())) {
-                return date;
+            try {
+                const savedDate = localStorage.getItem(CALENDAR_POSITION_KEY);
+                if (savedDate) {
+                    const date = new Date(savedDate);
+                    if (!isNaN(date.getTime())) {
+                        return date;
+                    }
+                }
+            } catch (error) {
+                console.warn('Failed to load calendar position:', error);
             }
-            }
-        } catch (error) {
-            console.warn('Failed to load calendar position:', error);
-        }
         }
         return null;
     };
 
     const clearCalendarPosition = () => {
         if (import.meta.client) {
-        try {
-            localStorage.removeItem(CALENDAR_POSITION_KEY);
-        } catch (error) {
-            console.warn('Failed to clear calendar position:', error);
-        }
+            try {
+                localStorage.removeItem(CALENDAR_POSITION_KEY);
+            } catch (error) {
+                console.warn('Failed to clear calendar position:', error);
+            }
         }
     };
 
 
     // --- Lifecycle and Watchers ---
+    let isInitialLoad = true;
     onMounted(() => {
-        loadData();
+        // ページロード時に強制リフレッシュ
+        loadData(true);
     });
 
+    // onMounted後の変更を監視し、ロード処理を実行
     watch([currentDate, currentView], () => {
-        loadData(false); 
+        if (isInitialLoad) {
+            isInitialLoad = false;
+            return;
+        }
+        // 日付・ビュー変更時は、マスターはキャッシュ利用、イベントは最新を取得
+        loadData(false);
     }, { deep: true });
 
     // --- 公開するプロパティと関数 ---
     return {
-      currentDate,
-      selectedDate,
-      currentView,
-      users,
-      facilities, // 👈 公開
-      equipments, // 👈 公開
-      events,
-      holidays,
-      isLoading,
-      
-      loadData, 
-      refreshEvents, 
-      
-      setView,
-      selectDay,
-      
-      previousDay,
-      nextDay,
-      previousWeek,
-      nextWeek,
-      previousMonth,
-      nextMonth,
-      
-      goToToday,
-      goToSelectDate,
-      
-      getSchedulesForDay,
-      getUserSchedulesForDay,
-      isHoliday,
-      getHolidayName,
-      toggleUserVisibility, // 既存コードで存在
+        currentDate,
+        selectedDate,
+        currentView,
+        users,
+        facilities,
+        equipments,
+        events,
+        holidays,
+        isLoading,
 
-      // EventForm.vue や他のコンポーネントで必要とされるユーティリティ関数
-      formatDate,
-      formatDatetime,
-      formatShortDate,
-      formatDateForDb,
-      getDayOfWeek,
-      timeToPixels,
-      timeToPixelsForHorizontal,
-      
-      generateCalendarDays,
-      generateWeekDays,
-      timeSlots,
+        createEventAndRefresh,
+        updateEventAndRefresh,
+        deleteEventAndRefresh,
 
-      // Calendar Position Persistence (既存コードで存在)
-      saveCalendarPosition,
-      loadCalendarPosition,
-      clearCalendarPosition,
+        loadData,
+        refreshEvents,
+
+        setView,
+        selectDay,
+
+        previousDay,
+        nextDay,
+        previousWeek,
+        nextWeek,
+        previousMonth,
+        nextMonth,
+
+        goToToday,
+        goToSelectDate,
+
+        getSchedulesForDay,
+        getUserSchedulesForDay,
+        isHoliday,
+        getHolidayName,
+        toggleUserVisibility,
+
+        // EventForm.vue や他のコンポーネントで必要とされるユーティリティ関数
+        formatDate,
+        formatDatetime,
+        formatShortDate,
+        formatDateForDb,
+        getDayOfWeek,
+        timeToPixels,
+        timeToPixelsForHorizontal,
+
+        generateCalendarDays,
+        generateWeekDays,
+        timeSlots,
+
+        // Calendar Position Persistence (既存コードで存在)
+        saveCalendarPosition,
+        loadCalendarPosition,
+        clearCalendarPosition,
     };
 };

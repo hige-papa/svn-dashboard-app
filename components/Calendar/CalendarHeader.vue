@@ -2,7 +2,7 @@
   <div class="header">
      <v-list-item class="ma-0 pa-0">
       <template v-slot:prepend>
-        <button class="register-btn" @click="navigateTo('/calendar/register')">
+        <button class="register-btn" @click="handleStartRegister">
           <i class="mdi mdi-pencil icon mr-2"></i>
           予定登録
         </button>
@@ -18,10 +18,14 @@
 </template>
 
 <script setup>
-const emit = defineEmits(['goToToday']);
+const emit = defineEmits(['startRegister', 'goToToday']);
 
 const goToToday = () => {
   emit('goToToday');
+}
+
+const handleStartRegister = () => {
+  emit('startRegister');
 }
 </script>
 

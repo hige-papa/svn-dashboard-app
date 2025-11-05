@@ -505,16 +505,18 @@ const confirmDelete = () => {
 }
 
 onMounted(() => {
-  getEquipmentsAsync().then(equipments => {
+  getEquipmentsAsync().then((equipments: MasterItem[]) => {
     equipmentMaster.value = equipments.map(equipment => ({
       id: equipment.id,
+      code: equipment.code,
       name: equipment.name,
       capacity: equipment.capacity,
     }))
   })
-  getFacilitiesAsync().then(facilities => {
+  getFacilitiesAsync().then((facilities: MasterItem[]) => {
     facilitiesMaster.value = facilities.map(facility => ({
       id: facility.id,
+      code: facility.code ?? '',
       name: facility.name,
       capacity: facility.capacity,
     }))

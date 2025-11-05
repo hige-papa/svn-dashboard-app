@@ -16,7 +16,7 @@ const CACHE_PATH = 'o/calendar-cache%2F';
 
 export const useEventService = () => {
     const eventsService = useFirestoreGeneral('events')
-    const { addWithBatch } = useFirestore()
+    const { addWithBatch, updateDocAsync, deleteDocAsync } = useFirestore()
 
     // --- Date Utility Functions ---
     const getCacheKeyForDate = (dateStr: string): string => {
@@ -45,7 +45,7 @@ export const useEventService = () => {
         interval: number = 1
     ): string[] => {
         const resultDates: string[] = [];
-        const recurrenceStartDate = parseDateAsLocal(formData.recurringStartDate);
+        const recurrenceStartDate = parseDateAsLocal(formData.recurringStartDate!);
         let current = new Date(recurrenceStartDate);
         let generatedCount = 0;
         const maxCount = formData.recurringEndType?.toLowerCase() === 'count' ? formData.recurringCount : Infinity;
@@ -95,12 +95,23 @@ export const useEventService = () => {
     };
 
     // --- キャッシュ取得ロジック ---
-    const getEventsFromCacheAsync = async (cacheKey: string): Promise<EventDisplay[]> => {
+    /**
+     * イベントキャッシュファイルをFirebase Storageから取得する。
+     * @param cacheKey - 週のキー
+     * @param forceNoCache - ブラウザ/CDNキャッシュを無視して強制的に最新ファイルを取得するか
+     */
+    const getEventsFromCacheAsync = async (cacheKey: string, forceNoCache = true): Promise<EventDisplay[]> => { 
         const fileName = `${cacheKey}-cache.json`;
-        const url = `${CACHE_BASE_URL}${PROJECT_ID}.firebasestorage.app/${CACHE_PATH}${fileName}?alt=media`;
+        let url = `${CACHE_BASE_URL}${PROJECT_ID}.firebasestorage.app/${CACHE_PATH}${fileName}?alt=media`;
         
+        // ブラウザのキャッシュを無効化する処理を追加
+        if (forceNoCache) {
+            url += `&v=${Date.now()}`; // ユニークなクエリパラメーターを追加
+        }
+
         try {
-            const response = await fetch(url);
+            // cache: 'no-store' はブラウザのHTTPキャッシュを完全に無視するよう指示
+            const response = await fetch(url, { cache: 'no-store' }); 
             if (!response.ok) {
                 if (response.status === 404) return [];
                 throw new Error(`Failed to fetch cache (${response.status})`);
@@ -138,7 +149,7 @@ export const useEventService = () => {
      * @returns 登録されたイベントIDの配列
      */
     const createEvent = async (formData: EventFormData): Promise<string[]> => {
-        const { addWithBatch } = useFirestore()
+        // const { addWithBatch } = useFirestore()
 
         // 1. 共通のEventDataを構築
         const baseEventData: Partial<EventData> = {
@@ -230,6 +241,69 @@ export const useEventService = () => {
         return batchActions.map(a => a.reference.id); 
     };
 
+    /**
+     * イベント更新処理 (単一イベントまたはマスターイベントを更新)
+     * @returns 更新されたイベントIDの配列
+     */
+    const updateEvent = async (initialData: EventData, formData: EventFormData): Promise<string[]> => {
+        // 期間や繰り返しイベントの複雑な更新ロジック（例：変更前の実体イベントの削除、変更後の実体イベントの生成）はここでは省略します。
+        // まずは単一イベントの単純な更新にフォーカスします。
+        
+        // 【重要】今回のファイルには 'updateWithBatch' が見当たらないため、
+        // useFirestoreGeneral の updateDocAsync を使用して単一イベントを更新するロジックを実装します。
+        // 繰り返しイベントの更新は複雑なため、今回は単一イベントの更新のみをサポートします。
+        
+        if (initialData.dateType !== 'single' || formData.dateType !== 'single') {
+            throw new Error('このバージョンの EventService では、単一日イベントの更新のみをサポートしています。');
+        }
+        
+        if (!initialData.id) {
+            throw new Error('更新対象のイベントIDが指定されていません。');
+        }
+        
+        // 1. 共通の更新データを構築
+        const updatedEventData: Partial<EventData> = {
+            title: formData.title,
+            eventType: formData.eventType,
+            dateType: 'single', 
+            date: formData.date!, // dateType === 'single' のため date は必須
+            startTime: formData.startTime,
+            endTime: formData.endTime,
+            location: formData.location,
+            description: formData.description,
+            priority: formData.priority,
+            participantIds: formData.participantIds,
+            participants: formData.participants,
+            facilityIds: formData.facilityIds,
+            facilities: formData.facilities,
+            equipmentIds: formData.equipmentIds,
+            equipments: formData.equipments,
+            eventTypeName: formData.eventTypeName,
+            eventTypeColor: formData.eventTypeColor,
+            private: formData.private,
+        };
+
+        // Firestoreの単一ドキュメントを更新
+        // 【修正】updateWithBatchではなく、eventsService.updateDocAsyncで直接更新
+        await eventsService.updateAsync(initialData.id, updatedEventData);
+        
+        // 更新されたイベントIDの配列を返す
+        return [initialData.id];
+    };
+
+/**
+     * イベント削除処理 (単一イベントの削除)
+     * @param eventId 削除するイベントID
+     */
+    const deleteEvent = async (eventId: string): Promise<void> => {
+        if (!eventId) {
+            throw new Error('削除対象のイベントIDが指定されていません。');
+        }
+        
+        // useFirestoreGeneral の deleteDocAsync を使用して単一イベントを削除
+        await eventsService.deleteAsync(eventId);
+    };
+
     // --- EventForm.vue向け リソース別取得関数 (キャッシュからフィルタリング) ---
 
     /**
@@ -239,13 +313,14 @@ export const useEventService = () => {
         resourceType: 'participant' | 'facility' | 'equipment',
         resourceId: string,
         startDate: string, // 単日チェックを想定 (startDate === endDate)
-        endDate: string
+        endDate: string,
+        forceNoCache = true // 👈 デフォルトをtrue
     ): Promise<EventDisplay[]> => {
         // 1. 該当日の週キャッシュキーを取得
         const cacheKey = getCacheKeyForDate(startDate);
         
         // 2. キャッシュファイルをロード
-        const allEvents = await getEventsFromCacheAsync(cacheKey);
+        const allEvents = await getEventsFromCacheAsync(cacheKey, forceNoCache); 
 
         // 3. 日付とリソースIDでフィルタリング
         const filteredEvents = allEvents.filter(event => {
@@ -279,15 +354,17 @@ export const useEventService = () => {
 
     return { 
         createEvent, // 復元
+        updateEvent, // 👈 追加
+        deleteEvent, // 👈 公開
         
         // EventForm.vueが依存する関数をキャッシュベースで提供
-        getEventsByParticipantInRange: (uid: string, startDate: string, endDate: string) => getEventsByResourceInRange('participant', uid, startDate, endDate),
-        getEventsByFacilityInRange: (facilityId: string, startDate: string, endDate: string) => getEventsByResourceInRange('facility', facilityId, startDate, endDate),
-        getEventsByEquipmentInRange: (equipmentId: string, startDate: string, endDate: string) => getEventsByResourceInRange('equipment', equipmentId, startDate, endDate),
+        getEventsByParticipantInRange: (uid: string, startDate: string, endDate: string, forceNoCache = true) => getEventsByResourceInRange('participant', uid, startDate, endDate, forceNoCache),
+        getEventsByFacilityInRange: (facilityId: string, startDate: string, endDate: string, forceNoCache = true) => getEventsByResourceInRange('facility', facilityId, startDate, endDate, forceNoCache),
+        getEventsByEquipmentInRange: (equipmentId: string, startDate: string, endDate: string, forceNoCache = true) => getEventsByResourceInRange('equipment', equipmentId, startDate, endDate, forceNoCache),
         
         // useCalendar.ts が依存するユーティリティ
-        getEventsFromCacheAsync,
+        getEventsFromCacheAsync, 
         getCacheKeyForDate,
-        getEventsInRange, // 互換性維持のため公開 (エラーをスローするが型は満たす)
+        getEventsInRange, 
     };
 };

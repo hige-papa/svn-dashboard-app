@@ -640,7 +640,8 @@ const {
   getEventsByParticipantInRange, 
   getEventsByEquipmentInRange, 
   getEventsByFacilityInRange, 
-  createEvent 
+  createEvent,
+  updateEvent, // 👈 追加
 } = useEventService();
 
 // UTCで日付文字列をDateオブジェクトに変換 (useCalendarにもあるが、ここでは依存しないように再定義)
@@ -649,7 +650,7 @@ const parseDateAsLocal = (dateStr: string): Date => new Date(`${dateStr}T00:00:0
 interface Props {
   date?: string,
   participantIds?: string[],
-  initialData?: any // EventFormData
+  initialData?: EventData // EventFormData
 }
 
 const props = withDefaults(defineProps<Props>(), {})
@@ -1105,20 +1106,32 @@ const handleSubmit = async () => {
   
   if (formData.dateType === 'single' && conflicts.value.length > 0 && !confirm('重複があります。保存しますか？')) return
 
-  isLoading.value = true
-  try {
-    const eventIds = await createEvent({ ...formData })
-    
-    console.log(`Created event IDs: ${eventIds.join(', ')}`)
+  emit('submit', formData)
 
-    showNotification('予定が正常に保存されました！')
-    resetForm()
-  } catch (error) {
-    console.error('保存エラー:', error)
-    showNotification('保存に失敗しました', 'error')
-  } finally {
-    isLoading.value = false
-  }
+  // isLoading.value = true
+  // try {
+  //   let eventIds: string[] = []
+    
+  //   if (props.initialData) {
+  //     // 既存データがある場合は更新
+  //     // NOTE: 単一イベントのみサポート（updateEventの制限による）
+  //     eventIds = await updateEvent(props.initialData, { ...formData }) // 👈 updateEventを呼び出す
+  //     showNotification('予定が正常に更新されました！') // 👈 メッセージを更新用に変更
+  //   } else {
+  //     // 既存データがない場合は新規作成
+  //     eventIds = await createEvent({ ...formData })
+  //     showNotification('予定が正常に保存されました！')
+  //   }
+    
+  //   console.log(`Processed event IDs: ${eventIds.join(', ')}`)
+
+  //   resetForm()
+  // } catch (error) {
+  //   console.error('処理エラー:', error)
+  //   showNotification('保存/更新に失敗しました', 'error')
+  // } finally {
+  //   isLoading.value = false
+  // }
 }
 
 const handleCancel = () => { if (confirm('入力内容が失われますが、よろしいですか？')) { resetForm(); back() } }

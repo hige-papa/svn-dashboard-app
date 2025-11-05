@@ -1,15 +1,15 @@
 <template>
   <div>
-    <div v-if="props.events.length === 0" class="no-events">
-      予定はありません
-    </div>
-    <div v-else>
+    <div v-if="visibleEvents?.length">
       <EventCard 
-        v-for="event in props.events" 
+        v-for="event in visibleEvents" 
         :key="event.id" 
         :event="event"
         @event-click="onEventClick"
       />
+    </div>
+    <div v-else class="no-events">
+      予定はありません
     </div>
   </div>
 </template>
@@ -24,6 +24,11 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   date: () => new Date(),
   events: () => []
+});
+
+const visibleEvents = computed(() => {
+  // 日付でフィルタリング
+  return props.events;
 });
 
 const emit = defineEmits(['eventClick']);

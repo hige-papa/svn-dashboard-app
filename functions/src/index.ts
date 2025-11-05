@@ -50,11 +50,14 @@ interface EventDisplay {
     isMultiDay: boolean;
     segmentId: string; // 繰り返し/複数日イベントで、元イベントとの紐付けに使用
     conflicted: boolean; // 競合しているか
+    createdAt: Timestamp | string;
+    updatedAt: Timestamp | string;
 }
 
 import * as functions from 'firebase-functions/v1';
 import * as admin from 'firebase-admin';
 import * as moment from 'moment-timezone';
+import { Timestamp } from 'firebase-admin/firestore';
 
 // Firestoreからデータを読み取るための管理SDKを初期化
 admin.initializeApp();
@@ -117,24 +120,18 @@ const generateCacheData = async (startDate: string, endDate: string) => {
         const data = doc.data() as EventDisplay;
 
         // そのまま追加する
-        events.push(data as EventDisplay);
+        // events.push(data as EventDisplay);
         
-        // // クライアントで必要な EventDisplay 形式に変換
-        // const eventDisplay: Partial<EventDisplay> = {
-        //     id: doc.id,
-        //     title: data.title,
-        //     date: data.date!,
-        //     startTime: data.startTime,
-        //     endTime: data.endTime,
-        //     priority: data.priority,
-        //     participantIds: data.participantIds,
-        //     // ... その他の必要な EventDisplay フィールド
-        //     eventTypeName: data.eventTypeName,
-        //     eventTypeColor: data.eventTypeColor,
-        //     private: data.private,
-        //     conflicted: false, // 衝突チェックはクライアント側または参照時に実施
-        // };
-        // events.push(eventDisplay as EventDisplay);
+        // クライアントで必要な EventDisplay 形式に変換
+        const eventDisplay: Partial<EventDisplay> = {
+            ...data,
+            ...{
+                id: doc.id,
+                createdAt: (data.createdAt as Timestamp)?.toDate().toLocaleString(),
+                updatedAt: (data.updatedAt as Timestamp)?.toDate().toLocaleString()
+            }
+        };
+        events.push(eventDisplay as EventDisplay);
     });
 
     // キャッシュデータ構造を定義 (週次ビューに必要な情報をここに含める)
