@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <CalendarHeader @go-to-today="handleGoToToday" />
+    <CalendarHeader @go-to-today="handleGoToToday" @start-register="registerDialog=true" />
 
     <div class="sub-header">
       <div class="view-selector">
@@ -76,48 +76,6 @@
           </div>
         </v-col>
       </v-row>
-      <!-- <v-list-item class="pa-0">
-        <template v-slot:prepend>
-          <h2 class="view-title">グループスケジュール</h2>
-        </template>
-        <template v-slot:append>
-          <div class="display-options-wrapper">
-            <v-checkbox
-              v-model="displayOption.isShowUser"
-              label="ユーザー"
-              hide-details
-              density="compact"
-              color="primary"
-              class="custom-checkbox"
-            ></v-checkbox>
-            <v-checkbox
-              v-model="displayOption.isShowCompany"
-              label="会社"
-              hide-details
-              density="compact"
-              color="primary"
-              class="custom-checkbox"
-            ></v-checkbox>
-            <v-checkbox
-              v-model="displayOption.isShowFacility"
-              label="施設"
-              hide-details
-              density="compact"
-              color="primary"
-              class="custom-checkbox"
-            ></v-checkbox>
-            <v-checkbox
-              v-model="displayOption.isShowEquipment"
-              label="備品"
-              hide-details
-              density="compact"
-              color="primary"
-              class="custom-checkbox"
-            ></v-checkbox>
-          </div>
-        </template>
-      </v-list-item> -->
-
       <div>
         <WeeklyCalendarView :users="visibleUsers" :company="company" :facilities="sortedFacilities" :equipments="sortedEquipments" :week-days="weekDays" :events="events" :daily-options="dailyOptions" :holidays="holidays"
           :get-user-schedules-for-day="getUserSchedulesForDay" @day-click="handleDayClickForWeekly" />
@@ -145,7 +103,7 @@
       </template>
       <v-card flat tile color="transparent">
         <v-card-text>
-          <EventsList v-if="currentView === 'weekly' && selectedDate" :date="selectedDate ?? new Date()" :events="selectedUserDayEvents" @event-click="handleShowEventDetails" :user="selectedUser" />
+          <EventsList v-if="currentView === 'weekly' && selectedDate && selectedUser" :date="selectedDate ?? new Date()" :events="selectedUserDayEvents" @event-click="handleShowEventDetails" :user="selectedUser" />
           <EventsList v-else-if="currentView === 'monthly' && selectedDate" :date="selectedDate ?? new Date()" :events="mySelectedDayEvents" @event-click="handleShowEventDetails" />
         </v-card-text>
         </v-card>
@@ -180,6 +138,20 @@
       </template>
       <EventView v-if="eventDetail" :event-data="eventDetail" @edit="handleEditEvent" @delete="handleDelete" @copy="handleCopy" @back="handleCloseView" />
     </aw-dialog>
+
+    <AwDialog v-model="registerDialog" :draggable="true" :resize="true" :overlay="false" :initial-width="600" :fullscreen="mobile">
+      <template #title>
+        <p class="list-title">予定新規登録</p>
+      </template>
+      <EventRegister @registered="handleRegistered" :date="getDateString(selectedDate ?? new Date())" :participant-ids="selectedUser?.uid ? [selectedUser.uid] : undefined" @error="handleRegisterError" />
+    </AwDialog>
+
+    <AwDialog v-model="editorDialog" :draggable="true" :resize="true" :overlay="false" :initial-width="600" :fullscreen="mobile">
+      <template #title>
+        <p class="list-title">予定更新</p>
+      </template>
+      <EventEditor v-if="selectedEvent?.id" :event-id="selectedEvent.id" @updated="handleUpdated" @error="handleEditorError" />
+    </AwDialog>
     
   </div>
 </template>
@@ -192,8 +164,8 @@ import { useTransaction } from '~/composables/transaction/useTransaction'
 import type { User } from 'firebase/auth';
 import { padStart } from 'vuetify/lib/util/helpers.mjs';
 import { useDailyOptions } from '~/composables/useDailyOptions'
-import { useFacility } from '~/composables/useFacility'
-import { useEquipment } from '~/composables/useEquipment'
+// import { useFacility } from '~/composables/useFacility'
+// import { useEquipment } from '~/composables/useEquipment'
 import { useMasterData } from '~/composables/useMasterData';
 
 // head設定
@@ -201,12 +173,16 @@ useHead({
   title: 'TASCAL - カレンダー'
 });
 
+// 型定義
+type CalendarView = 'daily' | 'weekly' | 'monthly';
+
+
 const user = useState<ExtendedUserProfile>('userProfile')
 
 // getAsyncを削除し、ローカル検索に置き換え
-const { deleteAsync } = useTransaction('events') 
-const { getListAsync: getFacilitiesAsync } = useFacility()
-const { getListAsync: getEquipmentsAsync } = useEquipment()
+// const { deleteAsync } = useTransaction('events') 
+// const { getListAsync: getFacilitiesAsync } = useFacility()
+// const { getListAsync: getEquipmentsAsync } = useEquipment()
 
 const { mobile } = useDisplay()
 
@@ -242,6 +218,7 @@ const {
   events,
   holidays,
   isLoading,
+  deleteEventAndRefresh,
   getDayOfWeek,
   formatDate,
   formatDatetime,
@@ -480,27 +457,27 @@ onMounted(async () => {
     console.log('[Calendar] Restored calendar position:', formatDateForDb(savedPosition));
   }
 
-  getEquipmentsAsync().then(equipments => {
-    equipmentMaster.value = (equipments as any[]).map(equipment => ({
-      id: equipment.id,
-      code: equipment.code,
-      name: equipment.name,
-      capacity: equipment.capacity,
-      avatar: equipment.imageUrl,
-    }))
-  })
-  getFacilitiesAsync().then(facilities => {
-    facilitiesMaster.value = (facilities as any[]).map(facility => ({
-      id: facility.id,
-      code: facility.code,
-      name: facility.name,
-      capacity: facility.capacity,
-      avatar: facility.imageUrl,
-    }))
-  })
+  // getEquipmentsAsync().then(equipments => {
+  //   equipmentMaster.value = (equipments as any[]).map(equipment => ({
+  //     id: equipment.id,
+  //     code: equipment.code,
+  //     name: equipment.name,
+  //     capacity: equipment.capacity,
+  //     avatar: equipment.imageUrl,
+  //   }))
+  // })
+  // getFacilitiesAsync().then(facilities => {
+  //   facilitiesMaster.value = (facilities as any[]).map(facility => ({
+  //     id: facility.id,
+  //     code: facility.code,
+  //     name: facility.name,
+  //     capacity: facility.capacity,
+  //     avatar: facility.imageUrl,
+  //   }))
+  // })
 
 // ★★★ 修正: useCalendar.tsのonMountedがなくなったため、ここで一度だけloadDataを実行 ★★★
-  await loadData();
+  await loadData(true); // onMountedでは常に強制リフレッシュ
 
   // 月間ビューの場合は現在の日を選択
   if (currentView.value === 'monthly') {
@@ -508,11 +485,12 @@ onMounted(async () => {
   }
 
   // 初期イベントデータを取得（loadData後に実行）
-  await updateCurrentDayEvents();
+  // events の watch に任せる
+  // await updateCurrentDayEvents();
 });
 
 // 現在の日のイベントを更新
-const updateCurrentDayEvents = async () => {
+const updateCurrentDayEvents = () => {
   if (currentView.value === 'daily') {
     // events.valueはloadData()で更新された後の最新データ
     currentDayEvents.value = getSchedulesForDay(currentDate.value);
@@ -520,7 +498,7 @@ const updateCurrentDayEvents = async () => {
 };
 
 // 選択中の日のイベントを更新
-const updateSelectedDayEvents = async () => {
+const updateSelectedDayEvents = () => {
   if (selectedDate.value) {
     // events.valueはloadData()で更新された後の最新データ
     selectedDayEvents.value = getSchedulesForDay(selectedDate.value);
@@ -539,25 +517,26 @@ watch(events, () => {
 // currentDateの変更を監視 (daily/weeklyの切り替え時にlocal eventを更新)
 watch(currentDate, async () => {
   // loadData()が先に実行されるため、ここではイベントのローカル処理のみ
-  await updateCurrentDayEvents();
+  // updateCurrentDayEvents(); // watch(events) に任せる
   // 週の位置を保存（予定登録などから戻ってきた時のため）
   saveCalendarPosition();
 });
 
 // selectedDateの変更を監視 (monthly/weeklyで日付選択時にlocal eventを更新)
-watch(selectedDate, async () => {
-  selectedDayEvents.value = [];
-  selectedUser.value = undefined;
-  await updateSelectedDayEvents();
+watch(selectedDate, () => {
+  // 日付が変わったら一旦リセットする処理だけ残す
+  // selectedDayEvents.value = [];
+  // selectedUser.value = undefined;
+  // ここで updateSelectedDayEvents() を呼ばないようにする
 });
 
 // currentViewの変更を監視（ストレージへの保存を追加）
 // Note: loadData は composable 側の watch で実行されるため、ここでは UI 更新と保存のみ
-watch(currentView, async (newView) => {
-  selectedDayEvents.value = [];
-  selectedUser.value = undefined;
-  // loadData()が switchView で明示的に呼ばれるため、ここではローカル更新のみ
-  await updateCurrentDayEvents();
+watch(currentView, (newView) => {
+  // selectedDayEvents.value = [];
+  // selectedUser.value = undefined;
+  // loadData()は useCalendar.ts の watch で実行される
+  // updateCurrentDayEvents(); // watch(events) に任せる
   // ビューが変更された時にlocalStorageに保存
   saveViewToStorage(newView);
 });
@@ -637,17 +616,32 @@ const eventListDialog = ref<boolean>(false)
 // 日付選択ハンドラ（週間ビュー用）
 const handleDayClickForWeekly = async (data: any) => {
   const { user, date } = data;
+  
   selectDay(date);
-  await updateSelectedDayEvents();
-  // alert(`${user.displayName}: ${events.length}件の予定`);
   selectedUser.value = user;
+
+  // 1. イベントデータの取得・更新完了を待つ
+  updateSelectedDayEvents(); 
+
+  // 2. VueのリアクティブシステムがDOM更新（computedの再計算）を完了するのを待つ
+  //    これにより、selectedUserDayEventsなどのcomputedが最新のselectedDayEventsを反映する
+  await nextTick(); 
+  
+  // 3. 全てのデータが揃った後にダイアログを開く
   eventListDialog.value = true;
 };
 
 // 日付選択ハンドラ（月間ビュー用）
 const handleDayClickForMonthly = async (date: Date) => {
   selectDay(date);
-  await updateSelectedDayEvents();
+
+  // 1. イベントデータの取得・更新完了を待つ
+  updateSelectedDayEvents();
+  
+  // 2. VueのリアクティブシステムがDOM更新（computedの再計算）を完了するのを待つ
+  await nextTick();
+
+  // 3. 全てのデータが揃った後にダイアログを開く
   eventListDialog.value = true;
 };
 
@@ -655,19 +649,17 @@ const handleDayClickForMonthly = async (date: Date) => {
 const switchView = async (view: CalendarView) => {
   if (isLoading.value) return; // ローディング中は無効
 
-  // showDetail.value = false;
-  await setView(view);
+  // currentView.value を更新（useCalendar.ts の watch が検知し、loadData が実行される）
+  setView(view); 
 
-  // ★★★ 修正: ビューが切り替わった場合、期間が変わるため必ずロードする ★★★
-  await loadData();
-  
+  // loadData は composable 側の watch に任せる
+
   // ビュー切り替え後のローカルイベントデータ更新
-  await updateCurrentDayEvents();
+  // watch(events) に任せる
 
   // 月間ビューに切り替えた場合は現在の日を選択
   if (view === 'monthly') {
     selectDay(new Date(currentDate.value));
-    await updateSelectedDayEvents();
   }
 };
 
@@ -675,28 +667,24 @@ const switchView = async (view: CalendarView) => {
 const handlePrevious = async () => {
   if (isLoading.value) return; // ローディング中は無効
 
-  // showDetail.value = false;
-
   if (currentView.value === 'daily') {
-    await previousDay();
+    previousDay();
   } else if (currentView.value === 'weekly') {
-    await previousWeek();
+    previousWeek();
   } else if (currentView.value === 'monthly') {
-    await previousMonth();
+    previousMonth();
   }
 
-  // ★★★ 修正: 日付が変更された後、必ずデータ再ロードする ★★★
-  await loadData();
+  // loadData() の呼び出しを削除 (useCalendar.ts の watch(currentDate) に任せる)
 
   // イベントデータを更新（ローカルフィルタリング）
-  // loadDataの後にevents.valueが更新されるため、ここでローカルのイベント配列を更新
-  await updateCurrentDayEvents();
+  // watch(events) に任せる
 
   // 月間ビューの場合、月変更後も選択状態を維持
   if (currentView.value === 'monthly') {
     if (selectedDate.value) {
-      selectDay(new Date(currentDate.value));
-      await updateSelectedDayEvents();
+      // selectDay(new Date(currentDate.value)); // 不要
+      updateSelectedDayEvents(); // selectedDateのwatchが走らない場合は必要
     }
   }
 };
@@ -705,28 +693,24 @@ const handlePrevious = async () => {
 const handleNext = async () => {
   if (isLoading.value) return; // ローディング中は無効
 
-  // showDetail.value = false;
-
   if (currentView.value === 'daily') {
-    await nextDay();
+    nextDay();
   } else if (currentView.value === 'weekly') {
-    await nextWeek();
+    nextWeek();
   } else if (currentView.value === 'monthly') {
-    await nextMonth();
+    nextMonth();
   }
 
-  // ★★★ 修正: 日付が変更された後、必ずデータ再ロードする ★★★
-  await loadData();
+  // loadData() の呼び出しを削除 (useCalendar.ts の watch(currentDate) に任せる)
 
   // イベントデータを更新（ローカルフィルタリング）
-  // loadDataの後にevents.valueが更新されるため、ここでローカルのイベント配列を更新
-  await updateCurrentDayEvents();
+  // watch(events) に任せる
 
   // 月間ビューの場合、月変更後も選択状態を維持
   if (currentView.value === 'monthly') {
     if (selectedDate.value) {
-      selectDay(new Date(currentDate.value));
-      await updateSelectedDayEvents();
+      // selectDay(new Date(currentDate.value)); // 不要
+      updateSelectedDayEvents(); // selectedDateのwatchが走らない場合は必要
     }
   }
 };
@@ -735,34 +719,32 @@ const handleNext = async () => {
 const handleGoToToday = async () => {
   if (isLoading.value) return; // ローディング中は無効
 
-  // showDetail.value = false;
-  await goToToday();
+  goToToday();
 
-  // ★★★ 修正: 日付が変更された後、必ずデータ再ロードする ★★★
-  await loadData();
+  // loadData() の呼び出しを削除 (useCalendar.ts の watch(currentDate) に任せる)
 
   // イベントデータを更新（ローカルフィルタリング）
-  await updateCurrentDayEvents();
+  // watch(events) に任せる
 
   // 月間ビューの場合は今日を選択
   if (currentView.value === 'monthly') {
-    selectDay(new Date());
-    await updateSelectedDayEvents();
+    // selectDay() は goToToday() で既に呼ばれている
+    updateSelectedDayEvents();
   }
 };
 
 const handleSelectDay = async (date: Date) => {
   // alert(date);
 
-  goToSelectDate(date);
+  goToSelectDate(date); // currentDate が変更されるため, watch が loadData を実行する
 
   // イベントデータを更新/
-  await updateCurrentDayEvents();
+  // watch(events) に任せる
 
   // 月間ビューの場合は今日を選択
   if (currentView.value === 'monthly') {
-    selectDay(date);
-    await updateSelectedDayEvents();
+    selectDay(date); // selectedDate が変更される
+    // await updateSelectedDayEvents(); // watch(selectedDate) に任せる
   }
 }
 
@@ -787,11 +769,15 @@ const handleShowEventDetails = (data: any) => {
   }
 }
 
+const selectedEvent = ref<EventDisplay | EventData>()
+
 const handleEditEvent = (event: EventDisplay | EventData) => {
   // alert(`edit => ${JSON.stringify(event)}`)
   // 予定編集ページに遷移する前に現在の週の位置を保存
-  saveCalendarPosition();
-  if (event?.id) navigateTo(`/calendar/${event.id}/edit`);
+  // saveCalendarPosition();
+  // if (event?.id) navigateTo(`/calendar/${event.id}/edit`);
+  selectedEvent.value = event;
+  editorDialog.value = true;
 };
 
 const handleCloseView = () => {
@@ -799,8 +785,9 @@ const handleCloseView = () => {
 }
 
 const handleDelete = (id: string) => {
-  deleteAsync(id).then(_ => {
-    loadData()
+  deleteEventAndRefresh(id).then(_ => {
+    // 削除後はデータを強制的に再ロード (マスターデータキャッシュもリフレッシュ)
+    loadData(true); 
     viewDialog.value = false
   })
 }
@@ -825,6 +812,8 @@ const openDailyOptionDialog = () => {
 const handleSubmitDailyOption = (data: DailyUserOption) => {
   // alert(JSON.stringify(data));
   setDailyOption(data).then(() => {
+    // 日別オプション登録後はデータを強制的に再ロード
+    loadData(true);
     dailyOptionDialog.value = false;
   })
 }
@@ -839,12 +828,39 @@ const handleCancelDailyOption = () => {
 
 const goToRegister = () => {
   // 予定登録ページに遷移する前に現在の週の位置を保存
-  saveCalendarPosition();
-  navigateTo(`/calendar/register?date=${getDateString(selectedDate.value ?? new Date())}&participantId=${selectedUser.value?.uid}`)
+  // saveCalendarPosition();
+  // navigateTo(`/calendar/register?date=${getDateString(selectedDate.value ?? new Date())}&participantId=${selectedUser.value?.uid}`)
+  registerDialog.value = true;
 }
 
 const handleCopy = () => {
 
+}
+
+const registerDialog = ref<boolean>(false);
+
+const handleRegistered = () => {
+  registerDialog.value = false;
+  // 登録後はデータを強制的に再ロード
+  loadData(true);
+}
+
+const handleRegisterError = (error: any) => {
+  console.error('Event registration error:', error);
+  alert('予定の登録中にエラーが発生しました。再度お試しください。');
+}
+
+const editorDialog = ref<boolean>(false);
+
+const handleUpdated = (event: EventDisplay | EventData) => {
+  editorDialog.value = false;
+  // 更新後はデータを強制的に再ロード
+  loadData(true);
+};
+
+const handleEditorError = (error: any) => {
+  console.error('Event editing error:', error);
+  alert('予定の編集中にエラーが発生しました。再度お試しください。');
 }
 
 // エラーハンドリング用のwatcher

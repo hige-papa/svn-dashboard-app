@@ -1,6 +1,5 @@
 <template>
   <div class="page-container">
-    <!-- {{conflicts}} -->
     <div class="container">
       <div class="header">
         <p class="page-subtitle">{{ initialData ? '予定を更新' : '新しい予定を登録' }}</p>
@@ -542,14 +541,6 @@
             </div>
           </div>
         </div>
-        <!-- <div class="modal-footer">
-          <button type="button" @click="closeModal" class="btn btn-secondary">
-            キャンセル
-          </button>
-          <button type="button" @click="confirmSelection" class="btn btn-primary">
-            選択を確定
-          </button>
-        </div> -->
       </div>
       <template #footer>
         <div class="modal-footer">
@@ -565,7 +556,7 @@
 
     <aw-dialog v-model="dialog" :initial-height="550" :draggable="true" :resize="true" :overlay="false" :fullscreen="mobile">
       <template #title>
-        <span v-if="selected" class="list-title text-body-1">{{ selected?.name }}さんの{{ formData.date }}の予定一覧</span>
+        <span v-if="selected" class="list-title text-body-1">{{ selected?.name }}さんの{{ date ? formatDateForDb(date) : '' }}の予定一覧</span>
       </template>
       <DailyTimeline v-if="date" :events="events" :time-slots="timeSlots" :date="date" :time-to-pixels="timeToPixels"
         @event-click="() => { }" />
@@ -581,12 +572,9 @@
     <aw-dialog v-model="isShowEventRelatedParties" :initial-height="550" :draggable="true" :resize="true" :overlay="false"
       :initial-width="1200" :fullscreen="mobile">
       <template #title>
-        <span class="list-title text-body-1">参加者の予定一覧</span>
+        <span class="list-title text-body-1">参加者の予定一覧 ({{ targetDate ? formatDateForDb(targetDate) : '' }})</span>
       </template>
       <v-container>
-        <!-- <div>eventRelatedParties: {{ eventRelatedParties?.length ?? 0 }}</div>
-        <div>relatedPartyEvents: {{ relatedPartyEvents?.length ?? 0 }}</div>
-        <div>date: {{ targetDate }}</div> -->
         <GroupHorizontalTimeline :users="eventRelatedParties ?? []" :events="relatedPartyEvents" :date="targetDate" />
       </v-container>
     </aw-dialog>
@@ -626,6 +614,14 @@ interface TeamItem {
   memberCount: number;
 }
 
+// ⭐︎ useCalendarから必要なユーティリティ関数をインポート
+const { 
+  timeToPixels, 
+  timeSlots, 
+  formatDateForDb, 
+  formatDate, // useCalendar.tsで復活
+} = useCalendar();
+
 const { eventTypeDetails } = useConstants()
 
 const { data: ownCompanies } = useMasterData<OwnCompany>('own-company')
@@ -639,13 +635,22 @@ const { getListAsync: getUsersAsync } = useMaster('users')
 const { getListAsync: getFacilitiesAsync } = useFacility()
 const { getListAsync: getEquipmentsAsync } = useEquipment()
 const { getListAsync: getTeamsAsync } = useTeam()
-const { timeToPixels, timeSlots,  } = useCalendar();
-const { getEventsByParticipantInRange, getEventsByEquipmentInRange, getEventsByFacilityInRange } = useEventService();
+// ⭐︎ useEventServiceから必要な関数をインポート
+const { 
+  getEventsByParticipantInRange, 
+  getEventsByEquipmentInRange, 
+  getEventsByFacilityInRange, 
+  createEvent,
+  updateEvent, // 👈 追加
+} = useEventService();
+
+// UTCで日付文字列をDateオブジェクトに変換 (useCalendarにもあるが、ここでは依存しないように再定義)
+const parseDateAsLocal = (dateStr: string): Date => new Date(`${dateStr}T00:00:00`);
 
 interface Props {
   date?: string,
   participantIds?: string[],
-  initialData?: any // EventFormData
+  initialData?: EventData // EventFormData
 }
 
 const props = withDefaults(defineProps<Props>(), {})
@@ -707,7 +712,6 @@ const tempSelection = ref<string[]>([])
 
 const participants = ref<MasterItem[]>([])
 const participantsMaster = computed(() => {
-  // 1. ユーザーリストと自社リストを結合する
   const combinedList = [
     ...participants.value,
     ...(ownCompanies.value?.map(company => {
@@ -721,8 +725,6 @@ const participantsMaster = computed(() => {
     }) ?? [])
   ]
 
-  // 2. 結合したリストに対して重複情報をリアクティブに適用する
-  // (conflicts.value が変更されると、この computed も再計算されます)
   return combinedList.map(item => {
     const conflict = conflicts.value.find(c => c.id === item.id && c.type === 'participant')
     if (conflict) {
@@ -760,10 +762,6 @@ const filteredItems = computed((): MasterItem[] | TeamItem[] => {
     ? sourceItems.filter(item => item.name.toLowerCase().includes(query) || (item as MasterItem).department?.toLowerCase().includes(query))
     : sourceItems;
 
-  // ★★★★★
-  // slice() で配列のシャローコピーを作成してから sort() を呼び出す。
-  // これにより、元のリアクティブな配列を変更することなく、ソートされた新しい配列を返すことができる。
-  // ★★★★★
   return filtered.slice().sort((a, b) => {
     if (a.code > b.code) return 1;
     if (a.code < b.code) return -1;
@@ -832,16 +830,13 @@ watch(() => formData.dateType, (newType) => {
 });
 
 const targetDate = computed(() => {
+  let dateStr = '';
   switch (formData.dateType) {
-    case 'single':
-      return new Date(formData.date);
-    case 'range':
-      return new Date(formData.startDate);
-    case 'recurring':
-      return new Date(formData.recurringStartDate);
-    default:
-      return new Date();
+    case 'single': dateStr = formData.date; break;
+    case 'range': dateStr = formData.startDate; break;
+    case 'recurring': dateStr = formData.recurringStartDate; break;
   }
+  return dateStr ? parseDateAsLocal(dateStr) : new Date();
 })
 
 const openParticipantModal = () => {
@@ -906,13 +901,10 @@ const removeParticipant = (id: string) => { const i = formData.participantIds.in
 const removeFacility = (id: string) => { const i = formData.facilityIds.indexOf(id); if (i > -1) { formData.facilityIds.splice(i, 1); } }
 const removeEquipment = (id: string) => { const i = formData.equipmentIds.indexOf(id); if (i > -1) { formData.equipmentIds.splice(i, 1); } }
 
-// Set start/end times to 09:00 - 18:00 (visual-only, client-side)
 const setAlldayTimes = (e?: Event) => {
   formData.startTime = '09:00'
   formData.endTime = '18:00'
-  // clear any time-related validation error
   clearError('time')
-  // remove focus from the clicked button so UI doesn't keep focus styles
   try {
     const target = e?.currentTarget as HTMLElement | undefined
     target?.blur()
@@ -920,9 +912,6 @@ const setAlldayTimes = (e?: Event) => {
     // noop
   }
 }
-
-const getModalIcon = () => { /* ... */ }
-const getModalTitle = () => { /* ... */ }
 
 const getSearchPlaceholder = () => {
   if (modalType.value === 'participant' && modalView.value === 'teams') {
@@ -937,45 +926,47 @@ const getSearchPlaceholder = () => {
 }
 
 const checkConflicts = async () => {
-  if(isLoading.value) return
-  conflicts.value = []
-  if (!formData.date || !formData.startTime || !formData.endTime) {
+  if (isLoading.value || formData.dateType !== 'single' || !formData.date || !formData.startTime || !formData.endTime) {
+    conflicts.value = []
     updateMasterConflicts()
     return
   }
 
+  const checkDate = formData.date;
+  const startTime = formData.startTime;
+  const endTime = formData.endTime;
+
   try {
     isLoading.value = true
+    
+    // キャッシュ方式でも、リソース別取得関数は必要
     const results = await Promise.all([
-      ...formData.participantIds.map(id => getEventsByParticipantInRange(id, formData.date, formData.date)),
-      ...formData.facilityIds.map(id => getEventsByFacilityInRange(id, formData.date, formData.date)),
-      ...formData.equipmentIds.map(id => getEventsByEquipmentInRange(id, formData.date, formData.date)),
+      ...formData.participantIds.map(id => getEventsByParticipantInRange(id, checkDate, checkDate)),
+      ...formData.facilityIds.map(id => getEventsByFacilityInRange(id, checkDate, checkDate)),
+      ...formData.equipmentIds.map(id => getEventsByEquipmentInRange(id, checkDate, checkDate)),
     ])
 
     const allEvents = results.flat()
-    
-    // --- 変更点 1: 取得した予定の重複をIDベースで排除 ---
+
     const uniqueEventsMap = new Map()
     allEvents.forEach(event => {
-      if (event && event.id) { // eventオブジェクトとidの存在を確認
+      if (event && event.id && event.id !== props.initialData?.id) {
         uniqueEventsMap.set(event.id, event)
       }
     })
     const uniqueEvents = Array.from(uniqueEventsMap.values()) as EventDisplay[]
-    // ----------------------------------------------------
 
-    const startDateTime = new Date(`${formData.date}T${formData.startTime}:00`)
-    const endDateTime = new Date(`${formData.date}T${formData.endTime}:00`)
+    const startDateTime = new Date(`${checkDate}T${startTime}:00`)
+    const endDateTime = new Date(`${checkDate}T${endTime}:00`)
 
-    // --- 変更点 2: 重複排除後のユニークな予定リストに対して一度だけループ処理を行う ---
+    conflicts.value = []
+
     uniqueEvents.forEach(event => {
       const eventStart = new Date(`${event.date}T${event.startTime}:00`)
       const eventEnd = new Date(`${event.date}T${event.endTime}:00`)
 
-      // 時間の重複があるかチェック
       if ((startDateTime < eventEnd) && (endDateTime > eventStart)) {
         
-        // 参加者のチェック
         const conflictingPids = event.participantIds?.filter(pid => formData.participantIds.includes(pid)) || []
         conflictingPids.forEach(pid => {
           const user = participantsMaster.value.find(u => u.id === pid)
@@ -990,7 +981,6 @@ const checkConflicts = async () => {
           })
         })
 
-        // 施設のチェック
         const conflictingFids = event.facilityIds?.filter(fid => formData.facilityIds.includes(fid)) || []
         conflictingFids.forEach(fid => {
           const facility = facilitiesMaster.value.find(f => f.id === fid)
@@ -1005,7 +995,6 @@ const checkConflicts = async () => {
           })
         })
 
-        // 備品のチェック
         const conflictingEids = event.equipmentIds?.filter(eid => formData.equipmentIds.includes(eid)) || []
         conflictingEids.forEach(eid => {
           const equipment = equipmentMaster.value.find(e => e.id === eid)
@@ -1021,7 +1010,6 @@ const checkConflicts = async () => {
         })
       }
     })
-    // ----------------------------------------------------------------------
     
   } catch (error) {
     console.error('重複チェックエラー:', error)
@@ -1032,14 +1020,15 @@ const checkConflicts = async () => {
   }
 }
 
-// フォームの変更をキャッチして重複チェックを実行
-watch(() => [formData.date, formData.startTime, formData.endTime, formData.participantIds, formData.facilityIds, formData.equipmentIds], () => {
-  checkConflicts()
+watch(() => [formData.dateType, formData.date, formData.startTime, formData.endTime, formData.participantIds, formData.facilityIds, formData.equipmentIds], () => {
+  if (formData.dateType === 'single') {
+    checkConflicts()
+  } else {
+    clearConflicts()
+  }
 })
 
 const updateMasterConflicts = () => {
-  // participants.value への代入が不要になったため、
-  // markConflicts の型定義から 'participant' を削除
   const markConflicts = (items: MasterItem[], type: 'facility' | 'equipment') => {
     return items.map(item => {
       const conflict = conflicts.value.find(c => c.id === item.id && c.type === type)
@@ -1050,22 +1039,48 @@ const updateMasterConflicts = () => {
       }
     })
   }
-
-  // participants.value = markConflicts(participantsMaster.value, 'participant') // <- 問題の行を削除
   
-  // 施設と備品はこれまで通り更新
   facilitiesMaster.value = markConflicts(facilitiesMaster.value, 'facility')
   equipmentMaster.value = markConflicts(equipmentMaster.value, 'equipment')
 }
 
 const clearConflicts = () => { conflicts.value = []; updateMasterConflicts() }
 
-const getConflictIcon = (type: string) => { /* ... */ }
-const getConflictTypeName = (type: string) => { /* ... */ }
-const formatDate = (date: string) => new Date(date).toLocaleDateString('ja-JP')
+const getConflictIcon = (type: string) => { 
+  switch(type) {
+    case 'participant': return 'mdi-account-alert';
+    case 'facility': return 'mdi-office-building-alert';
+    case 'equipment': return 'mdi-chair-rolling'; 
+    default: return 'mdi-alert-circle';
+  }
+}
+const getConflictTypeName = (type: string) => { 
+  switch(type) {
+    case 'participant': return '参加者';
+    case 'facility': return '施設';
+    case 'equipment': return '備品';
+    default: return '不明';
+  }
+}
+// ⭐︎ 修正点: useCalendarから復活したformatDateを使用
+// const formatDate = (date: string) => formatDate(parseDateAsLocal(date)); 
 
-const validateField = (fieldName: keyof any) => { /* ... */ }
-const validateTimeFields = () => { /* ... */ }
+const validateField = (fieldName: keyof any) => { 
+  if (fieldName === 'eventTitle' && !formData.title) errors.eventTitle = '予定タイトルは必須です';
+  if (fieldName === 'eventDate' && formData.dateType === 'single' && !formData.date) errors.eventDate = '日付は必須です';
+  if (fieldName === 'startDate' && formData.dateType === 'range' && !formData.startDate) errors.startDate = '開始日は必須です';
+  if (fieldName === 'endDate' && formData.dateType === 'range' && (!formData.endDate || formData.endDate < formData.startDate)) errors.endDate = '有効な終了日を選択してください';
+  if (fieldName === 'recurringStartDate' && formData.dateType === 'recurring' && !formData.recurringStartDate) errors.recurringStartDate = '開始日は必須です';
+}
+const validateTimeFields = () => { 
+  if (!formData.startTime || !formData.endTime) {
+    errors.time = '開始時間と終了時間は必須です';
+    return;
+  }
+  if (formData.startTime >= formData.endTime) {
+    errors.time = '終了時間は開始時間より後に設定してください';
+  }
+}
 const validateForm = (): boolean => {
   Object.keys(errors).forEach(key => delete errors[key as keyof any])
   validateField('eventTitle')
@@ -1088,19 +1103,35 @@ const emit = defineEmits<{ (e: 'submit', data: any): void }>()
 
 const handleSubmit = async () => {
   if (!validateForm()) return showNotification('入力内容を確認してください', 'error')
-  if (conflicts.value.length > 0 && !confirm('重複があります。保存しますか？')) return
+  
+  if (formData.dateType === 'single' && conflicts.value.length > 0 && !confirm('重複があります。保存しますか？')) return
 
-  isLoading.value = true
-  try {
-    emit('submit', { ...formData })
-    showNotification('予定が正常に保存されました！')
-    resetForm()
-  } catch (error) {
-    console.error('保存エラー:', error)
-    showNotification('保存に失敗しました', 'error')
-  } finally {
-    isLoading.value = false
-  }
+  emit('submit', formData)
+
+  // isLoading.value = true
+  // try {
+  //   let eventIds: string[] = []
+    
+  //   if (props.initialData) {
+  //     // 既存データがある場合は更新
+  //     // NOTE: 単一イベントのみサポート（updateEventの制限による）
+  //     eventIds = await updateEvent(props.initialData, { ...formData }) // 👈 updateEventを呼び出す
+  //     showNotification('予定が正常に更新されました！') // 👈 メッセージを更新用に変更
+  //   } else {
+  //     // 既存データがない場合は新規作成
+  //     eventIds = await createEvent({ ...formData })
+  //     showNotification('予定が正常に保存されました！')
+  //   }
+    
+  //   console.log(`Processed event IDs: ${eventIds.join(', ')}`)
+
+  //   resetForm()
+  // } catch (error) {
+  //   console.error('処理エラー:', error)
+  //   showNotification('保存/更新に失敗しました', 'error')
+  // } finally {
+  //   isLoading.value = false
+  // }
 }
 
 const handleCancel = () => { if (confirm('入力内容が失われますが、よろしいですか？')) { resetForm(); back() } }
@@ -1117,15 +1148,23 @@ const selected = ref<MasterItem>();
 const events = ref<any[]>([]) // EventDisplay[]
 
 const viewUsageStatus = async (item: MasterItem) => {
-  if (item && formData.date) {
+  let checkDate = '';
+  switch (formData.dateType) {
+    case 'single': checkDate = formData.date; break;
+    case 'range': checkDate = formData.startDate; break;
+    case 'recurring': checkDate = formData.recurringStartDate; break;
+  }
+
+  if (item && checkDate) {
     selected.value = item
-    date.value = new Date(`${formData.date}T00:00:00`)
+    date.value = parseDateAsLocal(checkDate) 
+    
     if (modalType.value === 'participant') {
-      events.value = await getEventsByParticipantInRange(item.id, formData.date, formData.date)
+      events.value = await getEventsByParticipantInRange(item.id, checkDate, checkDate)
     } else if (modalType.value === 'facility') {
-      events.value = await getEventsByFacilityInRange(item.id, formData.date, formData.date)
+      events.value = await getEventsByFacilityInRange(item.id, checkDate, checkDate)
     } else if (modalType.value === 'equipment') {
-      events.value = await getEventsByEquipmentInRange(item.id, formData.date, formData.date)
+      events.value = await getEventsByEquipmentInRange(item.id, checkDate, checkDate)
     }
     dialog.value = true
   }
@@ -1143,26 +1182,50 @@ const eventRelatedParties = computed(() => {
 const relatedPartyEvents = ref<EventDisplay[]>([]) // EventDisplay[]
 
 const showEventRelatedParties = async () => {
+  let targetDateString = '';
+  switch (formData.dateType) {
+    case 'single':
+      targetDateString = formData.date;
+      break;
+    case 'range':
+      targetDateString = formData.startDate;
+      break;
+    case 'recurring':
+      targetDateString = formData.recurringStartDate;
+      break;
+    default:
+      targetDateString = formatDateForDb(new Date());
+  }
+  
+  if (!targetDateString) {
+      console.warn('Target date is not set for viewing related parties.');
+      return;
+  }
+  
+  const displayDate = parseDateAsLocal(targetDateString);
+
   let result: EventDisplay[] = []
   for (const e of eventRelatedParties.value) {
+    let eventsForResource: EventDisplay[] = [];
     switch (e.type) {
       case 'user':
-        let userEvents = await getEventsByParticipantInRange(e.id, formData.date, formData.date);
-        userEvents = userEvents.filter(e => { return result.findIndex(e2 => e2.id === e.id) < 0 })
-        result = [...result, ...userEvents]
-        break
+        eventsForResource = await getEventsByParticipantInRange(e.id, targetDateString, targetDateString);
+        break;
       case 'facility':
-        let facilityEvents = await getEventsByFacilityInRange(e.id, formData.startDate, formData.startDate);
-        facilityEvents = facilityEvents.filter(e => { return result.findIndex(e2 => e2.id === e.id) < 0 })
-        result = [...result, ...facilityEvents]
-        break
+        eventsForResource = await getEventsByFacilityInRange(e.id, targetDateString, targetDateString);
+        break;
       case 'equipment':
-        let equipmentEvents = await getEventsByEquipmentInRange(e.id, formData.recurringStartDate, formData.recurringStartDate);
-        equipmentEvents = equipmentEvents.filter(e => { return result.findIndex(e2 => e2.id === e.id) < 0 })
-        result = [...result, ...equipmentEvents]
-        break
+        eventsForResource = await getEventsByEquipmentInRange(e.id, targetDateString, targetDateString);
+        break;
     }
+    
+    eventsForResource.forEach(event => {
+      if (!result.some(e2 => e2.id === event.id)) {
+        result.push(event);
+      }
+    });
   }
+  
   relatedPartyEvents.value = result
   isShowEventRelatedParties.value = true
 }
@@ -1185,11 +1248,7 @@ onMounted(() => {
       } else if (user.value) {
         formData.participantIds.push(user.value.uid);
       }
-      console.log(`props-participantIds: ${JSON.stringify(props.participantIds)}`)
-      console.log(`participantsMaster: ${JSON.stringify(participantsMaster.value)}`)
       formData.participants = participantsMaster.value.filter(p => formData.participantIds.includes(p.id)).map(p => p.name);
-      console.log(`formData-participantIds: ${JSON.stringify(formData.participantIds)}`)
-      console.log(`formData-participants: ${JSON.stringify(formData.participants)}`)
       checkConflicts()
     }
   })
@@ -1221,33 +1280,6 @@ onMounted(() => {
     }))
   })
 })
-
-// ユーザー、施設、備品の予定重複チェック
-// const isConflicted = (id: string, event: EventDisplay, events: EventDisplay[]) => {
-//   const result = events.some(e => {
-//     if (e.id === event.id) return false; // 同じイベントは無視
-//     if (e.participantIds?.includes(id) ||
-//       e.facilityIds?.includes(id) ||
-//       e.equipmentIds?.includes(id)) {
-//       // 日付が同じで時間が重複しているかチェック
-//       if (e.date === event.date) {
-//         const [eStartHour, eStartMinute] = e.startTime.split(':').map(Number);
-//         const [eEndHour, eEndMinute] = e.endTime.split(':').map(Number);
-//         const [eventStartHour, eventStartMinute] = event.startTime.split(':').map(Number);
-//         const [eventEndHour, eventEndMinute] = event.endTime.split(':').map(Number);
-
-//         const eStart = eStartHour * 60 + eStartMinute;
-//         const eEnd = eEndHour * 60 + eEndMinute;
-//         const eventStart = eventStartHour * 60 + eventStartMinute;
-//         const eventEnd = eventEndHour * 60 + eventEndMinute;
-
-//         return (eventStart < eEnd && eventEnd > eStart); // 時間が重複している場合
-//       }
-//     }
-//     return false;
-//   });
-//   return result;
-// }
 </script>
 
 <style scoped>

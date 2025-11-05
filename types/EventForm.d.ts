@@ -69,6 +69,7 @@ declare global {
 
   interface EventData {
     id?: string;
+    masterId?: string;
     title: string;
     dateType: DateType;
     date?: string;
