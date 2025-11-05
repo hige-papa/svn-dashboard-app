@@ -42,7 +42,7 @@ const showNotification = (message: string, type: 'success' | 'error' | 'info' = 
   setTimeout(() => { notification.show = false }, 3000)
 }
 
-const update = async (data: any) => {
+const update = async (data: EventFormData) => {
   try {
     // イベントデータを更新
     await updateEventAndRefresh(origin.value, data);

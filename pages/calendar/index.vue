@@ -2,6 +2,8 @@
   <div class="container">
     <CalendarHeader @go-to-today="handleGoToToday" @start-register="registerDialog=true" />
 
+    <!-- {{ events }} -->
+
     <div class="sub-header">
       <div class="view-selector">
         <button class="view-btn" :class="{ 'active': currentView === 'daily' }" @click="switchView('daily')"
@@ -787,7 +789,7 @@ const handleCloseView = () => {
 const handleDelete = (id: string) => {
   deleteEventAndRefresh(id).then(_ => {
     // 削除後はデータを強制的に再ロード (マスターデータキャッシュもリフレッシュ)
-    loadData(true); 
+    // loadData(true); 
     viewDialog.value = false
   })
 }
@@ -837,12 +839,18 @@ const handleCopy = () => {
 
 }
 
+watch(events, () => {
+  console.log('[Calendar] Events updated. Total events loaded:', events.value.length);
+}, { deep: true });
+
 const registerDialog = ref<boolean>(false);
 
-const handleRegistered = () => {
+const handleRegistered = (event: EventDisplay) => {
   registerDialog.value = false;
+  console.log('Event registered:', event);
+  events.value.push(event);
   // 登録後はデータを強制的に再ロード
-  loadData(true);
+  // loadData(true);
 }
 
 const handleRegisterError = (error: any) => {
@@ -852,10 +860,15 @@ const handleRegisterError = (error: any) => {
 
 const editorDialog = ref<boolean>(false);
 
-const handleUpdated = (event: EventDisplay | EventData) => {
+const handleUpdated = (event: EventDisplay) => {
   editorDialog.value = false;
+  console.log('Event updated:', event);
+  const index = events.value.findIndex(e => e.id === event.id);
+  if (index !== -1) {
+    events.value[index] = event;
+  }
   // 更新後はデータを強制的に再ロード
-  loadData(true);
+  // loadData(true);
 };
 
 const handleEditorError = (error: any) => {

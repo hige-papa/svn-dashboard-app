@@ -193,7 +193,7 @@ export const useCalendar = () => {
             events.value.push(maskedEvent);
 
             // 3. ソートして表示を更新
-            events.value.sort((a, b) =>
+            events.value = events.value.sort((a, b) =>
                 a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)
             );
         }
@@ -237,7 +237,7 @@ export const useCalendar = () => {
             }
 
             // 3. ソートして表示を更新
-            events.value.sort((a, b) =>
+            events.value = events.value.sort((a, b) =>
                 a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)
             );
         }

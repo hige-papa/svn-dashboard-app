@@ -53,9 +53,9 @@ const showNotification = (message: string, type: 'success' | 'error' | 'info' = 
 const handleSubmit = async (formData: EventFormData) => {
   try {
     // フォームデータを eventService の createEvent 関数に渡す
-    await createEventAndRefresh(formData);
+    const ids = await createEventAndRefresh(formData);
     showNotification('予定が正常に登録されました！')
-    emit('registered');
+    emit('registered', { ...formData, id: ids[0] });
   } catch (error) {
     console.error("イベントの登録に失敗しました:", error);
     showNotification('登録に失敗しました', 'error')
