@@ -162,9 +162,9 @@
 import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import { useCalendar } from '~/composables/useCalendar';
 import { useDisplay } from 'vuetify'
-import { useTransaction } from '~/composables/transaction/useTransaction'
-import type { User } from 'firebase/auth';
-import { padStart } from 'vuetify/lib/util/helpers.mjs';
+// import { useTransaction } from '~/composables/transaction/useTransaction'
+// import type { User } from 'firebase/auth';
+// import { padStart } from 'vuetify/lib/util/helpers.mjs';
 import { useDailyOptions } from '~/composables/useDailyOptions'
 // import { useFacility } from '~/composables/useFacility'
 // import { useEquipment } from '~/composables/useEquipment'
@@ -188,25 +188,25 @@ const user = useState<ExtendedUserProfile>('userProfile')
 
 const { mobile } = useDisplay()
 
-// コンポーネントのインポート
-import CalendarHeader from '~/components/Calendar/CalendarHeader.vue';
-import NavControls from '~/components/Calendar/NavControls.vue';
-import EventView from '~/components/Calendar/EventView.vue';
-import DailyOptionForm from '~/components/Calendar/DailyOptionForm.vue';
-// import EventDetail from '~/components/EventDetail.vue';
+// // コンポーネントのインポート
+// import CalendarHeader from '~/components/Calendar/CalendarHeader.vue';
+// import NavControls from '~/components/Calendar/NavControls.vue';
+// import EventView from '~/components/Calendar/EventView.vue';
+// import DailyOptionForm from '~/components/Calendar/DailyOptionForm.vue';
+// // import EventDetail from '~/components/EventDetail.vue';
 
-// デイリービュー用コンポーネント
-import DailyTimeline from '~/components/Calendar/DailyView/DailyTimeline.vue';
-import EventsList from '~/components/Calendar/EventsList.vue';
+// // デイリービュー用コンポーネント
+// import DailyTimeline from '~/components/Calendar/DailyView/DailyTimeline.vue';
+// import EventsList from '~/components/Calendar/EventsList.vue';
 
-// 週間ビュー用コンポーネント
-import WeeklyCalendarView from '~/components/Calendar/WeeklyView/WeeklyCalendarView.vue';
-// import UserFilter from '~/components/WeeklyView/UserFilter.vue';
+// // 週間ビュー用コンポーネント
+// import WeeklyCalendarView from '~/components/Calendar/WeeklyView/WeeklyCalendarView.vue';
+// // import UserFilter from '~/components/WeeklyView/UserFilter.vue';
 
-// 月間ビュー用コンポーネント
-// import WeekdayHeader from '~/components/MonthlyView/WeekdayHeader.vue';
-import CalendarGrid from '~/components/Calendar/MonthlyView/CalendarGrid.vue';
-// import SelectedDayDetail from '~/components/MonthlyView/SelectedDayDetail.vue';
+// // 月間ビュー用コンポーネント
+// // import WeekdayHeader from '~/components/MonthlyView/WeekdayHeader.vue';
+// import CalendarGrid from '~/components/Calendar/MonthlyView/CalendarGrid.vue';
+// // import SelectedDayDetail from '~/components/MonthlyView/SelectedDayDetail.vue';
 
 // タブ状態保持用のキー
 const CALENDAR_VIEW_STORAGE_KEY = 'calendar-current-view';

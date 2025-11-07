@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "tascal-stg",
     "public": ".output/public",
     "ignore": [
       "firebase.json",

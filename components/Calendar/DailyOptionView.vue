@@ -321,7 +321,7 @@ const confirmDelete = () => {
     background-color: #c0392b;
 }
 
-/* .modal-overlay,
+.modal-overlay,
 .modal-container,
 .modal-header,
 .modal-title,
@@ -330,7 +330,7 @@ const confirmDelete = () => {
 .modal-footer,
 .delete-warning {
     /* EventView.vueからモーダル関連のスタイルをコピー */
-} */
+}
 
 .modal-overlay {
     position: fixed;

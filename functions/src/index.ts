@@ -175,7 +175,7 @@ const uploadCacheFile = async (cacheKey: string, data: any): Promise<string> => 
  * 既存の全イベントを走査し、週ごとのキャッシュファイルを一括で生成する
  * (HTTPトリガーとして、運用開始時に一度だけ手動で実行することを想定)
  */
-export const initialCacheGeneration = functions.region('asia-northeast1')
+export const initialCacheGeneration = functions//.region('asia-northeast1')
     .runWith({ timeoutSeconds: 300, memory: '1GB' }) // 大量データ処理のため設定を増強
     .https.onRequest(async (req, res) => {
         // 🚨 運用上のセキュリティ確保:
@@ -230,7 +230,7 @@ export const initialCacheGeneration = functions.region('asia-northeast1')
  * イベントの作成、更新、削除時にキャッシュファイルを再生成する
  * トリガーは一つの関数にまとめることで、イベントがどの操作で変更されても対応できる
  */
-export const onEventChangeRecalculateCache = functions.region('asia-northeast1')
+export const onEventChangeRecalculateCache = functions//.region('asia-northeast1')
     .firestore.document('events/{eventId}')
     .onWrite(async (change, context) => {
         const beforeData = change.before.data() as EventData | undefined;

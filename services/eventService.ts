@@ -11,7 +11,7 @@ const { generateUuid } = useUuid()
 // --- 定数 (Functionsと同期) ---
 const TIME_ZONE = 'Asia/Tokyo';
 const CACHE_BASE_URL = 'https://firebasestorage.googleapis.com/v0/b/';
-const PROJECT_ID = 'tascal-app-a344b'; 
+const PROJECT_ID = 'tascal-app-e3c28'; 
 const CACHE_PATH = 'o/calendar-cache%2F';
 
 export const useEventService = () => {
