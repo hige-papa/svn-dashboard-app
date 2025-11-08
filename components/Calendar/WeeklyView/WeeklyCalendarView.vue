@@ -32,8 +32,8 @@
             <div class="d-flex align-center justify-center gap-3">
               <div class="day-date">{{ formatShortDate(day) }}</div>
               <v-chip v-if="getOfficeCountOptimized(day) > 0" size="small" color="primary" variant="outlined"
-                class="office-count-chip">
-                <v-icon icon="mdi-office-building" size="x-small" class="mr-1"></v-icon>
+                class="office-count-chip ml-2">
+                <v-icon icon="mdi-office-building" size="small" class="mr-1"></v-icon>
                 {{ getOfficeCountOptimized(day) }}人
               </v-chip>
             </div>
@@ -88,11 +88,13 @@
                 :class="['event', 'event-type']"
                 :style="{ '--event-color': isViewable(event) ? `${eventTypeDetails[event.eventType]?.color}` : 'grey' }">
                 <template v-if="isViewable(event)">
-                  <div v-if="event.conflicted" class="pa-0 ma-0 d-flex align-center">
-                    <v-icon icon="mdi-alert-circle" size="small" color="warning"
-                      class="mr-1"></v-icon>
-                    <span class="text-warning" style="font-size: 10px;">重複予定あり</span>
-                  </div>
+                  <!--
+                    <div v-if="event.conflicted" class="pa-0 ma-0 d-flex align-center">
+                      <v-icon icon="mdi-alert-circle" size="small" color="warning"
+                        class="mr-1"></v-icon>
+                      <span class="text-warning" style="font-size: 10px;">重複予定あり</span>
+                    </div>
+                  -->
                   <div class="event-time-range">{{ event.startTime }}-{{ event.endTime }}</div>
                   <div class="event-title">{{ event.title }}</div>
                 </template>

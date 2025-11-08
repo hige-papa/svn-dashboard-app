@@ -1,7 +1,8 @@
 // composables/useDailyOptions.ts
 import { ref, watch, onMounted, type Ref } from 'vue';
 import { useDailyOptionService } from '~/services/dailyOptionService';
-import { getMasterDataCacheAsync, masterDataCache } from '~/composables/useCalendar';
+// 修正: getMasterDataCacheAsync を削除し、getDailyOptionsCacheAsync をインポート
+import { getDailyOptionsCacheAsync, masterDataCache } from '~/composables/useCalendar';
 
 // useCalendarなど、他のComposableから日付やビューのRefを受け取り、同期することを想定
 export const useDailyOptions = (currentDate: Ref<Date | null>, currentView: Ref<string>) => {
@@ -53,7 +54,12 @@ export const useDailyOptions = (currentDate: Ref<Date | null>, currentView: Ref<
     try {
       const dateRange = getCurrentDateRange();
       // Use cache for daily options
-      const result = await getMasterDataCacheAsync('dailyOptions', false, {
+      // const result = await getMasterDataCacheAsync('dailyOptions', false, {
+      //   startDate: dateRange.startDate,
+      //   endDate: dateRange.endDate
+      // });
+      // 修正: getMasterDataCacheAsync から getDailyOptionsCacheAsync に変更
+      const result = await getDailyOptionsCacheAsync(false, { 
         startDate: dateRange.startDate,
         endDate: dateRange.endDate
       });
@@ -81,7 +87,7 @@ export const useDailyOptions = (currentDate: Ref<Date | null>, currentView: Ref<
   };
 
   // --- Actions ---
-  /**
+/**
    * ユーザーの日別ステータスを設定（作成/更新）し、データを再読み込みします。
    * @param optionData 保存するデータ
    */
@@ -92,7 +98,8 @@ export const useDailyOptions = (currentDate: Ref<Date | null>, currentView: Ref<
       // Clear dailyOptions cache (all date ranges)
       const keysToDelete: string[] = [];
       masterDataCache.value.forEach((_, key) => {
-        if (key.startsWith('dailyOptions:')) {
+        // 修正: 'dailyOptions:' で始まるキーをすべて削除 (新形式のキーに対応)
+        if (key.startsWith('dailyOptions:')) { 
           keysToDelete.push(key);
         }
       });

@@ -5,6 +5,7 @@ import { useEventService } from '~/services/eventService';
 import { useMaster } from '~/composables/master/useMaster';
 import { printFirestoreDebugSummary } from '~/composables/firebase/useFirestore';
 import moment from 'moment-timezone';
+import { where } from 'firebase/firestore';
 
 type CalendarView = 'daily' | 'weekly' | 'monthly';
 
@@ -30,6 +31,73 @@ const CACHE_DURATION_MS = 10 * 60 * 60 * 1000;
 const DAILY_OPTIONS_CACHE_DURATION_MS = 60 * 60 * 1000;
 
 type MasterDataKey = 'users' | 'holidays' | 'dailyOptions' | 'facilities' | 'equipments';
+
+/**
+ * DailyOptions専用のキャッシュキーを生成する
+ * @param startDate 範囲の開始日 (YYYY-MM-DD)
+ * @param endDate 範囲の終了日 (YYYY-MM-DD)
+ * @returns キャッシュキー文字列
+ */
+const getDailyOptionsCacheKey = (startDate: string, endDate: string): string => {
+    return `dailyOptions:${startDate}_${endDate}`;
+};
+
+/**
+ * Master data cache API for dailyOptions (useDailyOptionsから利用)
+ * 日付範囲をキャッシュキーに含めて、キャッシュを日付範囲ごとに分離する。
+ */
+export const getDailyOptionsCacheAsync = async (
+    forceRefresh = false,
+    options: { startDate: string; endDate: string } // options を必須にする
+): Promise<{ data: any; fromCache: boolean; timestamp: number }> => {
+    const { startDate, endDate } = options;
+    const now = Date.now();
+    const cacheKey = getDailyOptionsCacheKey(startDate, endDate); // 日付範囲をキーに含める
+    const cache = masterDataCache.value.get(cacheKey);
+    const duration = DAILY_OPTIONS_CACHE_DURATION_MS;
+
+    if (!forceRefresh && cache && now - cache.timestamp < duration) {
+        if (cache.promise) {
+            await cache.promise;
+            const updatedCache = masterDataCache.value.get(cacheKey);
+            if (updatedCache) {
+                return { data: updatedCache.data, fromCache: true, timestamp: updatedCache.timestamp };
+            }
+            return { data: cache.data, fromCache: true, timestamp: cache.timestamp };
+        }
+        return { data: cache.data, fromCache: true, timestamp: cache.timestamp };
+    }
+
+    // ここで useMaster('dailyOptions') を使う代わりに、専用の service を使用するロジックが必要だが、
+    // useCalendar.tsでは useMaster() しか使えないため、この関数は useDailyOptionService に依存すべきではない。
+    // useDailyOptions.ts で dailyOptionService.getDailyOptionsAsync(startDate, endDate) を直接呼ぶべき。
+
+    // しかし、元のコードが getMasterDataCacheAsync を使っているため、マスターデータとして扱う前提を維持します。
+    // ここでは、useMaster('dailyOptions') が日付範囲を自動的に処理することを期待します（元のコードの意図）。
+
+    const masterService = useMaster('daily_user_options');
+    // useMaster('dailyOptions') の getListAsync() が options を考慮する実装になっていることを期待
+    const query = [
+        where('date', '>=', startDate),
+        where('date', '<=', endDate)
+    ]
+    const fetchPromise = masterService.getListAsync(...query); // optionsを渡す
+
+    masterDataCache.value.set(cacheKey, { data: [], timestamp: now, promise: fetchPromise });
+
+    try {
+        const data = await fetchPromise;
+
+        const newCacheEntry = { data: data, timestamp: Date.now() };
+        masterDataCache.value.set(cacheKey, newCacheEntry);
+
+        return { data: data, fromCache: false, timestamp: newCacheEntry.timestamp };
+    } catch (error) {
+        console.error(`Failed to fetch dailyOptions for range: ${startDate} - ${endDate}`, error);
+        masterDataCache.value.delete(cacheKey);
+        throw error;
+    }
+};
 
 /**
  * Master data cache API (既存ロジックを流用)
