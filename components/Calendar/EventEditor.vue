@@ -1,5 +1,5 @@
 <template>
-  <EventForm v-if="event" :initial-data="event"  @submit="update"></EventForm>
+  <EventForm v-if="event" :initial-data="event"  @submit="update" @cancel="handleCansel"></EventForm>
 
   <Transition name="notification">
     <div v-if="notification.show" class="notification" :class="notification.type">
@@ -27,7 +27,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const emit = defineEmits(['updated', 'error']);
+const emit = defineEmits(['updated', 'cancel', 'error']);
 
 const eventId = computed(() => props.eventId);
 
@@ -53,6 +53,10 @@ const update = async (data: EventFormData) => {
     showNotification('更新に失敗しました', 'error')
     emit('error', error);
   }
+}
+
+const handleCansel = () => {
+  emit('cancel');
 }
 
 onMounted(async () => {

@@ -630,7 +630,7 @@ const user = useState<User>('user')
 
 const { mobile } = useDisplay()
 
-const { back } = useRouter()
+// const { back } = useRouter()
 const { getListAsync: getUsersAsync } = useMaster('users')
 const { getListAsync: getFacilitiesAsync } = useFacility()
 const { getListAsync: getEquipmentsAsync } = useEquipment()
@@ -1099,7 +1099,7 @@ const showNotification = (message: string, type: 'success' | 'error' | 'info' = 
   setTimeout(() => { notification.show = false }, 3000)
 }
 
-const emit = defineEmits<{ (e: 'submit', data: any): void }>()
+const emit = defineEmits(['submit', 'cancel'])
 
 const handleSubmit = async () => {
   if (!validateForm()) return showNotification('入力内容を確認してください', 'error')
@@ -1134,7 +1134,7 @@ const handleSubmit = async () => {
   // }
 }
 
-const handleCancel = () => { if (confirm('入力内容が失われますが、よろしいですか？')) { resetForm(); back() } }
+const handleCancel = () => { if (confirm('入力内容が失われますが、よろしいですか？')) { resetForm(); emit('cancel') } }
 const resetForm = () => {
   Object.keys(errors).forEach(key => delete errors[key as keyof any])
   conflicts.value = []

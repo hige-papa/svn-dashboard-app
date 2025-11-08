@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <CalendarHeader @go-to-today="handleGoToToday" @start-register="registerDialog=true" />
+    <CalendarHeader @go-to-today="handleGoToToday" @start-register="registerDialog = true" />
 
     <!-- {{ events }} -->
 
@@ -24,7 +24,7 @@
         <NavControls :display-label="navDisplayLabel" :previous-label="navPreviousLabel" :next-label="navNextLabel"
           :loading="isLoading" @previous="handlePrevious" @next="handleNext" @change-date="handleSelectDay" />
 
-        </div>
+      </div>
     </div>
 
     <div v-if="isLoading" class="loading-overlay">
@@ -39,7 +39,7 @@
           :time-to-pixels="timeToPixels" @event-click="handleShowEventDetails" />
       </div>
 
-      </div>
+    </div>
 
     <div v-else-if="currentView === 'weekly'" class="weekly-view">
       <v-row>
@@ -48,67 +48,53 @@
         </v-col>
         <v-col cols="12" sm="6">
           <div class="d-flex justify-end">
-            <v-checkbox
-              v-model="displayOption.isShowUser"
-              label="ユーザー"
-              density="compact"
-              hide-details
-            ></v-checkbox>
-            <v-checkbox
-              v-model="displayOption.isShowCompany"
-              label="会社"
-              density="compact"
-              hide-details
-              class="ml-2"
-            ></v-checkbox>
-            <v-checkbox
-              v-model="displayOption.isShowFacility"
-              label="施設"
-              density="compact"
-              hide-details
-              class="ml-2"
-            ></v-checkbox>
-            <v-checkbox
-              v-model="displayOption.isShowEquipment"
-              label="備品"
-              density="compact"
-              hide-details
-              class="ml-2"
-            ></v-checkbox>
+            <v-checkbox v-model="displayOption.isShowUser" label="ユーザー" density="compact" hide-details></v-checkbox>
+            <v-checkbox v-model="displayOption.isShowCompany" label="会社" density="compact" hide-details
+              class="ml-2"></v-checkbox>
+            <v-checkbox v-model="displayOption.isShowFacility" label="施設" density="compact" hide-details
+              class="ml-2"></v-checkbox>
+            <v-checkbox v-model="displayOption.isShowEquipment" label="備品" density="compact" hide-details
+              class="ml-2"></v-checkbox>
           </div>
         </v-col>
       </v-row>
       <div>
-        <WeeklyCalendarView :users="visibleUsers" :company="company" :facilities="sortedFacilities" :equipments="sortedEquipments" :week-days="weekDays" :events="events" :daily-options="dailyOptions" :holidays="holidays"
-          :get-user-schedules-for-day="getUserSchedulesForDay" @day-click="handleDayClickForWeekly" />
+        <WeeklyCalendarView :users="visibleUsers" :company="company" :facilities="sortedFacilities"
+          :equipments="sortedEquipments" :week-days="weekDays" :events="events" :daily-options="dailyOptions"
+          :holidays="holidays" :get-user-schedules-for-day="getUserSchedulesForDay"
+          @day-click="handleDayClickForWeekly" />
       </div>
-      </div>
+    </div>
 
     <div v-else-if="currentView === 'monthly'" class="monthly-view pa-1">
       <h2 class="view-title">月間カレンダー</h2>
 
       <div>
         <CalendarGrid v-if="selectedDate" :calendar-days="calendarDays" :selected-date="selectedDate" :events="myEvents"
-          :get-schedules-for-day="getSchedulesForDay" :is-holiday="isHoliday" :get-holiday-name="getHolidayName" :daily-options="myDailyOptions"
-          @day-click="handleDayClickForMonthly" />
+          :get-schedules-for-day="getSchedulesForDay" :is-holiday="isHoliday" :get-holiday-name="getHolidayName"
+          :daily-options="myDailyOptions" @day-click="handleDayClickForMonthly" />
       </div>
-      </div>
+    </div>
 
     <div v-if="currentView === 'daily'">
       <h3 class="list-title">{{ eventListSubtitle }}</h3>
-      <EventsList class="events-list" :date="currentDate ?? new Date()" :events="myCurrentDayEvents" @event-click="handleShowEventDetails" />
+      <EventsList class="events-list" :date="currentDate ?? new Date()" :events="myCurrentDayEvents"
+        @event-click="handleShowEventDetails" />
     </div>
 
-    <aw-dialog v-model="eventListDialog" :draggable="true" :resize="true" :overlay="false" :width="mobile ? '100%' : '50%'" :fullscreen="mobile">
+    <aw-dialog v-model="eventListDialog" :draggable="true" :resize="true" :overlay="false"
+      :width="mobile ? '100%' : '50%'" :fullscreen="mobile">
       <template #title>
         <h3 class="list-title">{{ eventListSubtitle }}</h3>
       </template>
       <v-card flat tile color="transparent">
         <v-card-text>
-          <EventsList v-if="currentView === 'weekly' && selectedDate && selectedUser" :date="selectedDate ?? new Date()" :events="selectedUserDayEvents" @event-click="handleShowEventDetails" :user="selectedUser" />
-          <EventsList v-else-if="currentView === 'monthly' && selectedDate" :date="selectedDate ?? new Date()" :events="mySelectedDayEvents" @event-click="handleShowEventDetails" />
+          <EventsList v-if="currentView === 'weekly' && selectedDate && selectedUser" :date="selectedDate ?? new Date()"
+            :events="selectedUserDayEvents" @event-click="handleShowEventDetails" :user="selectedUser" />
+          <EventsList v-else-if="currentView === 'monthly' && selectedDate" :date="selectedDate ?? new Date()"
+            :events="mySelectedDayEvents" @event-click="handleShowEventDetails" />
         </v-card-text>
-        </v-card>
+      </v-card>
       <template #footer>
         <div class="modal-footer">
           <button type="button" @click="openDailyOptionDialog" class="modal-footer-btn btn-primary">
@@ -121,13 +107,16 @@
       </template>
     </aw-dialog>
 
-    <aw-dialog v-model="dailyOptionDialog" :draggable="true" :resize="true" :overlay="false" width="50%" :fullscreen="mobile">
+    <aw-dialog v-model="dailyOptionDialog" :draggable="true" :resize="true" :overlay="false" width="50%"
+      :fullscreen="mobile">
       <template #title>
         <h3>
           <p class="list-title">{{ dailyOptionSubtitle }}</p>
         </h3>
       </template>
-      <DailyOptionForm v-if="selectedDate" :user="selectedUser" :date="getDateString(selectedDate)" @cancel="handleCancelDailyOption" @submit="handleSubmitDailyOption" :initial-data="dailyOption"></DailyOptionForm>
+      <DailyOptionForm v-if="selectedDate" :user="selectedUser" :date="getDateString(selectedDate)"
+        @cancel="handleCancelDailyOption" @submit="handleSubmitDailyOption" :initial-data="dailyOption">
+      </DailyOptionForm>
     </aw-dialog>
 
     <div class="footer">
@@ -138,23 +127,28 @@
       <template #title>
         <p class="list-title">予定の詳細</p>
       </template>
-      <EventView v-if="eventDetail" :event-data="eventDetail" @edit="handleEditEvent" @delete="handleDelete" @copy="handleCopy" @back="handleCloseView" />
+      <EventView v-if="eventDetail" :event-data="eventDetail" @edit="handleEditEvent" @delete="handleDelete"
+        @copy="handleCopy" @back="handleCloseView" />
     </aw-dialog>
 
-    <AwDialog v-model="registerDialog" :draggable="true" :resize="true" :overlay="false" :initial-width="600" :fullscreen="mobile">
+    <AwDialog v-model="registerDialog" :draggable="true" :resize="true" :overlay="false" :initial-width="600"
+      :fullscreen="mobile">
       <template #title>
         <p class="list-title">予定新規登録</p>
       </template>
-      <EventRegister @registered="handleRegistered" :date="getDateString(selectedDate ?? new Date())" :participant-ids="selectedUser?.uid ? [selectedUser.uid] : undefined" @error="handleRegisterError" />
+      <EventRegister @registered="handleRegistered" :date="getDateString(selectedDate ?? new Date())"
+        :participant-ids="selectedUser?.uid ? [selectedUser.uid] : undefined" @cancel="handleCancelRegister" @error="handleRegisterError" />
     </AwDialog>
 
-    <AwDialog v-model="editorDialog" :draggable="true" :resize="true" :overlay="false" :initial-width="600" :fullscreen="mobile">
+    <AwDialog v-model="editorDialog" :draggable="true" :resize="true" :overlay="false" :initial-width="600"
+      :fullscreen="mobile">
       <template #title>
         <p class="list-title">予定更新</p>
       </template>
-      <EventEditor v-if="selectedEvent?.id" :event-id="selectedEvent.id" @updated="handleUpdated" @error="handleEditorError" />
+      <EventEditor v-if="selectedEvent?.id" :event-id="selectedEvent.id" @cancel="handleCancelEdit" @updated="handleUpdated"
+        @error="handleEditorError" />
     </AwDialog>
-    
+
   </div>
 </template>
 
@@ -276,14 +270,14 @@ const { data: companies } = useMasterData<OwnCompany>('own-company')
 const company = computed(() => {
   if (displayOption.value.isShowCompany === false) return undefined
   return companies.value?.map(company => {
-      return {
-        id: company.id,
-        code: company.code,
-        name: company.displayName || '未設定',
-        department: '',
-        avatar: company.avatar,
-      }
-    })?.[0]
+    return {
+      id: company.id,
+      code: company.code,
+      name: company.displayName || '未設定',
+      department: '',
+      avatar: company.avatar,
+    }
+  })?.[0]
 })
 
 const facilitiesMaster = ref<MasterItem[]>([])
@@ -330,19 +324,19 @@ const dateString = computed(() => {
 });
 
 const eventListSubtitle = computed(() => {
-    if (user.value && selectedUser.value && user.value.uid != selectedUser.value?.uid) {
-        return `${selectedUser.value?.displayName}さんの${dateString.value}の予定一覧`;
-    } else {
-        return `${dateString.value}の予定一覧`;
-    }
+  if (user.value && selectedUser.value && user.value.uid != selectedUser.value?.uid) {
+    return `${selectedUser.value?.displayName}さんの${dateString.value}の予定一覧`;
+  } else {
+    return `${dateString.value}の予定一覧`;
+  }
 });
 
 const dailyOptionSubtitle = computed(() => {
-    if (selectedUser.value) {
-        return `${selectedUser.value.displayName}さんの${ dailyOption.value ? '日別ステータスを更新' : '日別ステータスを登録' }`;
-    } else {
-        return dailyOption.value ? '日別ステータスを更新' : '日別ステータスを登録';
-    }
+  if (selectedUser.value) {
+    return `${selectedUser.value.displayName}さんの${dailyOption.value ? '日別ステータスを更新' : '日別ステータスを登録'}`;
+  } else {
+    return dailyOption.value ? '日別ステータスを更新' : '日別ステータスを登録';
+  }
 });
 
 // 各ビュー用のローカルイベントデータ
@@ -356,7 +350,7 @@ const isConflicted = (id: string, event: EventDisplay, allEvents: EventDisplay[]
     if (e.segmentId === event.segmentId) return false; // 同じイベントインスタンスは無視
 
     // 参加者、施設、備品のいずれかに重複IDが含まれているかチェック
-    const isResourceMatch = 
+    const isResourceMatch =
       e.participantIds?.includes(id) ||
       e.facilityIds?.includes(id) ||
       e.equipmentIds?.includes(id);
@@ -389,7 +383,7 @@ const myCurrentDayEvents = computed(() => {
   const dayEvents = currentDayEvents.value;
   // ユーザーが参加しているイベントのみにフィルタリング
   const userEvents = dayEvents.filter(e => e.participantIds?.includes(user.value?.uid));
-  
+
   // 重複チェックを実行（ディープコピーを避けるため、必要なデータのみで構成された新しい配列を作成）
   return userEvents.map(event => ({
     ...event,
@@ -478,7 +472,7 @@ onMounted(async () => {
     }))
   })
 
-// ★★★ 修正: useCalendar.tsのonMountedがなくなったため、ここで一度だけloadDataを実行 ★★★
+  // ★★★ 修正: useCalendar.tsのonMountedがなくなったため、ここで一度だけloadDataを実行 ★★★
   await loadData(true); // onMountedでは常に強制リフレッシュ
 
   // 月間ビューの場合は現在の日を選択
@@ -608,7 +602,7 @@ const selectedUserDayEvents = computed(() => {
   const dayEvents = selectedDayEvents.value;
   const userEvents = dayEvents.filter(e => { return e.participantIds?.includes(selectedUser.value?.uid ?? '') });
   const uid = selectedUser.value?.uid ?? '';
-  
+
   return userEvents.map(event => ({
     ...event,
     conflicted: isConflicted(uid, event, dayEvents)
@@ -620,17 +614,17 @@ const eventListDialog = ref<boolean>(false)
 // 日付選択ハンドラ（週間ビュー用）
 const handleDayClickForWeekly = async (data: any) => {
   const { user, date } = data;
-  
+
   selectDay(date);
   selectedUser.value = user;
 
   // 1. イベントデータの取得・更新完了を待つ
-  updateSelectedDayEvents(); 
+  updateSelectedDayEvents();
 
   // 2. VueのリアクティブシステムがDOM更新（computedの再計算）を完了するのを待つ
   //    これにより、selectedUserDayEventsなどのcomputedが最新のselectedDayEventsを反映する
-  await nextTick(); 
-  
+  await nextTick();
+
   // 3. 全てのデータが揃った後にダイアログを開く
   eventListDialog.value = true;
 };
@@ -641,7 +635,7 @@ const handleDayClickForMonthly = async (date: Date) => {
 
   // 1. イベントデータの取得・更新完了を待つ
   updateSelectedDayEvents();
-  
+
   // 2. VueのリアクティブシステムがDOM更新（computedの再計算）を完了するのを待つ
   await nextTick();
 
@@ -654,7 +648,7 @@ const switchView = async (view: CalendarView) => {
   if (isLoading.value) return; // ローディング中は無効
 
   // currentView.value を更新（useCalendar.ts の watch が検知し、loadData が実行される）
-  setView(view); 
+  setView(view);
 
   // loadData は composable 側の watch に任せる
 
@@ -759,13 +753,13 @@ const eventDetail = ref<EventData>()
 // イベント詳細を表示
 const handleShowEventDetails = (data: any) => {
   const { eventData } = data; // eventDataはEventDisplay
-  
+
   // 🚀 パフォーマンス改善: APIコールを避け、メモリ上のevents.valueから検索
   const foundEvent = events.value.find(e => e.id === eventData.id);
 
   if (foundEvent) {
     // EventDisplayをEventDataとして扱う
-    eventDetail.value = foundEvent as unknown as EventData; 
+    eventDetail.value = foundEvent as unknown as EventData;
     viewDialog.value = true;
   } else {
     // データがない場合は、データ取得が不完全な可能性をログに出力
@@ -783,6 +777,10 @@ const handleEditEvent = (event: EventDisplay | EventData) => {
   selectedEvent.value = event;
   editorDialog.value = true;
 };
+
+const handleCancelEdit = () => {
+  editorDialog.value = false;
+}
 
 const handleCloseView = () => {
   viewDialog.value = false
@@ -853,6 +851,10 @@ const handleRegistered = (event: EventDisplay) => {
   events.value.push(event);
   // 登録後はデータを強制的に再ロード
   // loadData(true);
+}
+
+const handleCancelRegister = () => {
+  registerDialog.value = false;
 }
 
 const handleRegisterError = (error: any) => {
@@ -1046,21 +1048,52 @@ useHead({
 }
 
 .modal-footer {
-  display: flex; gap: 12px; justify-content: flex-end; height: 65px; padding: 12px;
-  border-top: 1px solid #dee2e6; /* --border-color */
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  height: 65px;
+  padding: 12px;
+  border-top: 1px solid #dee2e6;
+  /* --border-color */
 }
 
 .modal-footer-btn {
-  padding: 14px 28px; border-radius: 6px; /* --radius-sm */ font-size: 14px; font-weight: 600;
-  cursor: pointer; transition: all 0.2s ease-in-out; /* --transition */ border: none; display: flex; align-items: center; gap: 8px;
+  padding: 14px 28px;
+  border-radius: 6px;
+  /* --radius-sm */
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  /* --transition */
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.btn-primary { background-color: #4361ee; /* --primary-color */ color: white; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* --shadow-sm */ }
+.btn-primary {
+  background-color: #4361ee;
+  /* --primary-color */
+  color: white;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  /* --shadow-sm */
+}
+
 .btn-primary:hover {
-  background-color: #3a53c4; /* --primary-hover */ box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); /* --shadow-md */
+  background-color: #3a53c4;
+  /* --primary-hover */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  /* --shadow-md */
   transform: translateY(-1px);
 }
-.btn-primary:disabled { background-color: #adb5bd; /* --text-light */ cursor: not-allowed; transform: none; }
+
+.btn-primary:disabled {
+  background-color: #adb5bd;
+  /* --text-light */
+  cursor: not-allowed;
+  transform: none;
+}
 
 /* Display options (checkboxes) responsive styling */
 .display-options-wrapper {

@@ -1,5 +1,5 @@
 <template>
-    <EventForm :date="props.date" :participant-ids="props.participantIds" @submit="handleSubmit"></EventForm>
+    <EventForm :date="props.date" :participant-ids="props.participantIds" @submit="handleSubmit" @cancel="handleCancel"></EventForm>
 
     <Transition name="notification">
         <div v-if="notification.show" class="notification" :class="notification.type">
@@ -18,7 +18,7 @@ useHead({
   title: 'TASCAL - 予定新規登録'
 });
 
-const emit = defineEmits(['registered', 'error']);
+const emit = defineEmits(['registered', 'cancel', 'error']);
 
 // useTransaction の代わりに useEventService を使用
 // const { createEvent } = useEventService();
@@ -61,6 +61,10 @@ const handleSubmit = async (formData: EventFormData) => {
     showNotification('登録に失敗しました', 'error')
     emit('error', error);
   }
+}
+
+const handleCancel = () => {
+  emit('cancel');
 }
 </script>
 
