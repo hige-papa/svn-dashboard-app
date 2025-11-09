@@ -17,6 +17,7 @@ export const useFirestoreGeneral = (key: string) => {
         getDocWithRefAsync, 
         getCollectionAsync, 
         deleteDocWithRefAsync, 
+        deleteWithBatch,
         countCollectionAsync,
         getCollectionRef: getColRef // useFirestoreからgetCollectionRefを別名でインポート
     } = useFirestore();
@@ -178,6 +179,16 @@ export const useFirestoreGeneral = (key: string) => {
         return await deleteDocWithRefAsync(ref)
     };
 
+    const deleteWithBatchAsync = async (ids: string[]) => {
+        const actions: BatchAction[] = [];
+        for (const id of ids) {
+            actions.push({
+                reference: getDocRef(generalDocRoot.document(key, id))
+            });
+        }
+        return await deleteWithBatch(actions);
+    };
+
     /**
      * FirestoreのCollectionReferenceを直接取得する関数を公開
      */
@@ -198,6 +209,7 @@ export const useFirestoreGeneral = (key: string) => {
         countAsync,
         updateAsync,
         deleteAsync,
+        deleteWithBatchAsync,
         getCollectionRef,
     };
 };

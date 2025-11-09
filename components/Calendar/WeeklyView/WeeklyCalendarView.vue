@@ -56,7 +56,7 @@
             
             <td v-for="(cell, cellIndex) in row.days" :key="cell.dateString"
               :class="['day-cell', { 'today-cell': cell.isToday }]" 
-              @click="row.type === 'user' ? handleSelectDay(row.user, cell.date) : null">
+              @click="handleSelectDay(row.user, row.type, cell.date)">
               
               <div v-if="row.type === 'user'" class="mt-1">
                 <v-tooltip text="勤務形態" location="top">
@@ -158,7 +158,7 @@ const dateToDateString = (date: Date): string => {
 };
 
 // ヘルパー関数: リソースIDと日付から一意のキーを生成
-const createResourceKey = (type: RowType, id: string, dateStr: string): string => {
+const createResourceKey = (type: EventRelatedPartyType, id: string, dateStr: string): string => {
   return `${type}_${id}_${dateStr}`;
 };
 
@@ -189,8 +189,6 @@ const isToday = (date: Date) => {
 const getHolidayName = (date: Date): string => {
   return props.holidays.find(h => h.date === formatDateForDb(date))?.name || '';
 };
-
-type RowType = 'user' | 'company' | 'facility' | 'equipment'
 
 // --- **最適化 1: 日次オプションの事前インデックス化** ---
 const dailyOptionMap = computed<Record<string, DailyUserOption>>(() => {
@@ -254,7 +252,7 @@ const eventsByResourceIdAndDate = computed<Record<string, EventDisplay[]>>(() =>
     if (!dateKey) return;
 
     // リソースタイプとIDのリスト
-    const resourceKeys: { type: RowType; id: string; }[] = [];
+    const resourceKeys: { type: EventRelatedPartyType; id: string; }[] = [];
 
     // ユーザー
     event.participantIds?.forEach(id => resourceKeys.push({ type: 'user', id }));
@@ -305,7 +303,7 @@ const eventsByResourceIdAndDate = computed<Record<string, EventDisplay[]>>(() =>
 });
 
 // ハッシュマップからイベントを取得
-const getUserEventsForDayOptimized = (type: RowType, id: string, date: Date): EventDisplay[] => {
+const getUserEventsForDayOptimized = (type: EventRelatedPartyType, id: string, date: Date): EventDisplay[] => {
   if (type === 'user' && props.getUserSchedulesForDay) {
     try {
       return props.getUserSchedulesForDay(id, date);
@@ -322,14 +320,14 @@ const getUserEventsForDayOptimized = (type: RowType, id: string, date: Date): Ev
 // ----------------------------------------------------------------------
 // --- **最適化 3: 全表示データの事前集約** ---
 
-const getRowData = (resource: any, type: RowType) => {
+const getRowData = (resource: any, type: EventRelatedPartyType) => {
   const isUser = type === 'user';
   const resourceId = isUser ? resource.uid : resource.id;
 
   return {
     id: resourceId,
     type: type,
-    user: isUser ? resource : null,
+    user: isUser ? { ...resource, id: resource.uid } : resource,
     name: resource.displayName || resource.name,
     avatar: resource.avatar,
     extension: resource.extension,
@@ -425,8 +423,8 @@ const getVisibleEvents = (events: EventDisplay[], limit: number = 2) => {
   return events.slice(0, limit);
 };
 
-const handleSelectDay = (user: ExtendedUserProfile, date: Date) => {
-  emit('dayClick', { user: user, date: date })
+const handleSelectDay = (user: ExtendedUserProfile, type: EventRelatedPartyType, date: Date) => {
+  emit('dayClick', { user: user, type: type, date: date })
 }
 
 // ----------------------------------------------------------------------

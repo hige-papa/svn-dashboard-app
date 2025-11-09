@@ -650,6 +650,8 @@ const parseDateAsLocal = (dateStr: string): Date => new Date(`${dateStr}T00:00:0
 interface Props {
   date?: string,
   participantIds?: string[],
+  facilityIds?: string[],
+  equipmentIds?: string[],
   initialData?: EventData // EventFormData
 }
 
@@ -1260,6 +1262,7 @@ onMounted(() => {
       capacity: equipment.capacity,
       avatar: equipment.imageUrl,
     }))
+    formData.equipmentIds = [...formData.equipmentIds, ...(props.equipmentIds || [])];
   })
   getFacilitiesAsync().then(facilities => {
     facilitiesMaster.value = (facilities as any[]).map(facility => ({
@@ -1269,6 +1272,7 @@ onMounted(() => {
       capacity: facility.capacity,
       avatar: facility.imageUrl,
     }))
+    formData.facilityIds = [...formData.facilityIds, ...(props.facilityIds || [])];
   })
   getTeamsAsync().then(teams => {
     teamsMaster.value = (teams as any[]).map(team => ({

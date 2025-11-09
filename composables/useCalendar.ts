@@ -316,18 +316,37 @@ export const useCalendar = () => {
     /**
      * イベント削除を実行し、成功した場合にメモリ上のイベントリストを更新する
      * @param eventId 削除するイベントID
+     * @param option 削除オプション: 'single', 'all', 'after', 'before'
+     * @param targetDate 日付指定の際の基準日 (YYYY-MM-DD形式)
      */
-    const deleteEventAndRefresh = async (eventId: string): Promise<void> => {
+    const deleteEventAndRefresh = async (
+        eventId: string,
+        option?: 'single' | 'all' | 'after' | 'before',
+        targetDate?: string
+    ): Promise<void> => {
         if (!eventId) return;
 
-        // 1. Firestoreからイベントを削除
-        await eventService.deleteEvent(eventId);
+        // 1. Firestoreからイベントを削除 (オプションを渡す)
+        const deletedIds = await eventService.deleteEvent(eventId, option, targetDate);
 
-        // 2. メモリ上の events.value から該当IDのイベントを削除 (リアクティビティで画面更新)
-        events.value = events.value.filter(e => e.id !== eventId);
+        // メモリ上の events.value から削除されたIDを反映
+        if (deletedIds.length > 0) {
+            events.value = events.value.filter(e => !deletedIds.includes(e.id!));
+            console.log('Deleted event IDs:', deletedIds);
+        }
 
-        // 3. (非同期で) キャッシュの更新を待つ
-        //    ⇒ refreshEvents の強制呼び出しは行わない
+        // // 2. メモリ上の events.value から該当IDのイベントを削除 (単一削除の場合のみ)
+        // // ※ 'all' の場合は多数のイベントが削除されるため、ここではメモリ上の更新は諦め、
+        // //    次の refreshEvents で全体のデータを再取得することが確実です。
+        // if (option === 'single' || option === undefined) {
+        //     events.value = events.value.filter(e => e.id !== eventId);
+        // } else {
+        //     // 大量削除の可能性がある場合は、データ全体をリフレッシュ
+        //     await refreshEvents();
+        // }
+        
+        // 3. 画面に反映
+        // events.value の更新で自動的に画面が更新されます。
     };
 
     // --- Date Range Calculation (既存ロジックを維持) ---

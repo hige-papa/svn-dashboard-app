@@ -89,15 +89,16 @@
       </template>
       <v-card flat tile color="transparent">
         <v-card-text>
-          <EventsList v-if="currentView === 'weekly' && selectedDate && selectedUser" :date="selectedDate ?? new Date()"
-            :events="selectedUserDayEvents" @event-click="handleShowEventDetails" :user="selectedUser" />
+          <EventsList v-if="currentView === 'weekly' && selectedDate" :date="selectedDate ?? new Date()"
+            :events="selectedUserDayEvents" @event-click="handleShowEventDetails" />
           <EventsList v-else-if="currentView === 'monthly' && selectedDate" :date="selectedDate ?? new Date()"
             :events="mySelectedDayEvents" @event-click="handleShowEventDetails" />
         </v-card-text>
       </v-card>
       <template #footer>
         <div class="modal-footer">
-          <button type="button" @click="openDailyOptionDialog" class="modal-footer-btn btn-primary">
+          <button v-if="selectedUser?.type === 'user'" type="button" @click="openDailyOptionDialog"
+            class="modal-footer-btn btn-primary">
             日別ステータス編集
           </button>
           <button type="button" @click="goToRegister()" class="modal-footer-btn btn-primary">
@@ -114,8 +115,9 @@
           <p class="list-title">{{ dailyOptionSubtitle }}</p>
         </h3>
       </template>
-      <DailyOptionForm v-if="selectedDate" :user="selectedUser" :date="getDateString(selectedDate)"
-        @cancel="handleCancelDailyOption" @submit="handleSubmitDailyOption" :initial-data="dailyOption">
+      <DailyOptionForm v-if="selectedDate" :user="selectedUser?.type === 'user' ? selectedUser : undefined"
+        :date="getDateString(selectedDate)" @cancel="handleCancelDailyOption" @submit="handleSubmitDailyOption"
+        :initial-data="dailyOption">
       </DailyOptionForm>
     </aw-dialog>
 
@@ -131,13 +133,78 @@
         @copy="handleCopy" @back="handleCloseView" />
     </aw-dialog>
 
+    <aw-dialog v-model="showDeleteOptionModal" :draggable="true" :resize="true" :overlay="false" width="400px"
+      :fullscreen="mobile">
+      <template #title>
+        <h3 class="list-title text-red-600">
+          <!-- <i class="mdi mdi-delete-alert icon"></i> -->
+          予定を削除
+        </h3>
+      </template>
+      <v-card flat tile color="transparent">
+        <v-card-text>
+          <p class="mb-3">この繰り返し/期間予定をどのように削除しますか？</p>
+          <p class="delete-warning p-2 rounded mb-4 font-bold text-red-600 bg-red-100">
+            「{{ eventDetail?.title }}」
+          </p>
+
+          <div class="option-group space-y-3">
+            <label class="flex items-start cursor-pointer">
+              <div class="leading-tight">
+                <input type="radio" v-model="deleteOption" value="single" class="mt-1 mr-3 w-4 h-4">
+                <span class="font-bold">この日（{{ deleteTargetDateFormatted }}）のみ削除</span>
+                <!-- <span class="text-xs text-gray-500 block">（他の日の予定はそのまま残り、この日の予定は例外イベントとして扱われます。）</span> -->
+              </div>
+            </label>
+
+            <label class="flex items-start cursor-pointer">
+              <div class="leading-tight">
+                <input type="radio" v-model="deleteOption" value="all" class="mt-1 mr-3 w-4 h-4">
+                <span class="font-bold">すべての予定を削除</span>
+                <!-- <span class="text-xs text-gray-500 block">（過去・未来のすべての実体イベントとマスターイベントを削除します。）</span> -->
+              </div>
+            </label>
+
+            <label class="flex items-start cursor-pointer">
+              <div class="leading-tight">
+                <input type="radio" v-model="deleteOption" value="after" class="mt-1 mr-3 w-4 h-4">
+                <span class="font-bold">{{ deleteTargetDateFormatted }} 以降の予定を削除</span>
+                <!-- <span class="text-xs text-gray-500 block">（過去の予定は残し、この日以降の繰り返しを終了します。）</span> -->
+              </div>
+            </label>
+
+            <label class="flex items-start cursor-pointer">
+              <div class="leading-tight">
+                <input type="radio" v-model="deleteOption" value="before" class="mt-1 mr-3 w-4 h-4">
+                <span class="font-bold">{{ deleteTargetDateFormatted }} 以前の予定を削除</span>
+                <!-- <span class="text-xs text-gray-500 block">（未来の予定は残し、この日以前の過去の予定を削除します。）</span> -->
+              </div>
+            </label>
+          </div>
+        </v-card-text>
+      </v-card>
+      <template #footer>
+        <div class="modal-footer">
+          <button type="button" @click="closeDeleteOptionModal" class="modal-footer-btn btn-secondary">
+            キャンセル
+          </button>
+          <button type="button" @click="confirmDeleteOption" class="modal-footer-btn btn-danger">
+            <i class="mdi mdi-delete-outline icon"></i> 削除を実行
+          </button>
+        </div>
+      </template>
+    </aw-dialog>
+
     <AwDialog v-model="registerDialog" :draggable="true" :resize="true" :overlay="false" :initial-width="600"
       :fullscreen="mobile">
       <template #title>
         <p class="list-title">予定新規登録</p>
       </template>
       <EventRegister @registered="handleRegistered" :date="getDateString(selectedDate ?? new Date())"
-        :participant-ids="selectedUser?.uid ? [selectedUser.uid] : undefined" @cancel="handleCancelRegister" @error="handleRegisterError" />
+        :participant-ids="selectedUser?.type === 'user' || selectedUser?.type === 'company' && selectedUser?.id ? [selectedUser.id] : undefined"
+        :facility-ids="selectedUser?.type === 'facility' ? [selectedUser.id] : undefined"
+        :equipment-ids="selectedUser?.type === 'equipment' ? [selectedUser.id] : undefined"
+        @cancel="handleCancelRegister" @error="handleRegisterError" />
     </AwDialog>
 
     <AwDialog v-model="editorDialog" :draggable="true" :resize="true" :overlay="false" :initial-width="600"
@@ -145,9 +212,16 @@
       <template #title>
         <p class="list-title">予定更新</p>
       </template>
-      <EventEditor v-if="selectedEvent?.id" :event-id="selectedEvent.id" @cancel="handleCancelEdit" @updated="handleUpdated"
-        @error="handleEditorError" />
+      <EventEditor v-if="selectedEvent?.id" :event-id="selectedEvent.id" @cancel="handleCancelEdit"
+        @updated="handleUpdated" @error="handleEditorError" />
     </AwDialog>
+
+    <Transition name="notification">
+      <div v-if="notification.show" class="notification" :class="notification.type">
+        <i :class="getNotificationIcon()" class="icon"></i>
+        <span>{{ notification.message }}</span>
+      </div>
+    </Transition>
 
   </div>
 </template>
@@ -324,8 +398,8 @@ const dateString = computed(() => {
 });
 
 const eventListSubtitle = computed(() => {
-  if (user.value && selectedUser.value && user.value.uid != selectedUser.value?.uid) {
-    return `${selectedUser.value?.displayName}さんの${dateString.value}の予定一覧`;
+  if (user.value && selectedUser.value && user.value.uid != selectedUser.value?.id) {
+    return selectedUser.value.type === 'user' ? `${selectedUser.value?.displayName}さんの${dateString.value}の予定一覧` : `${selectedUser.value?.name}の${dateString.value}の予定一覧`;
   } else {
     return `${dateString.value}の予定一覧`;
   }
@@ -333,7 +407,7 @@ const eventListSubtitle = computed(() => {
 
 const dailyOptionSubtitle = computed(() => {
   if (selectedUser.value) {
-    return `${selectedUser.value.displayName}さんの${dailyOption.value ? '日別ステータスを更新' : '日別ステータスを登録'}`;
+    return selectedUser.value.type === 'user' ? `${selectedUser.value.displayName}さんの${dailyOption.value ? '日別ステータスを更新' : '日別ステータスを登録'}` : `${selectedUser.value.name}の${dailyOption.value ? '日別ステータスを更新' : '日別ステータスを登録'}`;
   } else {
     return dailyOption.value ? '日別ステータスを更新' : '日別ステータスを登録';
   }
@@ -343,40 +417,40 @@ const dailyOptionSubtitle = computed(() => {
 const currentDayEvents = ref<EventDisplay[]>([]);
 const selectedDayEvents = ref<EventDisplay[]>([]);
 
-// ユーザー、施設、備品の予定重複チェック
-const isConflicted = (id: string, event: EventDisplay, allEvents: EventDisplay[]) => {
-  // allEvents は、現在表示範囲内の全イベントとする
-  const result = allEvents.some(e => {
-    if (e.segmentId === event.segmentId) return false; // 同じイベントインスタンスは無視
+// // ユーザー、施設、備品の予定重複チェック
+// const isConflicted = (id: string, event: EventDisplay, allEvents: EventDisplay[]) => {
+//   // allEvents は、現在表示範囲内の全イベントとする
+//   const result = allEvents.some(e => {
+//     if (e.segmentId === event.segmentId) return false; // 同じイベントインスタンスは無視
 
-    // 参加者、施設、備品のいずれかに重複IDが含まれているかチェック
-    const isResourceMatch =
-      e.participantIds?.includes(id) ||
-      e.facilityIds?.includes(id) ||
-      e.equipmentIds?.includes(id);
+//     // 参加者、施設、備品のいずれかに重複IDが含まれているかチェック
+//     const isResourceMatch =
+//       e.participantIds?.includes(id) ||
+//       e.facilityIds?.includes(id) ||
+//       e.equipmentIds?.includes(id);
 
-    if (isResourceMatch) {
-      // 日付が同じで時間が重複しているかチェック
-      if (e.date === event.date) {
-        // 時間文字列を数値に変換（分単位）
-        const timeToMinutes = (timeStr: string) => {
-          const [h, m] = timeStr.split(':').map(Number);
-          return h * 60 + m;
-        };
+//     if (isResourceMatch) {
+//       // 日付が同じで時間が重複しているかチェック
+//       if (e.date === event.date) {
+//         // 時間文字列を数値に変換（分単位）
+//         const timeToMinutes = (timeStr: string) => {
+//           const [h, m] = timeStr.split(':').map(Number);
+//           return h * 60 + m;
+//         };
 
-        const eStart = timeToMinutes(e.startTime);
-        const eEnd = timeToMinutes(e.endTime);
-        const eventStart = timeToMinutes(event.startTime);
-        const eventEnd = timeToMinutes(event.endTime);
+//         const eStart = timeToMinutes(e.startTime);
+//         const eEnd = timeToMinutes(e.endTime);
+//         const eventStart = timeToMinutes(event.startTime);
+//         const eventEnd = timeToMinutes(event.endTime);
 
-        // 重複条件: (eventStart < eEnd && eventEnd > eStart)
-        return (eventStart < eEnd && eventEnd > eStart);
-      }
-    }
-    return false;
-  });
-  return result;
-}
+//         // 重複条件: (eventStart < eEnd && eventEnd > eStart)
+//         return (eventStart < eEnd && eventEnd > eStart);
+//       }
+//     }
+//     return false;
+//   });
+//   return result;
+// }
 
 const myCurrentDayEvents = computed(() => {
   // events.value から currentDate に該当するイベントを取得
@@ -387,7 +461,7 @@ const myCurrentDayEvents = computed(() => {
   // 重複チェックを実行（ディープコピーを避けるため、必要なデータのみで構成された新しい配列を作成）
   return userEvents.map(event => ({
     ...event,
-    conflicted: isConflicted(user.value.uid, event, dayEvents) // allEventsとしてその日の全イベントを渡す
+    // conflicted: isConflicted(user.value.uid, event, dayEvents) // allEventsとしてその日の全イベントを渡す
   })) as EventDisplay[]
 })
 
@@ -408,7 +482,7 @@ const mySelectedDayEvents = computed(() => {
   // 重複チェックを実行
   return userEvents.map(event => ({
     ...event,
-    conflicted: isConflicted(user.value.uid, event, dayEvents)
+    // conflicted: isConflicted(user.value.uid, event, dayEvents)
   })) as EventDisplay[]
 })
 
@@ -595,17 +669,51 @@ const calendarDays = computed(() => {
   return generateCalendarDays.value;
 });
 
-const selectedUser = ref<ExtendedUserProfile>()
+type UserType = 'user';
+type CompanyType = 'company';
+type FacilityType = 'facility';
+type EquipmentType = 'equipment';
+
+interface SelectedUser extends ExtendedUserProfile {
+  id: string;
+  type: UserType;
+}
+
+interface SelectedMasterItem extends MasterItem {
+  id: string;
+  type: CompanyType | FacilityType | EquipmentType;
+}
+
+type Selected = SelectedUser | SelectedMasterItem;
+
+const selectedUser = ref<Selected>()
 
 const selectedUserDayEvents = computed(() => {
   // mySelectedDayEventsと同様の重複チェックロジックを適用
   const dayEvents = selectedDayEvents.value;
-  const userEvents = dayEvents.filter(e => { return e.participantIds?.includes(selectedUser.value?.uid ?? '') });
-  const uid = selectedUser.value?.uid ?? '';
+
+  const getEvents = () => {
+    if (!selectedUser.value) return [];
+    switch (selectedUser.value.type) {
+      case 'user':
+        return dayEvents.filter(e => e.participantIds?.includes(selectedUser.value!.id));
+      case 'company':
+        return dayEvents.filter(e => e.participantIds?.includes(selectedUser.value!.id));
+      case 'facility':
+        return dayEvents.filter(e => e.facilityIds?.includes(selectedUser.value!.id));
+      case 'equipment':
+        return dayEvents.filter(e => e.equipmentIds?.includes(selectedUser.value!.id));
+      default:
+        return [];
+    }
+  }
+
+  const userEvents = getEvents();
+  // const uid = selectedUser.value?.uid ?? '';
 
   return userEvents.map(event => ({
     ...event,
-    conflicted: isConflicted(uid, event, dayEvents)
+    // conflicted: isConflicted(uid, event, dayEvents)
   })) as EventDisplay[]
 })
 
@@ -613,10 +721,10 @@ const eventListDialog = ref<boolean>(false)
 
 // 日付選択ハンドラ（週間ビュー用）
 const handleDayClickForWeekly = async (data: any) => {
-  const { user, date } = data;
+  const { user, type, date } = data;
 
   selectDay(date);
-  selectedUser.value = user;
+  selectedUser.value = { ...user, type: type };
 
   // 1. イベントデータの取得・更新完了を待つ
   updateSelectedDayEvents();
@@ -786,13 +894,47 @@ const handleCloseView = () => {
   viewDialog.value = false
 }
 
-const handleDelete = (id: string) => {
-  deleteEventAndRefresh(id).then(_ => {
-    // 削除後はデータを強制的に再ロード (マスターデータキャッシュもリフレッシュ)
-    // loadData(true); 
-    viewDialog.value = false
+const handleSubmitDailyOption = (data: DailyUserOption) => {
+  // alert(JSON.stringify(data));
+  setDailyOption(data).then(() => {
+    // 日別オプション登録後はデータを強制的に再ロード
+    loadData(true);
+    dailyOptionDialog.value = false;
   })
 }
+
+// useEventService から DeleteOption 型をインポート (useCalendar経由でアクセスするため、ここでは直接importしないが、型定義があれば使用)
+type DeleteOption = 'single' | 'all' | 'after' | 'before'; 
+
+// EventView.vue から渡される型を定義
+interface DeleteTarget {
+  id: string;
+  date: string; // YYYY-MM-DD
+  masterId?: string; // 期間/繰り返しイベントかどうかを判定するために使用
+}
+
+/**
+ * EventViewから削除要求を受け取るハンドラ (Step 1)
+ * @param id 削除するイベントID
+ * @param date イベントの日付 (YYYY-MM-DD)
+ */
+const handleDelete = (id: string, date: string) => {
+  // 1. EventViewモーダルを閉じる
+  viewDialog.value = false;
+  
+  // 2. 削除対象の情報をセット
+  const foundEvent = events.value.find(e => e.id === id);
+  deleteTarget.value = { id, date, masterId: foundEvent?.masterId };
+  
+  // 3. 繰り返し/期間イベントかを判定し、モーダルを表示
+  if (isRecurringOrRangeEvent.value) {
+    deleteOption.value = 'single'; // デフォルトを「この日のみ」に設定
+    showDeleteOptionModal.value = true;
+  } else {
+    // 単一イベントの場合はオプションなしで即座に削除処理を呼び出す
+    confirmDelete(id, undefined, date);
+  }
+};
 
 // 登録画面へ
 const getDateString = (date: Date) => {
@@ -807,18 +949,92 @@ const dailyOptionDialog = ref<boolean>(false);
 const dailyOption = ref<DailyUserOption>();
 
 const openDailyOptionDialog = () => {
-  dailyOption.value = getUserOptionForDay(selectedUser.value?.uid ?? user.value.uid, selectedDate.value);
+  dailyOption.value = getUserOptionForDay(selectedUser.value?.id ?? user.value.uid, selectedDate.value);
   dailyOptionDialog.value = true;
 }
 
-const handleSubmitDailyOption = (data: DailyUserOption) => {
-  // alert(JSON.stringify(data));
-  setDailyOption(data).then(() => {
-    // 日別オプション登録後はデータを強制的に再ロード
-    loadData(true);
-    dailyOptionDialog.value = false;
-  })
+// --- 新しい削除関連の状態 ---
+const showDeleteOptionModal = ref(false); // 削除オプションモーダルの表示状態
+const deleteTarget = ref<DeleteTarget | null>(null); // 削除対象のイベント情報（ID, Date, MasterIdなど）
+const deleteOption = ref<DeleteOption>('single'); // 選択された削除オプション
+
+// 削除基準日の表示用フォーマット
+const deleteTargetDateFormatted = computed(() => {
+  if (!deleteTarget.value?.date) return 'この日';
+  return formatDate(new Date(deleteTarget.value.date));
+});
+
+// 繰り返し/期間イベントかを判定 (EventViewからMasterIdは渡されないため、selectedEventから取得)
+const isRecurringOrRangeEvent = computed(() => {
+  if (!deleteTarget.value) return false;
+  
+  // 削除対象のイベントを現在のイベントリストから検索
+  const foundEvent = events.value.find(e => e.id === deleteTarget.value!.id);
+
+  // masterId がある、または dateType が recurring/range であれば、繰り返し/期間イベントと見なす
+  return foundEvent?.masterId !== undefined || foundEvent?.dateType === 'recurring' || foundEvent?.dateType === 'range';
+});
+
+/**
+ * 削除オプションモーダルで「削除する」を押したときのハンドラ (Step 2)
+ */
+const confirmDeleteOption = () => {
+  if (!deleteTarget.value) return;
+
+  const { id, date } = deleteTarget.value;
+  const option = deleteOption.value;
+  
+  // 選択されたオプションと基準日を渡して最終的な削除処理を呼び出す
+  confirmDelete(id, option, date);
+  
+  showDeleteOptionModal.value = false;
+  deleteTarget.value = null;
+};
+
+/**
+ * 最終的な削除処理を実行する関数 (Step 3)
+ * @param id 削除対象のID
+ * @param option 削除オプション
+ * @param targetDate 削除基準日
+ */
+const confirmDelete = (id: string, option?: DeleteOption, targetDate?: string) => {
+  deleteEventAndRefresh(id, option, targetDate)
+    .then(() => {
+      // 削除成功時の通知（EventViewの通知は削除したため、ここで再実装が必要）
+      showNotification('予定が削除されました', 'success');
+      console.log(`[Delete] Event ID: ${id}, Option: ${option}, Date: ${targetDate} 削除成功`);
+    })
+    .catch(error => {
+      console.error("削除エラー:", error);
+      showNotification('予定の削除中にエラーが発生しました。再度お試しください。', 'error');
+    });
+};
+
+const notification = reactive({
+  show: false,
+  message: '',
+  type: 'success' as 'success' | 'error'
+})
+
+const getNotificationIcon = () => {
+  return notification.type === 'success' ? 'mdi mdi-check' : 'mdi mdi-alert'
 }
+
+// 通知表示
+const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+  notification.message = message
+  notification.type = type
+  notification.show = true
+
+  setTimeout(() => {
+    notification.show = false
+  }, 3000)
+}
+
+const closeDeleteOptionModal = () => {
+  showDeleteOptionModal.value = false;
+  deleteTarget.value = null;
+};
 
 const handleCancelDailyOption = () => {
   dailyOptionDialog.value = false;
@@ -1124,6 +1340,67 @@ useHead({
 
 .custom-checkbox :deep(.v-selection-control--dirty .v-label) {
   color: #4361ee;
+}
+
+/* 通知 */
+.notification {
+  position: fixed;
+  top: 80px;
+  right: 24px;
+  background-color: var(--success-color);
+  color: white;
+  padding: 16px 24px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1000;
+}
+
+.notification.error {
+  background-color: var(--danger-color);
+}
+
+.icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Vue Transition */
+.notification-enter-active,
+.notification-leave-active {
+  transition: all 0.3s ease;
+}
+
+.notification-enter-from {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.notification-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: 2px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+  background-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
 }
 
 @media (max-width: 768px) {

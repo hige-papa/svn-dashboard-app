@@ -256,7 +256,7 @@
     </div>
 
     <!-- <Teleport to="body"> -->
-      <Transition name="modal">
+      <!-- <Transition name="modal">
         <div v-if="showDeleteModal" class="modal-overlay" @click="closeDeleteModal">
           <div class="modal-container" @click.stop>
             <div class="modal-header">
@@ -272,6 +272,31 @@
               <p>この予定を削除してもよろしいですか？</p>
               <p class="delete-warning">「{{ eventData.title }}」</p>
               <p>この操作は取り消すことができません。</p>
+
+              <div v-if="isRecurringOrRange" class="delete-options mt-4">
+                <h4 class="text-sm font-semibold mb-2">削除オプション</h4>
+                <div class="option-group">
+                  <label class="block mb-2">
+                    <input type="radio" v-model="deleteOption" value="single" class="mr-2">
+                    **この日のみ削除**
+                    <span class="text-xs text-gray-500 block ml-5">（他の日の予定はそのまま残ります。例外イベントとして扱われます。）</span>
+                  </label>
+                  <label class="block mb-2">
+                    <input type="radio" v-model="deleteOption" value="all" class="mr-2">
+                    **すべての予定を削除**
+                    <span class="text-xs text-gray-500 block ml-5">（マスターイベント、およびすべての日付の実体イベントを削除します。）</span>
+                  </label>
+                  <label class="block mb-2">
+                    <input type="radio" v-model="deleteOption" value="after" class="mr-2">
+                    **{{ formatDate(deleteTargetDate) }} 以降の予定を削除**
+                  </label>
+                  <label class="block mb-2">
+                    <input type="radio" v-model="deleteOption" value="before" class="mr-2">
+                    **{{ formatDate(deleteTargetDate) }} 以前の予定を削除**
+                  </label>
+                </div>
+
+                </div>
             </div>
             <div class="modal-footer">
               <button type="button" @click="closeDeleteModal" class="btn btn-secondary">
@@ -283,7 +308,7 @@
             </div>
           </div>
         </div>
-      </Transition>
+      </Transition> -->
     <!-- </Teleport> -->
 
     <Transition name="notification">
@@ -304,9 +329,9 @@ import { useDisplay } from 'vuetify';
 
 const user = useState<User>('user');
 
-const { mobile } = useDisplay()
+// const { mobile } = useDisplay()
 
-const { back } = useRouter()
+// const { back } = useRouter()
 
 interface Props {
   eventData: EventData
@@ -337,7 +362,7 @@ useHead({
 })
 
 // リアクティブデータ
-const showDeleteModal = ref(false)
+// const showDeleteModal = ref(false)
 const notification = reactive({
   show: false,
   message: '',
@@ -466,9 +491,11 @@ const showNotification = (message: string, type: 'success' | 'error' = 'success'
   }, 3000)
 }
 
+// emitの型定義も更新が必要です
 const emit = defineEmits<{
   (event: 'edit', data: EventData): void
-  (event: 'delete', id: string): void
+  // 削除イベントのシグネチャを修正: IDとイベントが持つ日付を渡す
+  (event: 'delete', id: string, date: string): void 
   (event: 'copy', data: EventData): void
   (event: 'back'): void
 }>()
@@ -483,8 +510,12 @@ const handleEdit = () => {
   emit('edit', props.eventData)
 }
 
+// 既存の handleDelete を修正
 const handleDelete = () => {
-  showDeleteModal.value = true
+  if (props.eventData.id && props.eventData.date) {
+    // IDと、クリックされた実体イベントの日付を親に渡す
+    emit('delete', props.eventData.id, props.eventData.date)
+  }
 }
 
 const handleCopy = () => {
@@ -492,17 +523,35 @@ const handleCopy = () => {
   showNotification('予定が複製されました')
 }
 
-const closeDeleteModal = () => {
-  showDeleteModal.value = false
-}
+// const closeDeleteModal = () => {
+//   showDeleteModal.value = false
+// }
 
-const confirmDelete = () => {
-  if (props.eventData.id) {
-    emit('delete', props.eventData.id)
-    showNotification('予定が削除されました')
-  }
-  closeDeleteModal()
-}
+// const confirmDelete = () => {
+//   if (props.eventData.id) {
+//     if (isRecurringOrRange.value) {
+//       // 期間・繰り返し予定の場合、オプションと日付を渡す
+//       emit('delete', props.eventData.id, deleteOption.value, deleteTargetDate.value)
+//       showNotification('予定が削除されました (オプション適用)')
+//     } else {
+//       // 単一予定の場合
+//       emit('delete', props.eventData.id)
+//       showNotification('予定が削除されました')
+//     }
+//   }
+//   closeDeleteModal()
+// }
+
+// const deleteOption = ref<'single' | 'all' | 'after' | 'before'>('single') // 選択された削除オプション
+// const deleteTargetDate = ref<string>(props.eventData.date ?? '') // 日付指定の際の基準日
+
+// const isRecurringOrRange = computed(() => {
+//   return props.eventData.dateType === 'range' || props.eventData.dateType === 'recurring' || props.eventData.masterId !== undefined
+// })
+
+// watch(() => props.eventData.date, (newDate) => {
+//   deleteTargetDate.value = newDate ?? ''
+// })
 
 onMounted(() => {
   getEquipmentsAsync().then((equipments: MasterItem[]) => {

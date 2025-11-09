@@ -30,6 +30,7 @@ declare global {
     endDate: string;
     recurringStartDate: string;
     recurringPattern: RecurringPattern;
+    recurringInterval: number;
     selectedWeekdays: number[];
     monthlyType: MonthlyType;
     monthlyDate: number;
@@ -80,6 +81,7 @@ declare global {
     allDay?: boolean;
     recurringStartDate?: string;
     recurringPattern?: RecurringPattern;
+    recurringInterval?: number;
     selectedWeekdays?: number[];
     monthlyType?: MonthlyType;
     monthlyDate?: number;
@@ -124,6 +126,7 @@ declare global {
     id: string;
     segmentId?: string;
     originalStartDate?: string;
+    dateType: DateType;
     title: string;
     date: string;
     endDate?: string;
@@ -239,7 +242,7 @@ declare global {
     name: string;    // 祝日名 (例: "元日")
   }
 
-  export type EventRelatedPartyType = 'user' | 'facility' | 'equipment'
+  type EventRelatedPartyType = 'user' | 'company' | 'facility' | 'equipment';
 
   interface EventRelatedParty {
     id: string

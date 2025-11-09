@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 interface Props {
-  user?: ExtendedUserProfile;
+  // user?: ExtendedUserProfile;
   date?: Date
   events?: EventDisplay[]
 }

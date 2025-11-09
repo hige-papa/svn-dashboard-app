@@ -37,12 +37,12 @@ export const useEventService = () => {
       return Math.floor((utc2 - utc1) / (1000 * 60 * 60 * 24));
     };
 
-    // --- Recurrence Date Generation Utility (簡略化版を再構築) ---
+    // --- Recurrence Date Generation Utility (修正版) ---
     const generateRecurringDates = (
         formData: EventFormData,
         viewStartDate: Date,
         viewEndDate: Date,
-        interval: number = 1
+        interval: number = 1 // フォームデータから interval が渡される想定。渡されない場合はデフォルト1
     ): string[] => {
         const resultDates: string[] = [];
         const recurrenceStartDate = parseDateAsLocal(formData.recurringStartDate!);
@@ -54,6 +54,9 @@ export const useEventService = () => {
             : null;
         const hardLimitDate = new Date(recurrenceStartDate);
         hardLimitDate.setFullYear(hardLimitDate.getFullYear() + 20);
+        
+        // interval はフォームデータから取得またはデフォルト1を使用
+        const effectiveInterval = formData.recurringInterval > 0 ? formData.recurringInterval : 1;
 
         while (true) {
             if (generatedCount >= maxCount) break;
@@ -63,20 +66,36 @@ export const useEventService = () => {
 
             let matches = false;
             const startDate = recurrenceStartDate;
-            const effectiveInterval = interval > 0 ? interval : 1;
             const dayOfWeek = current.getDay();
             
             switch (formData.recurringPattern) {
                 case 'daily':
+                    // Daily: 日数差が effectiveInterval の倍数であること
                     if (getDayDiff(startDate, current) % effectiveInterval === 0) matches = true;
                     break;
+
                 case 'weekdays':
+                    // Weekdays: 月曜(1)から金曜(5)であること
                     if (dayOfWeek >= 1 && dayOfWeek <= 5) matches = true;
                     break;
+
                 case 'custom':
                 case 'weekly':
-                    if (formData.selectedWeekdays?.includes(dayOfWeek)) matches = true;
+                    // Weekly/Custom: 
+                    // 1. 曜日がマッチしていること
+                    // 2. 開始日からの週数が effectiveInterval の倍数であること
+                    if (formData.selectedWeekdays?.includes(dayOfWeek)) {
+                        const dayDiff = getDayDiff(startDate, current);
+                        // 週の差分を計算。開始日から7日後の差が 7 の倍数であるかをチェック。
+                        const weekDiff = Math.floor(dayDiff / 7);
+
+                        // 週の差分がインターバルの倍数であるかを確認
+                        if (weekDiff % effectiveInterval === 0) {
+                            matches = true;
+                        }
+                    }
                     break;
+
                 // 月次/年次ロジックは省略
                 default:
                     matches = false;
@@ -89,9 +108,16 @@ export const useEventService = () => {
                     resultDates.push(formatDateForDb(current));
                 }
             }
+            
+            // 週次パターンで正しいインターバルを適用するために、
+            // 毎日進めるロジックは維持し、チェックロジックでインターバルを吸収する。
             current.setDate(current.getDate() + 1);
         }
-        return resultDates.filter(dateStr => dateStr >= formatDateForDb(viewStartDate) && dateStr <= formatDateForDb(viewEndDate));
+        
+        // 最終的な表示範囲でフィルタリング
+        const viewStartStr = formatDateForDb(viewStartDate);
+        const viewEndStr = formatDateForDb(viewEndDate);
+        return resultDates.filter(dateStr => dateStr >= viewStartStr && dateStr <= viewEndStr);
     };
 
     // --- キャッシュ取得ロジック ---
@@ -155,7 +181,7 @@ export const useEventService = () => {
         const baseEventData: Partial<EventData> = {
             title: formData.title,
             eventType: formData.eventType,
-            dateType: 'single', // 実体化されたイベントは 'single' 相当として扱う
+            dateType: formData.dateType,
             startTime: formData.startTime,
             endTime: formData.endTime,
             location: formData.location,
@@ -205,7 +231,9 @@ export const useEventService = () => {
 
         } else if (formData.dateType === 'recurring') {
             const start = parseDateAsLocal(formData.recurringStartDate!);
-            const recurringDates = generateRecurringDates(formData, start, maxEndDateForRecurrence);
+            // 繰り返し間隔 (interval) を generateRecurringDates に渡す
+            const interval = formData.recurringInterval || 1; 
+            const recurringDates = generateRecurringDates(formData, start, maxEndDateForRecurrence, interval);
             
             for (const dateStr of recurringDates) {
                 eventsToSave.push({
@@ -214,6 +242,7 @@ export const useEventService = () => {
                     date: dateStr,
                     recurringPattern: formData.recurringPattern, 
                     recurringStartDate: formData.recurringStartDate,
+                    recurringInterval: formData.recurringInterval, // 繰り返し間隔を保存
                     // 繰り返しルールの詳細も保持
                     selectedWeekdays: formData.selectedWeekdays,
                     monthlyType: formData.monthlyType,
@@ -291,17 +320,93 @@ export const useEventService = () => {
         return [initialData.id];
     };
 
-/**
-     * イベント削除処理 (単一イベントの削除)
-     * @param eventId 削除するイベントID
+    /**
+     * イベント削除処理 (単一イベントの削除, または繰り返しイベントの削除オプション付き)
+     * @param eventId 削除するイベントID (実体イベントのID)
+     * @param option 削除オプション: 'single', 'all', 'after', 'before'
+     * @param targetDate 日付指定の際の基準日 (YYYY-MM-DD形式)
      */
-    const deleteEvent = async (eventId: string): Promise<void> => {
+    const deleteEvent = async (
+        eventId: string,
+        option?: 'single' | 'all' | 'after' | 'before',
+        targetDate?: string
+    ): Promise<string[]> => {
         if (!eventId) {
             throw new Error('削除対象のイベントIDが指定されていません。');
         }
-        
-        // useFirestoreGeneral の deleteDocAsync を使用して単一イベントを削除
-        await eventsService.deleteAsync(eventId);
+
+        // 1. 対象イベントのデータを取得（マスターIDなどを取得するため）
+        const eventDoc = await eventsService.getAsync(eventId);
+        if (!eventDoc) return [];
+
+        // 単一イベントまたはオプションが指定されていない場合は単純削除
+        if (!eventDoc.masterId || !option) {
+            await eventsService.deleteAsync(eventId);
+            return [eventId];
+        }
+
+        // 2. 期間/繰り返しイベントの削除ロジック
+        // ※ ここでは実装の複雑さを考慮し、基本的な処理のみを記述します。
+        //    実際のアプリケーションでは、マスターイベントの更新や、
+        //    関連するすべての子イベントのバッチ削除が必要です。
+        switch (option) {
+            case 'all':
+                // 2-1. すべての関連イベントを削除
+                //      - マスターイベントを削除
+                //      - masterIdが一致するすべての子イベントをバッチで削除
+                console.log(`Deleting all events for masterId: ${eventDoc.masterId}`);
+                const query = where('masterId', '==', eventDoc.masterId);
+                const targets = await eventsService.getListAsync(query);
+                await eventsService.deleteWithBatchAsync(targets.map(e => e.id)).catch(() => {
+                    console.error('Error deleting all events for the masterId.');
+                });
+                return targets.map(e => e.id);
+                // break;
+
+            case 'single':
+                // 2-2. この日のみ削除 (例外イベントの作成)
+                //      - 削除対象の実体イベントを削除
+                //      - マスターイベントの 'exclusionDates' フィールドなどに、この日の日付を追加して更新
+                console.log(`Deleting single event instance: ${eventId} on ${eventDoc.date}`);
+                // await createExclusionForMaster(eventDoc.masterId, eventDoc.date); // 仮想関数
+                await eventsService.deleteAsync(eventId);
+                return [eventId];
+                // break;
+
+            case 'after':
+                // 2-4. 指定日以降を削除
+                //      - masterIdが一致し、targetDate以降の日付の実体イベントをバッチで削除
+                //      - 必要に応じて、マスターイベントの 'recurringEndDate' を targetDate の前日に更新
+                console.log(`Deleting events ${option} ${targetDate} for masterId: ${eventDoc.masterId}`);
+                const targetsAfter = await eventsService.getListAsync(
+                    where('masterId', '==', eventDoc.masterId),
+                    where('date', '>=', targetDate!)
+                );
+                await eventsService.deleteWithBatchAsync(targetsAfter.map(e => e.id)).catch(() => {
+                    console.error('Error deleting events after the target date.');
+                });
+                return targetsAfter.map(e => e.id);
+                // break;
+            case 'before':
+                // 2-3. 日付範囲で削除
+                //      - masterIdが一致し、targetDateに基づく日付範囲の実体イベントをバッチで削除
+                //      - 必要に応じて、マスターイベントの 'recurringEndDate' を targetDate に更新
+                console.log(`Deleting events ${option} ${targetDate} for masterId: ${eventDoc.masterId}`);
+                const targetsBefore = await eventsService.getListAsync(
+                    where('masterId', '==', eventDoc.masterId),
+                    where('date', '<=', targetDate!)
+                );
+                await eventsService.deleteWithBatchAsync(targetsBefore.map(e => e.id)).catch(() => {
+                    console.error('Error deleting events before the target date.');
+                });
+                return targetsBefore.map(e => e.id);
+                // break;
+
+            default:
+                await eventsService.deleteAsync(eventId);
+                return [eventId];
+                // break;
+        }
     };
 
     // --- EventForm.vue向け リソース別取得関数 (キャッシュからフィルタリング) ---

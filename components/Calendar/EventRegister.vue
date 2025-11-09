@@ -1,5 +1,12 @@
 <template>
-    <EventForm :date="props.date" :participant-ids="props.participantIds" @submit="handleSubmit" @cancel="handleCancel"></EventForm>
+    <EventForm
+      :date="props.date"
+      :participant-ids="props.participantIds"
+      :facility-ids="props.facilityIds"
+      :equipment-ids="props.equipmentIds"
+      @submit="handleSubmit"
+      @cancel="handleCancel">
+    </EventForm>
 
     <Transition name="notification">
         <div v-if="notification.show" class="notification" :class="notification.type">
@@ -39,6 +46,8 @@ const { createEventAndRefresh } = useCalendar();
 interface Props {
   date?: string,
   participantIds?: string[],
+  facilityIds?: string[],
+  equipmentIds?: string[],
 }
 
 const props = withDefaults(defineProps<Props>(), {})
