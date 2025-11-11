@@ -196,7 +196,7 @@
     </aw-dialog>
 
     <AwDialog v-model="registerDialog" :draggable="true" :resize="true" :overlay="false" :initial-width="600"
-      :fullscreen="mobile">
+      :fullscreen="true">
       <template #title>
         <p class="list-title">予定新規登録</p>
       </template>
@@ -208,7 +208,7 @@
     </AwDialog>
 
     <AwDialog v-model="editorDialog" :draggable="true" :resize="true" :overlay="false" :initial-width="600"
-      :fullscreen="mobile">
+      :fullscreen="true">
       <template #title>
         <p class="list-title">予定更新</p>
       </template>

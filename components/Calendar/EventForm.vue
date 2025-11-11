@@ -678,6 +678,7 @@ const formData = reactive<EventFormData>({
   endDate: '',
   recurringStartDate: '',
   recurringPattern: 'weekly',
+  recurringInterval: 1,
   selectedWeekdays: [],
   monthlyType: 'date',
   monthlyDate: 1,
