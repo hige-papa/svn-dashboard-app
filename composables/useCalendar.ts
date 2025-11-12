@@ -557,7 +557,7 @@ export const useCalendar = () => {
         const startDate = moment(d).startOf('month').startOf('isoWeek');
 
         for (let i = 0; i < 42; i++) {
-            const day = startDate.clone().add(i, 'days');
+            const day = startDate.clone().add(i - 1, 'days');
             days.push({ date: day.toDate(), currentMonth: day.month() === month });
         }
         return days;
