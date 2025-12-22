@@ -1,6 +1,6 @@
 [
   {
-    "origin": ["http://localhost:3000", "https://tascal-app-a344b.web.app", "https://tascal-app-a344b.firebaseapp.com"],
+    "origin": ["http://localhost:3000", "https://tascal-app-a344b.web.app", "https://tascal-app-a344b.firebaseapp.com", "https://tascal-stg.web.app", "https://tascal-stg.firebaseapp.com", "https://tascal-svn.web.app", "https://tascal-svn.firebaseapp.com"],
     "method": ["GET"],
     "responseHeader": ["Content-Type"],
     "maxAgeSeconds": 3600
