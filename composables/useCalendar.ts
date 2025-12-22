@@ -6,6 +6,7 @@ import { useMaster } from '~/composables/master/useMaster';
 import { printFirestoreDebugSummary } from '~/composables/firebase/useFirestore';
 import moment from 'moment-timezone';
 import { where } from 'firebase/firestore';
+import type { User } from 'firebase/auth';
 
 type CalendarView = 'daily' | 'weekly' | 'monthly';
 
@@ -145,10 +146,15 @@ export const getMasterDataCacheAsync = async (
 
 export const getMasterDataCache = () => masterDataCache;
 
-
 // --- メインコンポーザブル ---
 export const useCalendar = () => {
-    const currentUserId = ref('dummy-user-id-001');
+    // const  currentUserId= ref('dummy-user-id-001');
+
+    const user = useState<User>('user')
+
+    const currentUserId = computed(() => {
+        return user.value?.uid || 'dummy-user-id-001';
+    });
 
     const eventService = useEventService();
 
