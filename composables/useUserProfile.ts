@@ -34,7 +34,7 @@ export const useUserProfile = (): {
   toBasicUserProfile: (extendedProfile: ExtendedUserProfile) => UserProfile;
   getRandomColor: () => string;
 } => {
-  const { createUserWithEmailAndPasswordAsync, updateUserAsync } = useAuth();
+  const { createUserWithEmailAndPasswordAsync, updateUserAsync, updateUserWithAuthAsync } = useAuth();
   const { addAsync, addWithIdAsync, getAsync, getListAsync, updateAsync, deleteAsync } = useMaster('users');
 
   /**
@@ -67,7 +67,7 @@ export const useUserProfile = (): {
       }
 
       // Authentication側のプロフィール更新
-      await updateUserAsync({
+      await updateUserWithAuthAsync(secondaryAuth, {
         displayName: profileData.displayName,
         photoURL: profileData.avatar || null
       } as UserInfo);

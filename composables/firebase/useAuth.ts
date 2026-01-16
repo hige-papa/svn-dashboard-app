@@ -80,6 +80,19 @@ export const useAuth = () => {
         }
     }
 
+    const updateUserWithAuthAsync = async (auth: Auth, u: UserInfo) => {
+        if (auth.currentUser) {
+            return await updateProfile(auth.currentUser, u)
+                .then(_ => {
+                    // user.value = u;
+                    console.log("success update user profile with firebase authentication");
+                })
+                .catch(error => {
+                    console.error("failed update user profile firebase authentication", error);
+                });
+        }
+    }
+
     const updatePhoneNumberAsync = async (verificationCode: string) => {
         if (auth.value.currentUser) {
             const applicationVerifier = new RecaptchaVerifier(auth.value, 'recaptcha-container');
@@ -172,6 +185,7 @@ export const useAuth = () => {
         loginWithEmailAndPasswordAsync,
         logoutAsync,
         updateUserAsync,
+        updateUserWithAuthAsync,
         sendPasswordResetEmailAsync,
         verifyBeforeUpdateEmailAsync,
         verifyPasswordResetCodeAsync,
