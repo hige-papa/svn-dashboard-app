@@ -20,8 +20,8 @@ quadrantChart
     title 改善提案 優先度マトリクス
     x-axis Low Effort --> High Effort
     y-axis Low Impact --> High Impact
-    quadrant-1 Strategic (計画実施)
-    quadrant-2 Quick Wins (即実施)
+    quadrant-1 Strategic
+    quadrant-2 Quick Wins
     quadrant-3 Low Priority
     quadrant-4 Fill-in
     "I-18 Rules再設計": [0.35, 0.99]
